@@ -39,6 +39,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { Switch } from "@/components/ui/switch";
 import TripDetailLayout from "@/components/trip-detail-layout";
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
+
+
 const expenseSchema = z.object({
   description: z.string().min(1, "Description is required"),
   amount: z.string().min(1, "Amount is required"),
@@ -183,7 +186,7 @@ export default function TripExpenses() {
 
   const addExpenseMutation = useMutation({
     mutationFn: async (data: ExpenseFormData) => {
-      const response = await fetch(`/api/trips/${tripId}/expenses`, {
+      const response = await fetch(`${API_BASE}/api/trips/${tripId}/expenses`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

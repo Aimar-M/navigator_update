@@ -12,6 +12,9 @@ import { z } from "zod";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useAuth } from "@/hooks/use-auth";
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
+
+
 // Define the schema for creating a new poll
 const createPollSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -87,7 +90,7 @@ export const CreatePollDialog = ({
       // Get token from localStorage
       const token = localStorage.getItem('auth_token');
       
-      return fetch(`/api/trips/${tripId}/polls`, {
+      return fetch(`${API_BASE}/api/trips/${tripId}/polls`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -283,6 +286,7 @@ export const CreatePollDialog = ({
                     <Input
                       type="datetime-local"
                       {...field}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />

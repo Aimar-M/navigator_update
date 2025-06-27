@@ -24,6 +24,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
+
 // Helper functions for accommodation links with custom names
 function parseAccommodationLink(link: string): { name: string; url: string } {
   // Check if the link contains custom name (format: "Name||URL")
@@ -967,7 +969,7 @@ export default function TripDetails() {
                               description: "Processing your confirmation"
                             });
                             
-                            fetch(`/api/trips/${tripId}/members/${user.id}`, {
+                            fetch(`${API_BASE}/api/trips/${tripId}/members/${user.id}`, {
                               method: 'PUT',
                               headers: {
                                 'Content-Type': 'application/json',
@@ -1008,7 +1010,7 @@ export default function TripDetails() {
                                 description: "Recording your decision"
                               });
                               
-                              fetch(`/api/trips/${tripId}/members/${user.id}`, {
+                              fetch(`${API_BASE}/api/trips/${tripId}/members/${user.id}`, {
                                 method: 'PUT',
                                 headers: {
                                   'Content-Type': 'application/json',
