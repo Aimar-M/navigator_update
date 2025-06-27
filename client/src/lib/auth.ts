@@ -1,6 +1,6 @@
 // Simple auth utilities to handle login/register/logout
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export async function loginUser(username: string, password: string) {
   try {
