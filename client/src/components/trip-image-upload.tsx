@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Camera, Upload, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 
 interface TripImageUploadProps {

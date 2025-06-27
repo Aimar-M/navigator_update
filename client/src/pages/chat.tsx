@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CreatePollDialog } from "@/components/polls/create-poll-dialog";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 
 export default function Chat() {

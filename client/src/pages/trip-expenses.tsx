@@ -39,7 +39,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Switch } from "@/components/ui/switch";
 import TripDetailLayout from "@/components/trip-detail-layout";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 
 const expenseSchema = z.object({
