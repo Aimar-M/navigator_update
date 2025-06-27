@@ -9,7 +9,7 @@ config();
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000", // Common React dev port
-  "https://navigator-update.vercel.app/" // <-- replace with your actual Vercel frontend URL
+  "https://navigator-update.vercel.app" // <-- replace with your actual Vercel frontend URL
 ];
 
 const app = express();
