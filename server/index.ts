@@ -8,19 +8,26 @@ config();
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "http://localhost:3000", // Common React dev port
+  "http://localhost:3000",
   "https://navigator-update.vercel.app",
   "https://navigator-update-git-main-aimar-ms-projects.vercel.app",
-  "https://navigator-update-1zbs9iahz-aimar-ms-projects.vercel.app" //  // <-- replace with your actual Vercel frontend URL
+  "https://navigator-update-1zbs9iahz-aimar-ms-projects.vercel.app"
 ];
 
 const app = express();
+
 app.use(cors({
-  origin: allowedOrigins,
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 
 app.use((req, res, next) => {
   const start = Date.now();
