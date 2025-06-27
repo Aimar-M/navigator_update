@@ -969,7 +969,7 @@ export default function TripDetails() {
                               description: "Processing your confirmation"
                             });
                             
-                            fetch(`${API_BASE}/trips/${tripId}/members/${user.id}`, {
+                            fetch(`${API_BASE}/api/trips/${tripId}/members/${user.id}`, {
                               method: 'PUT',
                               headers: {
                                 'Content-Type': 'application/json',
@@ -1010,7 +1010,7 @@ export default function TripDetails() {
                                 description: "Recording your decision"
                               });
                               
-                              fetch(`${API_BASE}/trips/${tripId}/members/${user.id}`, {
+                              fetch(`${API_BASE}/api/trips/${tripId}/members/${user.id}`, {
                                 method: 'PUT',
                                 headers: {
                                   'Content-Type': 'application/json',

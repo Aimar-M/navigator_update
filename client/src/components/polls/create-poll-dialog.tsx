@@ -90,7 +90,7 @@ export const CreatePollDialog = ({
       // Get token from localStorage
       const token = localStorage.getItem('auth_token');
       
-      return fetch(`${API_BASE}/trips/${tripId}/polls`, {
+      return fetch(`${API_BASE}/api/trips/${tripId}/polls`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

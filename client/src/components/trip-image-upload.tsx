@@ -54,7 +54,7 @@ export default function TripImageUpload({
         const base64String = e.target?.result as string;
         
         const token = localStorage.getItem('auth_token');
-        const response = await fetch(`${API_BASE}/trips/${tripId}/image`, {
+        const response = await fetch(`${API_BASE}/api/trips/${tripId}/image`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -101,7 +101,7 @@ export default function TripImageUpload({
     
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`${API_BASE}/trips/${tripId}/image`, {
+      const response = await fetch(`${API_BASE}/api/trips/${tripId}/image`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

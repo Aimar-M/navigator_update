@@ -186,7 +186,7 @@ export default function TripExpenses() {
 
   const addExpenseMutation = useMutation({
     mutationFn: async (data: ExpenseFormData) => {
-      const response = await fetch(`${API_BASE}/trips/${tripId}/expenses`, {
+      const response = await fetch(`${API_BASE}/api/trips/${tripId}/expenses`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
