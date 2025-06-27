@@ -140,7 +140,7 @@ export default function Chat() {
       const formattedPolls = polls ? polls.map((poll: any) => ({
         id: `poll-${poll.id}`,
         type: 'poll',
-        pollData: poll,
+        poll: poll,
         timestamp: poll.createdAt,
         user: {
           id: poll.creator?.id || poll.createdBy,
@@ -328,35 +328,10 @@ export default function Chat() {
             <div className="space-y-2 py-1">
               {/* Combined message and poll timeline */}
               {(() => {
-                // Create arrays for messages and polls
-                const messageItems = messages.map(msg => ({
-                  id: `msg-${msg.id}`,
-                  type: 'message',
-                  content: msg.content,
-                  timestamp: msg.timestamp,
-                  user: msg.user
-                }));
-                
-                const pollItems = Array.isArray(polls) ? polls.map(poll => ({
-                  id: `poll-${poll.id}`,
-                  type: 'poll',
-                  poll: poll,
-                  timestamp: poll.createdAt,
-                  user: {
-                    id: poll.createdBy,
-                    name: poll.creator?.name || "Anonymous"
-                  }
-                })) : [];
-                
-                // Combine and sort chronologically
-                const timelineItems = [...messageItems, ...pollItems].sort((a, b) => 
-                  new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-                );
-                
-                // Render each item based on its type
-                return timelineItems.map(item => {
+                // Use the already combined and sorted messages array
+                return messages.map(item => {
                   if (item.type === 'message') {
-                    // Regular message rendering
+                    // Safe to use item.content
                     return (
                       <div key={item.id} className={`flex items-start mb-3 ${item.user?.id === user?.id ? "flex-row-reverse" : ""}`}>
                         {item.user?.id !== user?.id && (
@@ -392,8 +367,7 @@ export default function Chat() {
                         </div>
                       </div>
                     );
-                  } else {
-                    // Poll rendering
+                  } else if (item.type === 'poll') {
                     const poll = item.poll;
                     const isOwnPoll = poll.createdBy === user?.id;
                     
@@ -429,6 +403,7 @@ export default function Chat() {
                       </div>
                     );
                   }
+                  return null;
                 });
               })()}
               
