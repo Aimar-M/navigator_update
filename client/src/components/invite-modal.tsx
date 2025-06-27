@@ -116,14 +116,14 @@ export default function InviteModal({ tripId, isOpen, onClose }: InviteModalProp
     setIsValidating(true);
     try {
       // Call the API to check if username exists
-      const response = await fetch(`${API_BASE}/api/users/validate?username=${encodeURIComponent(usernameToCheck)}`);
+      const response = await fetch(`${API_BASE}/users/validate?username=${encodeURIComponent(usernameToCheck)}`);
       const isValid = response.ok;
       
       // Check if user is already a trip member - separate API call
       let alreadyInvited = false;
       if (isValid) {
         try {
-          const tripResponse = await fetch(`${API_BASE}/api/trips/${tripId}/check-member?username=${encodeURIComponent(usernameToCheck)}`);
+          const tripResponse = await fetch(`${API_BASE}/trips/${tripId}/check-member?username=${encodeURIComponent(usernameToCheck)}`);
           const data = await tripResponse.json();
           alreadyInvited = data.isMember;
         } catch (err) {
@@ -202,13 +202,13 @@ export default function InviteModal({ tripId, isOpen, onClose }: InviteModalProp
             const normalizedUsername = username.trim().toLowerCase();
             
             // First validate if the username exists
-            const validateResponse = await fetch(`${API_BASE}/api/users/validate?username=${encodeURIComponent(normalizedUsername)}`);
+            const validateResponse = await fetch(`${API_BASE}/users/validate?username=${encodeURIComponent(normalizedUsername)}`);
             const validateData = await validateResponse.json();
             const userValid = validateData.valid;
             
             if (userValid) {
               // Then check if they're already in the trip
-              const memberCheckResponse = await fetch(`${API_BASE}/api/trips/${tripId}/check-member?username=${encodeURIComponent(normalizedUsername)}`);
+              const memberCheckResponse = await fetch(`${API_BASE}/trips/${tripId}/check-member?username=${encodeURIComponent(normalizedUsername)}`);
               const memberData = await memberCheckResponse.json();
               const isMember = memberData.isMember;
               

@@ -59,7 +59,7 @@ export default function Chat() {
         headers['Authorization'] = `Bearer ${token}`;
       }
       
-      const response = await fetch(`${API_BASE}/api/trips/${tripId}`, { headers });
+      const response = await fetch(`${API_BASE}/trips/${tripId}`, { headers });
       if (!response.ok) throw new Error("Failed to fetch trip");
       return response.json();
     },
@@ -79,7 +79,7 @@ export default function Chat() {
         headers['Authorization'] = `Bearer ${token}`;
       }
       
-      const response = await fetch(`${API_BASE}/api/trips/${tripId}/messages`, { headers });
+      const response = await fetch(`${API_BASE}/trips/${tripId}/messages`, { headers });
       if (!response.ok) throw new Error("Failed to fetch messages");
       return response.json();
     },
@@ -98,7 +98,7 @@ export default function Chat() {
     refetchInterval: 10000, // Refresh every 10 seconds
     queryFn: async () => {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`${API_BASE}/api/trips/${tripId}/polls`, {
+      const response = await fetch(`${API_BASE}/trips/${tripId}/polls`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -225,7 +225,7 @@ export default function Chat() {
         headers['Authorization'] = `Bearer ${token}`;
       }
       
-      const response = await fetch(`${API_BASE}/api/trips/${tripId}/messages`, {
+      const response = await fetch(`${API_BASE}/trips/${tripId}/messages`, {
         method: "POST",
         headers,
         body: JSON.stringify({ content: message }),

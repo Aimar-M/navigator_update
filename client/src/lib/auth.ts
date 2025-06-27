@@ -6,7 +6,7 @@ export async function loginUser(username: string, password: string) {
   try {
     console.log('Sending login request for:', username);
     
-    const response = await fetch(`${API_BASE}/api/auth/login`, {
+    const response = await fetch(`${API_BASE}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -37,7 +37,7 @@ export async function registerUser(userData: {
   email: string;
   name: string;
 }) {
-  const response = await fetch(`${API_BASE}/api/auth/register`, {
+  const response = await fetch(`${API_BASE}/auth/register`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -54,7 +54,7 @@ export async function registerUser(userData: {
 }
 
 export async function logoutUser() {
-  const response = await fetch(`${API_BASE}/api/auth/logout`, {
+  const response = await fetch(`${API_BASE}/auth/logout`, {
     method: 'POST',
   });
 
