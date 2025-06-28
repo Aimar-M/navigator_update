@@ -13,7 +13,8 @@ console.log('🔧 Port:', process.env.PORT || '5000');
 
 const app = express();
 
-app.use(express.json());
+app.use(express.json()); // <-- Make sure this is before CORS
+
 app.use(cors({
   origin: [
     "http://localhost:5173",
@@ -29,8 +30,10 @@ app.use(cors({
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 204, // <-- Add this line
 }));
 
+app.options('*', cors()); // <-- Add this line
 
 app.use((req, res, next) => {
   const start = Date.now();
