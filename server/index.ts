@@ -22,8 +22,6 @@ app.use(cors({
     "https://navigator-update.vercel.app",
     "https://navigator-update-git-main-aimar-ms-projects.vercel.app",
     "https://navigator-update-1zbs9iahz-aimar-ms-projects.vercel.app",
-    // Allow Railway preview deployments
-    /^https:\/\/.*\.railway\.app$/,
     // Allow all origins in development
     ...(process.env.NODE_ENV === 'development' ? ['http://localhost:*'] : [])
   ],
