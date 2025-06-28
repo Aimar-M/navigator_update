@@ -42,7 +42,7 @@ export default function Header() {
       };
       
       try {
-        const response = await fetch("${API_BASE}/api/trips/memberships/pending", { headers });
+        const response = await fetch(`${API_BASE}/api/trips/memberships/pending`, { headers });
         if (!response.ok) return [];
         return response.json();
       } catch (error) {

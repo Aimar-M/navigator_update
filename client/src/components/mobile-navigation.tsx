@@ -27,7 +27,7 @@ export default function MobileNavigation() {
       try {
         // Here, we're getting all messages and counting those we haven't seen
         // In a real implementation, the server would track this
-        const response = await fetch("${API_BASE}/api/messages", { headers });
+        const response = await fetch(`${API_BASE}/api/messages`, { headers });
         if (!response.ok) return 0;
         
         const messages = await response.json();
