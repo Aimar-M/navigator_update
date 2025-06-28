@@ -6,33 +6,34 @@ import cors from "cors";
 
 config();
 
-const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:3000",
-  "https://navigator-update.vercel.app",
-  "https://navigator-update-git-main-aimar-ms-projects.vercel.app",
-  "https://navigator-update-1zbs9iahz-aimar-ms-projects.vercel.app"
-];
 
 const app = express();
 
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    } else {
-      return callback(new Error("Not allowed by CORS"));
-    }
-  },
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://navigator-update.vercel.app",
+    "https://navigator-update-git-main-aimar-ms-projects.vercel.app",
+    "https://navigator-update-1zbs9iahz-aimar-ms-projects.vercel.app",
+    // Allow Railway preview deployments
+    /^https:\/\/.*\.railway\.app$/,
+    // Allow all origins in development
+    ...(process.env.NODE_ENV === 'development' ? ['http://localhost:*'] : [])
+  ],
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
+
 
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
+
+  // Log all requests for debugging
+  console.log(`📥 ${req.method} ${path} - ${req.get('User-Agent') || 'Unknown'}`);
 
   const originalResJson = res.json;
   res.json = function (bodyJson, ...args) {
@@ -62,6 +63,17 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
+  // 404 handler for unmatched routes
+  app.use('*', (req: Request, res: Response) => {
+    console.log(`❌ 404 - Route not found: ${req.method} ${req.originalUrl}`);
+    res.status(404).json({ 
+      message: 'Route not found', 
+      path: req.originalUrl,
+      method: req.method,
+      availableRoutes: ['/api/health', '/api/auth/login', '/api/auth/register']
+    });
+  });
+
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
@@ -82,12 +94,14 @@ app.use((req, res, next) => {
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = process.env.PORT;
+  const port = process.env.PORT || 5000;
   server.listen({
     port,
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
-    log(`serving on port ${port}`);
+    log(`🚀 Server running on port ${port}`);
+    log(`📡 API available at http://0.0.0.0:${port}/api`);
+    log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
   });
 })();
