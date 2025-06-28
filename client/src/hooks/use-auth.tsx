@@ -4,6 +4,9 @@ import { useToast } from "@/hooks/use-toast";
 import { loginUser, registerUser, logoutUser, getAuthToken, setAuthToken, removeAuthToken, getPendingInvitation, removePendingInvitation } from "@/lib/auth";
 import { wsClient } from "@/lib/websocket";
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
+
 interface User {
   id: number;
   username: string;
@@ -48,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             'Authorization': `Bearer ${token}`
           };
           
-          const response = await fetch("/api/auth/me", { headers });
+          const response = await fetch("${API_BASE}/api/auth/me", { headers });
           
           if (response.ok) {
             const userData = await response.json();

@@ -18,6 +18,9 @@ import navigatorLogo from "@assets/ab_Navigator2-11_1749671092581.png";
 import navigatorText from "@assets/ab_Navigator2-09_1749671257407.png";
 import { NotificationBell } from "@/components/NotificationBell";
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
+
 export default function Header() {
   const { user, logout } = useAuth();
   const [, navigate] = useLocation();
@@ -39,7 +42,7 @@ export default function Header() {
       };
       
       try {
-        const response = await fetch("/api/trips/memberships/pending", { headers });
+        const response = await fetch("${API_BASE}/api/trips/memberships/pending", { headers });
         if (!response.ok) return [];
         return response.json();
       } catch (error) {

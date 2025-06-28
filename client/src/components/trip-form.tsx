@@ -11,6 +11,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import CityAutocomplete from "@/components/city-autocomplete";
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
+
 interface TripFormProps {
   onComplete?: () => void;
 }
@@ -82,7 +85,7 @@ export default function TripForm({ onComplete }: TripFormProps) {
       
       // Use fetch directly with authentication token
       const token = localStorage.getItem('auth_token');
-      const response = await fetch("/api/trips", {
+      const response = await fetch("${API_BASE}/api/trips", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
