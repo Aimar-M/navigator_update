@@ -6,6 +6,10 @@ import cors from "cors";
 
 config();
 
+console.log('🚀 Starting server...');
+console.log('📁 Current directory:', process.cwd());
+console.log('🌍 Environment:', process.env.NODE_ENV || 'development');
+console.log('🔧 Port:', process.env.PORT || '5000');
 
 const app = express();
 
@@ -61,47 +65,55 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  const server = await registerRoutes(app);
+  try {
+    console.log('🔧 Setting up routes...');
+    const server = await registerRoutes(app);
 
-  // 404 handler for unmatched routes
-  app.use('*', (req: Request, res: Response) => {
-    console.log(`❌ 404 - Route not found: ${req.method} ${req.originalUrl}`);
-    res.status(404).json({ 
-      message: 'Route not found', 
-      path: req.originalUrl,
-      method: req.method,
-      availableRoutes: ['/api/health', '/api/auth/login', '/api/auth/register']
+    // 404 handler for unmatched routes
+    app.use('*', (req: Request, res: Response) => {
+      console.log(`❌ 404 - Route not found: ${req.method} ${req.originalUrl}`);
+      res.status(404).json({ 
+        message: 'Route not found', 
+        path: req.originalUrl,
+        method: req.method,
+        availableRoutes: ['/api/health', '/api/auth/login', '/api/auth/register']
+      });
     });
-  });
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
 
-    res.status(status).json({ message });
-    throw err;
-  });
+      res.status(status).json({ message });
+      throw err;
+    });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
+    // importantly only setup vite in development and after
+    // setting up all the other routes so the catch-all route
+    // doesn't interfere with the other routes
+    if (app.get("env") === "development") {
+      console.log('🔧 Setting up Vite for development...');
+      await setupVite(app, server);
+    } else {
+      console.log('🔧 Setting up static file serving for production...');
+      serveStatic(app);
+    }
+
+    // ALWAYS serve the app on port 5000
+    // this serves both the API and the client.
+    // It is the only port that is not firewalled.
+    const port = process.env.PORT || 5000;
+    server.listen({
+      port,
+      host: "0.0.0.0",
+      reusePort: true,
+    }, () => {
+      log(`🚀 Server running on port ${port}`);
+      log(`📡 API available at http://0.0.0.0:${port}/api`);
+      log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+    });
+  } catch (error) {
+    console.error('❌ Server startup failed:', error);
+    process.exit(1);
   }
-
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = process.env.PORT || 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`🚀 Server running on port ${port}`);
-    log(`📡 API available at http://0.0.0.0:${port}/api`);
-    log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
-  });
 })();

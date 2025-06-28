@@ -8,4 +8,8 @@ healthcheckTimeout = 300
 restartPolicyType = "on_failure"
 
 [env]
-NODE_ENV = "production" 
+NODE_ENV = "production"
+# Make sure these are set in Railway dashboard:
+# DATABASE_URL = "your-database-url"
+# SESSION_SECRET = "your-session-secret"
+# PORT = "auto-set-by-railway" 
