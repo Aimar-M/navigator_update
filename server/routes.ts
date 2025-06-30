@@ -16,8 +16,6 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 
-const API_BASE = import.meta.env.VITE_API_URL || '';
-
 
 interface WebSocketClient extends WebSocket {
   userId?: number;
@@ -105,18 +103,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   }
   
-  // // Health check endpoint for Railway
-  // router.get('/health', (req: Request, res: Response) => {
-  //   console.log('🏥 Health check requested');
-  //   res.status(200).json({ 
-  //     status: 'ok', 
-  //     timestamp: new Date().toISOString(),
-  //     environment: process.env.NODE_ENV || 'development',
-  //     uptime: process.uptime(),
-  //     memory: process.memoryUsage(),
-  //     version: process.version
-  //   });
-  // });
+  // Health check endpoint for Railway
+  router.get('/health', (req: Request, res: Response) => {
+    console.log('🏥 Health check requested');
+    res.status(200).json({ 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      version: process.version
+    });
+  });
 
   // Simple ping endpoint for basic connectivity testing
   router.get('/ping', (req: Request, res: Response) => {
@@ -4261,7 +4259,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.use(`${API_BASE}/api`, router);
+  app.use('/api', router);
   
   return httpServer;
 }
