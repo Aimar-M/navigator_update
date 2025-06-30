@@ -71,9 +71,9 @@ export default function OrganizerReviewDashboard({
       setConfirmedUserIds(prev => new Set(Array.from(prev).concat(userId)));
     },
     onSuccess: (_, userId) => {
-      queryClient.invalidateQueries({ queryKey: ['${API_BASE}/api/trips', tripId, 'members'] });
-      queryClient.invalidateQueries({ queryKey: ['${API_BASE}/api/trips', tripId] });
-      queryClient.invalidateQueries({ queryKey: ['${API_BASE}/api/trips'] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`, tripId, 'members'] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`, tripId] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
       
       const member = members.find(m => m.userId === userId);
       toast({
@@ -109,9 +109,9 @@ export default function OrganizerReviewDashboard({
       setRejectedUserIds(prev => new Set(Array.from(prev).concat(userId)));
     },
     onSuccess: (_, userId) => {
-      queryClient.invalidateQueries({ queryKey: ['${API_BASE}/api/trips', tripId, 'members'] });
-      queryClient.invalidateQueries({ queryKey: ['${API_BASE}/api/trips', tripId] });
-      queryClient.invalidateQueries({ queryKey: ['${API_BASE}/api/trips'] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`, tripId, 'members'] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`, tripId] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
       
       const member = members.find(m => m.userId === userId);
       toast({

@@ -14,6 +14,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { apiRequest } from '@/lib/queryClient';
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
+
 export default function TripDetailFixed() {
   const { id } = useParams<{ id: string }>();
   const tripId = parseInt(id);
@@ -22,20 +25,20 @@ export default function TripDetailFixed() {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
   // Fetch trip details
-  const { data: trip, isLoading: isTripLoading } = useQuery({
-    queryKey: [`${API_BASE}/api/trips', tripId],
+  const { data: trip, isLoading: isTripLoading } = useQuery<any>({
+    queryKey: [`${API_BASE}/api/trips`,tripId],
     enabled: !!tripId && !!user,
   });
 
   // Fetch trip members
-  const { data: members, isLoading: isMembersLoading } = useQuery({
-    queryKey: [`${API_BASE}/api/trips', tripId, 'members'],
+  const { data: members, isLoading: isMembersLoading } = useQuery<any>({
+    queryKey: [`${API_BASE}/api/trips`,tripId, 'members'],
     enabled: !!tripId && !!user,
   });
 
   // Fetch trip activities
-  const { data: activities, isLoading: isActivitiesLoading } = useQuery({
-    queryKey: [`${API_BASE}/api/trips', tripId, 'activities'],
+  const { data: activities, isLoading: isActivitiesLoading } = useQuery<any>({
+    queryKey: [`${API_BASE}/api/trips`,tripId, 'activities'],
     enabled: !!tripId && !!user,
   });
 

@@ -36,7 +36,7 @@ export function NotificationBell() {
 
   // Fetch pending settlements requiring user confirmation
   const { data: pendingSettlements = [] } = useQuery<PendingSettlement[]>({
-    queryKey: ["${API_BASE}/api/settlements/pending"],
+    queryKey: [`${API_BASE}/api/settlements/pending`],
     refetchInterval: 30000, // Poll every 30 seconds for new notifications
   });
 
@@ -49,7 +49,7 @@ export function NotificationBell() {
         title: "Settlement Confirmed",
         description: "Payment has been marked as received.",
       });
-      queryClient.invalidateQueries({ queryKey: ["${API_BASE}/api/settlements/pending"] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/settlements/pending`] });
       // Also invalidate trip expenses and balances to update visuals
       pendingSettlements.forEach(settlement => {
         queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${settlement.tripId}/expenses/balances`] });

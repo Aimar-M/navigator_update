@@ -4,6 +4,9 @@ import { useAuth } from "@/hooks/use-auth";
 import TripDetailLayout from "@/components/trip-detail-layout";
 import PollsSection from "@/components/polls/PollsSection";
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
+
 export default function Polls() {
   const { id } = useParams<{ id: string }>();
   const tripId = parseInt(id);

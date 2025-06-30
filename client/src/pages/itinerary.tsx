@@ -17,6 +17,9 @@ import TripDetailLayout from "@/components/trip-detail-layout";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
+
 // Define interfaces
 interface Trip {
   id: number;
@@ -40,7 +43,7 @@ function Itinerary() {
   const { toast } = useToast();
   // Fetch user data
   const { data: user } = useQuery({
-    queryKey: ["/api/auth/me"],
+    queryKey: [`${API_BASE}/api/auth/me`],
     retry: false
   });
   const [isAddActivityModalOpen, setIsAddActivityModalOpen] = useState(false);

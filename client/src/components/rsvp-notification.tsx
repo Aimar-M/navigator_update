@@ -7,6 +7,9 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
+
 interface PendingTrip {
   id: number;
   name: string;
@@ -26,7 +29,7 @@ export default function RSVPNotification() {
 
   // Fetch pending RSVP trips
   const { data: pendingTrips = [], isLoading } = useQuery<PendingTrip[]>({
-    queryKey: ["/api/trips/rsvp/pending"],
+    queryKey: [`${API_BASE}/api/trips/rsvp/pending`],
     enabled: !!user
   });
 
@@ -37,8 +40,8 @@ export default function RSVPNotification() {
       return await apiRequest("PUT", `${API_BASE}/api/trips/${tripId}/members/${user.id}/rsvp`, { rsvpStatus });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/trips/rsvp/pending"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/trips"] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/rsvp/pending`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
       toast({
         title: "RSVP updated",
         description: "Your response has been recorded"

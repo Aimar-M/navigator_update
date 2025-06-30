@@ -33,7 +33,7 @@ export default function Header() {
   
   // Fetch pending invitations for notifications
   const { data: pendingInvitations } = useQuery({
-    queryKey: ["${API_BASE}/api/trips/memberships/pending", !!user, token],
+    queryKey: [`${API_BASE}/api/trips/memberships/pending`, !!user, token],
     queryFn: async () => {
       if (!user || !token) return [];
       

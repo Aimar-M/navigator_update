@@ -16,6 +16,9 @@ import TripTabs from "@/components/trip-tabs";
 import MobileNavigation from "@/components/mobile-navigation";
 import { apiRequest } from '@/lib/queryClient';
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
+
 // Add interfaces for type safety
 interface Trip {
   id: number;
@@ -56,19 +59,19 @@ export default function TripDetailFixed() {
 
   // Fetch trip details
   const { data: trip, isLoading: isTripLoading } = useQuery<Trip>({
-    queryKey: [`${API_BASE}/api/trips', tripId],
+    queryKey: [`${API_BASE}/api/trips`, tripId],
     enabled: !!tripId && !!user,
   });
 
   // Fetch trip members
   const { data: members, isLoading: isMembersLoading } = useQuery<Member[]>({
-    queryKey: [`${API_BASE}/api/trips', tripId, 'members'],
+    queryKey: [`${API_BASE}/api/trips`, tripId, 'members'],
     enabled: !!tripId && !!user,
   });
 
   // Fetch trip activities
   const { data: activities, isLoading: isActivitiesLoading } = useQuery<Activity[]>({
-    queryKey: [`${API_BASE}/api/trips', tripId, 'activities'],
+    queryKey: [`${API_BASE}/api/trips`, tripId, 'activities'],
     enabled: !!tripId && !!user,
   });
 

@@ -51,8 +51,8 @@ export default function Home() {
           
           if (response.ok) {
             // Refresh data to show the pending trip card
-            queryClient.invalidateQueries({ queryKey: ["/api/trips/memberships/pending"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/trips"] });
+            queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/memberships/pending`] });
+            queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
           } else {
             console.error('Failed to accept invitation:', response.statusText);
           }
@@ -70,7 +70,7 @@ export default function Home() {
   
   // Use React Query with proper dependencies to avoid setState during render
   const { data: trips, isLoading } = useQuery({
-    queryKey: ["/api/trips", !!user, token],
+    queryKey: [`${API_BASE}/api/trips`, !!user, token],
     queryFn: async () => {
       if (!user || !token) return [];
       
@@ -79,7 +79,7 @@ export default function Home() {
         'Authorization': `Bearer ${token}`
       };
       
-      const response = await apiRequest('GET', "/api/trips", { headers });
+      const response = await apiRequest('GET', `${API_BASE}/api/trips`, { headers });
       if (!response.ok) throw new Error("Failed to fetch trips");
       return response.json();
     },
@@ -108,7 +108,7 @@ export default function Home() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/trips"] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
       toast({
         title: "Success",
         description: "Trip pin status updated",
@@ -144,7 +144,7 @@ export default function Home() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/trips"] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
       toast({
         title: "Success",
         description: "Trip archive status updated",
@@ -161,7 +161,7 @@ export default function Home() {
   
   // Fetch pending invitations (trip memberships with "pending" status)
   const { data: pendingInvitations, isLoading: pendingInvitationsLoading } = useQuery({
-    queryKey: ["/api/trips/invitations/pending", !!user, token],
+    queryKey: [`${API_BASE}/api/trips/invitations/pending`, !!user, token],
     queryFn: async () => {
       if (!user || !token) return [];
       
@@ -170,7 +170,7 @@ export default function Home() {
       };
       
       // This would be the endpoint for pending invitations
-      const response = await apiRequest('GET', "/api/trips/memberships/pending", { headers });
+      const response = await apiRequest('GET', `${API_BASE}/api/trips/memberships/pending`, { headers });
       if (!response.ok) throw new Error("Failed to fetch pending invitations");
       
       const data = await response.json();

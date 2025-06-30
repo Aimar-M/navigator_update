@@ -13,6 +13,9 @@ import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useState } from "react";
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
+
 interface ActivityRSVP {
   id: number;
   activityId: number;
@@ -76,7 +79,7 @@ export default function ActivityDetails() {
   });
 
   const { data: currentUser } = useQuery<{ id: number; name: string; email: string }>({
-    queryKey: ["/api/auth/me"],
+    queryKey: [`${API_BASE}/api/auth/me`],
   });
 
   // Fetch trip details to check admin permissions

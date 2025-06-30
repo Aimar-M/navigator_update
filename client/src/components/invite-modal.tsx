@@ -74,7 +74,7 @@ export default function InviteModal({ tripId, isOpen, onClose }: InviteModalProp
   
   // Query for fetching all trips to find common travelers
   const { data: allTrips = [], isLoading: isLoadingTrips } = useQuery({
-    queryKey: ["${API_BASE}/api/trips"],
+    queryKey: [`${API_BASE}/api/trips`],
     enabled: isOpen,
     staleTime: 60000, // Cache for 1 minute
   });

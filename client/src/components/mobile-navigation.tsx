@@ -12,7 +12,7 @@ export default function MobileNavigation() {
 
   // Fetch unread message count
   const { data: unreadCount = 0 } = useQuery({
-    queryKey: ["${API_BASE}/api/messages/unread"],
+    queryKey: [`${API_BASE}/api/messages/unread`],
     queryFn: async () => {
       if (!user) return 0;
       

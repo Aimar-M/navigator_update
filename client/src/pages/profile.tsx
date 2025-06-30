@@ -36,13 +36,13 @@ export default function Profile() {
 
   // Fetch user profile data
   const { data: profile, isLoading: isProfileLoading } = useQuery({
-    queryKey: ["/api/auth/me"],
+    queryKey: ["${API_BASE}/api/auth/me"],
     enabled: !!user,
   });
 
   // Fetch user's trip statistics
   const { data: tripStats, isLoading: isStatsLoading } = useQuery({
-    queryKey: ["/api/users/stats"],
+    queryKey: [`${API_BASE}/api/users/stats`],
     enabled: !!user,
   });
 
@@ -93,7 +93,7 @@ export default function Profile() {
       }
 
       // Refresh profile data
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/auth/me`] });
       
       setIsEditing(false);
       toast({

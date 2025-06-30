@@ -276,7 +276,7 @@ export default function TripsCalendar() {
 
   // Fetch all trips
   const { data: trips, isLoading: tripsLoading } = useQuery({
-    queryKey: ["/api/trips"],
+    queryKey: [`${API_BASE}/api/trips`],
     queryFn: async () => {
       if (!user) return [];
       
@@ -295,7 +295,7 @@ export default function TripsCalendar() {
 
   // Fetch all activities across trips
   const { data: activities, isLoading: activitiesLoading } = useQuery({
-    queryKey: ["/api/activities"],
+    queryKey: [`${API_BASE}/api/activities`],
     queryFn: async () => {
       if (!user) return [];
       

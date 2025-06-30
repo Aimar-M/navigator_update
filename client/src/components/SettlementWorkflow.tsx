@@ -11,6 +11,9 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { ExternalLink, CreditCard, DollarSign, CheckCircle, Clock } from "lucide-react";
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
+
 interface SettlementWorkflowProps {
   tripId: number;
   balance: {

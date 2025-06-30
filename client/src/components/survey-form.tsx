@@ -14,6 +14,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
+
 interface SurveyFormProps {
   tripId: number;
   onComplete: () => void;

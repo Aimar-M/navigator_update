@@ -122,7 +122,7 @@ export default function Chats() {
 
   // Fetch all trips the user is a member of
   const { data: trips, isLoading: tripsLoading } = useQuery({
-    queryKey: ["/api/trips"],
+    queryKey: [`${API_BASE}/api/trips`],
     queryFn: async () => {
       if (!user) return null;
       
@@ -141,7 +141,7 @@ export default function Chats() {
 
   // Fetch last messages for all trips
   const { data: lastMessages, isLoading: messagesLoading } = useQuery({
-    queryKey: ["/api/messages"],
+    queryKey: [`${API_BASE}/api/messages`],
     queryFn: async () => {
       if (!user) return [];
       

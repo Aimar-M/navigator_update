@@ -21,6 +21,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/use-auth";
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
+
 interface ExpenseSplit {
   id: number;
   userId: number;

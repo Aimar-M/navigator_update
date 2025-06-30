@@ -51,7 +51,7 @@ app.use((req, res, next) => {
 
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
+    if (path.startsWith("${API_BASE}/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
@@ -113,7 +113,7 @@ app.use((req, res, next) => {
       reusePort: true,
     }, () => {
       log(`🚀 Server running on port ${port}`);
-      log(`📡 API available at http://0.0.0.0:${port}/api`);
+      log(`📡 API available at http://0.0.0.0:${port}/${API_BASE}/api`);
       log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
     });
   } catch (error) {

@@ -177,8 +177,8 @@ export default function TripDetails() {
       // Refresh all trip-related queries to update access immediately
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/members`] });
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}`] });
-      queryClient.invalidateQueries({ queryKey: ["/api/trips"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/trips/memberships/pending"] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/memberships/pending`] });
       
       toast({
         title: "RSVP updated",

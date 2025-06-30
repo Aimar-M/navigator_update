@@ -6,6 +6,9 @@ import BudgetChart from "@/components/budget/BudgetChart";
 import TripDetailLayout from "@/components/trip-detail-layout";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
+
 export default function TripBudget() {
   const { id } = useParams<{ id: string }>();
   const tripId = parseInt(id);

@@ -10,6 +10,8 @@ import { DollarSign, Receipt, Users, Activity, CheckCircle, XCircle } from "luci
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 interface ExpenseSplit {
   id: number;
   userId: number;
@@ -72,7 +74,7 @@ export default function ExpenseTracker() {
   });
 
   const { data: currentUser } = useQuery<{ id: number; name: string; email: string }>({
-    queryKey: ["/api/auth/me"],
+    queryKey: [`${API_BASE}/api/auth/me`],
   });
 
   // TODO: Mark Paid functionality removed - was non-functional

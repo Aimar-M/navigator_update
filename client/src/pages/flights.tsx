@@ -11,6 +11,10 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import TripDetailLayout from "@/components/trip-detail-layout";
 import { Plane, Users } from "lucide-react";
 
+
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
+
 export default function Flights() {
   const { id: tripId } = useParams<{ id: string }>();
   const { toast } = useToast();
@@ -24,7 +28,7 @@ export default function Flights() {
 
   // Fetch user data
   const { data: user } = useQuery({
-    queryKey: ["/api/auth/me"],
+    queryKey: [`${API_BASE}/api/auth/me`],
     retry: false
   });
 

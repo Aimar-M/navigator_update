@@ -29,6 +29,9 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, 
 import { SettlementWorkflow } from "@/components/SettlementWorkflow";
 import { OptimizedSettlementWorkflow } from "@/components/OptimizedSettlementWorkflow";
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
+
 interface ExpenseShare {
   id: number;
   userId: number;
@@ -112,11 +115,11 @@ export default function ExpensesPage() {
   });
 
   const { data: currentUser } = useQuery<{ id: number; name: string }>({
-    queryKey: ["/api/auth/me"],
+    queryKey: [`${API_BASE}/api/auth/me`],
   });
 
   // Check user's RSVP status  
-  const { data: trip } = useQuery({
+  const { data: trip } = useQuery<any>({
     queryKey: [`${API_BASE}/api/trips/${tripId}`],
   });
   

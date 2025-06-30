@@ -4,6 +4,9 @@ import { ArrowLeft, MapPin, Calendar, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
+
 interface UserProfileData {
   id: number;
   username: string;

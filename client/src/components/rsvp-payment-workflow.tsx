@@ -11,6 +11,9 @@ import { CreditCard, DollarSign, CheckCircle2, Clock, AlertCircle } from "lucide
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
+
 interface RSVPPaymentWorkflowProps {
   tripId: number;
   userId: number;
