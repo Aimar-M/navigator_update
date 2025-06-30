@@ -77,7 +77,7 @@ export class DatabaseStorage {
     // Get trips where user is the organizer (in case membership wasn't added properly)
     const organizedTrips = await db
       .select()
-      .from(trips)
+      .from(trips) 
       .where(eq(trips.organizer, userId));
     
     // Combine member trips and organized trips

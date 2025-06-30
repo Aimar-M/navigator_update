@@ -16,6 +16,9 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
+
 interface WebSocketClient extends WebSocket {
   userId?: number;
   tripIds?: number[];
@@ -1128,12 +1131,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Handle "cannot attend" responses - remove member and archive trip for them
       if (status === 'declined') {
         // Archive the trip for this user before removing them
-        await storage.createOrUpdateUserTripSettings({
+        await storage.createOrUpdateUserTripSettings(
           userId,
           tripId,
-          isPinned: false,
-          isArchived: true
-        });
+          {isPinned: false,
+            isArchived: true}
+        );
         
         // Remove the user from the trip
         const removed = await storage.removeTripMember(tripId, userId);
@@ -4258,7 +4261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.use(`${API_BASE}/api', router);
+  app.use(`${API_BASE}/api`, router);
   
   return httpServer;
 }

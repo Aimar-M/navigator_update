@@ -15,6 +15,8 @@ const app = express();
 
 app.use(express.json()); // <-- Make sure this is before CORS
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 app.use(cors({
   origin: [
     "http://localhost:5173",
@@ -78,7 +80,7 @@ app.use((req, res, next) => {
         message: 'Route not found', 
         path: req.originalUrl,
         method: req.method,
-        availableRoutes: [`${API_BASE}/api/health', `${API_BASE}/api/auth/login', `${API_BASE}/api/auth/register']
+        availableRoutes: [`${API_BASE}/api/health`, `${API_BASE}/api/auth/login`, `${API_BASE}/api/auth/register`]
       });
     });
 
