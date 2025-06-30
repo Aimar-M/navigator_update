@@ -21,6 +21,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest } from '@/lib/queryClient';
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 export default function Home() {
   const { user, isLoading: authLoading } = useAuth();
   const [, navigate] = useLocation();
@@ -397,7 +399,8 @@ export default function Home() {
                                       onClick={async () => {
                                         // Update status to confirmed
                                         const data = { status: 'confirmed' };
-                                        const response = await apiRequest('PUT', `${API_BASE}/api/trips/${invitation.membership.tripId}/members/${user.id}`, data, {
+                                        const response = await apiRequest('PUT', `${API_BASE}/api/trips/${invitation.membership.tripId}/members/${user.id}`, {
+                                          body:data,
                                           headers: {
                                             'Content-Type': 'application/json',
                                             'Authorization': `Bearer ${token}`
@@ -409,8 +412,8 @@ export default function Home() {
                                             description: "You're now confirmed for this trip"
                                           });
                                           // Refresh data
-                                          queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips'] });
-                                          queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/memberships/pending'] });
+                                          queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
+                                          queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/memberships/pending`] });
                                         } else {
                                           throw new Error("Failed to confirm attendance");
                                         }
@@ -425,7 +428,8 @@ export default function Home() {
                                       onClick={async () => {
                                         // Update status to declined
                                         const data = { status: 'declined' };
-                                        const response = await apiRequest('PUT', `${API_BASE}/api/trips/${invitation.membership.tripId}/members/${user.id}`, data, {
+                                        const response = await apiRequest('PUT', `${API_BASE}/api/trips/${invitation.membership.tripId}/members/${user.id}`, {
+                                          body: data,
                                           headers: {
                                             'Content-Type': 'application/json',
                                             'Authorization': `Bearer ${token}`
@@ -437,8 +441,8 @@ export default function Home() {
                                             description: "You've been removed from this trip and it has been archived"
                                           });
                                           // Refresh data to show updated trip list and archived section
-                                          queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips'] });
-                                          queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/memberships/pending'] });
+                                          queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
+                                          queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/memberships/pending`] });
                                         } else {
                                           throw new Error("Failed to decline invitation");
                                         }
