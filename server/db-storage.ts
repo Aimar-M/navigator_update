@@ -10,7 +10,7 @@ import {
   messages, surveyQuestions, surveyResponses, expenses, expenseSplits, settlements,
   polls, pollVotes, invitationLinks
 } from "@shared/schema";
-import { eq, and, desc, sql, ilike } from "drizzle-orm";
+import { eq, and, desc, sql, ilike, inArray } from "drizzle-orm";
 export class DatabaseStorage {
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -67,33 +67,56 @@ export class DatabaseStorage {
     return trip || undefined;
   }
 
-  async getTripsByUser(userId: number): Promise<Trip[]> {
+  // async getTripsByUser(userId: number): Promise<Trip[]> {
+  //   // Get trips where user is a member
+  //   const members = await db
+  //     .select()
+  //     .from(tripMembers)
+  //     .where(eq(tripMembers.userId, userId));
+    
+  //   // Get trips where user is the organizer (in case membership wasn't added properly)
+  //   const organizedTrips = await db
+  //     .select()
+  //     .from(trips) 
+  //     .where(eq(trips.organizer, userId));
+    
+  //   // Combine member trips and organized trips
+  //   const memberTrips = members.length > 0 ? await Promise.all(
+  //     members.map(member => 
+  //       db.select().from(trips).where(eq(trips.id, member.tripId))
+  //     )
+  //   ).then(results => results.flatMap(t => t)) : [];
+    
+  //   // Merge and deduplicate trips
+  //   const allTrips = [...memberTrips, ...organizedTrips];
+  //   const uniqueTrips = allTrips.filter((trip, index, array) => 
+  //     array.findIndex(t => t.id === trip.id) === index
+  //   );
+    
+  //   return uniqueTrips;
+  // }
+
+  async function getTripsByUser(userId: number) {
+    // Get trips where user is the organizer
+    const organizerTrips = await db.select().from(trips).where(eq(trips.organizer, userId));
+  
     // Get trips where user is a member
-    const members = await db
+    const memberTripIds = await db
+      .select({ tripId: trip_members.tripId })
+      .from(trip_members)
+      .where(eq(trip_members.userId, userId));
+  
+    const memberTrips = await db
       .select()
-      .from(tripMembers)
-      .where(eq(tripMembers.userId, userId));
-    
-    // Get trips where user is the organizer (in case membership wasn't added properly)
-    const organizedTrips = await db
-      .select()
-      .from(trips) 
-      .where(eq(trips.organizer, userId));
-    
-    // Combine member trips and organized trips
-    const memberTrips = members.length > 0 ? await Promise.all(
-      members.map(member => 
-        db.select().from(trips).where(eq(trips.id, member.tripId))
-      )
-    ).then(results => results.flatMap(t => t)) : [];
-    
-    // Merge and deduplicate trips
-    const allTrips = [...memberTrips, ...organizedTrips];
-    const uniqueTrips = allTrips.filter((trip, index, array) => 
-      array.findIndex(t => t.id === trip.id) === index
+      .from(trips)
+      .where(inArray(trips.id, memberTripIds.map(m => m.tripId)));
+  
+    // Combine and deduplicate
+    const allTrips = [...organizerTrips, ...memberTrips].filter(
+      (trip, index, self) => self.findIndex(t => t.id === trip.id) === index
     );
-    
-    return uniqueTrips;
+  
+    return allTrips;
   }
 
   async updateTrip(id: number, tripUpdate: Partial<InsertTrip>): Promise<Trip | undefined> {
