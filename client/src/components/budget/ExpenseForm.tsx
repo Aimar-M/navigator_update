@@ -31,6 +31,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 // Define the form schema using zod
 const expenseFormSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters" }),

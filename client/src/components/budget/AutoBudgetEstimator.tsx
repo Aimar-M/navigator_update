@@ -581,7 +581,7 @@ const AutoBudgetEstimator: React.FC<AutoBudgetEstimatorProps> = ({
                             outerRadius={120}
                             dataKey="value"
                           >
-                            {[
+                            {estimate && [
                               { name: 'Accommodation', value: estimate.accommodation, fill: '#8884d8' },
                               { name: 'Food', value: estimate.food, fill: '#82ca9d' },
                               { name: 'Transport', value: estimate.transportation, fill: '#ffc658' },
@@ -606,13 +606,13 @@ const AutoBudgetEstimator: React.FC<AutoBudgetEstimatorProps> = ({
                     <TabsContent value="bar" className="space-y-4">
                       <ResponsiveContainer width="100%" height={400}>
                         <BarChart 
-                          data={[
+                          data={estimate ? [
                             { category: 'Accommodation', amount: currentEstimate.accommodation, fill: '#8884d8' },
                             { category: 'Food', amount: currentEstimate.food, fill: '#82ca9d' },
                             { category: 'Transport', amount: currentEstimate.transportation, fill: '#ffc658' },
                             { category: 'Activities', amount: currentEstimate.activities, fill: '#ff7300' },
                             { category: 'Incidentals', amount: currentEstimate.incidentals, fill: '#00ff88' }
-                          ]} 
+                          ] : []} 
                           margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                         >
                           <CartesianGrid strokeDasharray="3 3" />
@@ -623,13 +623,13 @@ const AutoBudgetEstimator: React.FC<AutoBudgetEstimatorProps> = ({
                             contentStyle={{ backgroundColor: '#f8f9fa', border: '1px solid #dee2e6', borderRadius: '6px' }}
                           />
                           <Bar dataKey="amount">
-                            {[
+                            {(estimate ? [
                               { category: 'Accommodation', amount: estimate.accommodation, fill: '#8884d8' },
                               { category: 'Food', amount: estimate.food, fill: '#82ca9d' },
                               { category: 'Transport', amount: estimate.transportation, fill: '#ffc658' },
                               { category: 'Activities', amount: estimate.activities, fill: '#ff7300' },
                               { category: 'Incidentals', amount: estimate.incidentals, fill: '#00ff88' }
-                            ].map((entry, index) => (
+                            ] : []).map((entry, index) => (
                               <Cell key={`cell-${index}`} fill={entry.fill} />
                             ))}
                           </Bar>

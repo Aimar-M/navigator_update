@@ -15,6 +15,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest } from '@/lib/queryClient';
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 export default function Profile() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
@@ -78,7 +80,7 @@ export default function Profile() {
     setIsSubmitting(true);
 
     try {
-      const response = await apiRequest('PUT', `${API_BASE}/api/users/profile', {
+      const response = await apiRequest('PUT', `${API_BASE}/api/users/profile`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,

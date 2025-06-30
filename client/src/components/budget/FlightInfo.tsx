@@ -67,6 +67,8 @@ interface FlightInfoProps {
   currentUserId: number;
 }
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 const FlightInfo: React.FC<FlightInfoProps> = ({ tripId, currentUserId }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -74,7 +76,7 @@ const FlightInfo: React.FC<FlightInfoProps> = ({ tripId, currentUserId }) => {
 
   // Fetch flights for this trip
   const { data: flights, isLoading, error } = useQuery({
-    queryKey: [`${API_BASE}/api/trips', tripId, 'flights'],
+    queryKey: [`${API_BASE}/api/trips`, tripId, 'flights'],
     enabled: !!tripId,
   });
 
@@ -91,7 +93,7 @@ const FlightInfo: React.FC<FlightInfoProps> = ({ tripId, currentUserId }) => {
         description: "The flight has been successfully deleted.",
         variant: "default",
       });
-      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips', tripId, 'flights'] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`, tripId, 'flights'] });
     },
     onError: (error) => {
       toast({
@@ -167,7 +169,7 @@ const FlightInfo: React.FC<FlightInfoProps> = ({ tripId, currentUserId }) => {
         </CardHeader>
         <CardContent>
           <p>There was an error loading the flight information. Please try again later.</p>
-          <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips', tripId, 'flights'] })}>
+          <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`, tripId, 'flights'] })}>
             Retry
           </Button>
         </CardContent>

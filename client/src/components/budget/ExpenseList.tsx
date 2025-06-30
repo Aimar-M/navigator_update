@@ -51,6 +51,8 @@ import ExpenseForm from "./ExpenseForm";
 import { apiRequest } from "@/lib/queryClient";
 import UserAvatar from "../user-avatar";
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 // Define a type for expense categories
 type ExpenseCategory = 
   | "accommodation" 
@@ -122,7 +124,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ tripId, currentUserId, isOrga
 
   // Fetch expenses for this trip
   const { data: expenses = [], isLoading, error } = useQuery<ExpenseWithUser[]>({
-    queryKey: [`${API_BASE}/api/trips', tripId, 'expenses'],
+    queryKey: [`${API_BASE}/api/trips`, tripId, 'expenses'],
     enabled: !!tripId,
   });
 
@@ -137,8 +139,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ tripId, currentUserId, isOrga
         description: "The expense has been successfully deleted.",
         variant: "default",
       });
-      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips', tripId, 'expenses'] });
-      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips', tripId, 'expenses/summary'] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`, tripId, 'expenses'] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`, tripId, 'expenses/summary'] });
     },
     onError: (error) => {
       toast({
@@ -242,8 +244,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ tripId, currentUserId, isOrga
               tripId={tripId}
               onSuccess={() => {
                 setIsAddExpenseOpen(false);
-                queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips', tripId, 'expenses'] });
-                queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips', tripId, 'expenses/summary'] });
+                queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`, tripId, 'expenses'] });
+                queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`, tripId, 'expenses/summary'] });
               }}
             />
           </DialogContent>
@@ -360,8 +362,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ tripId, currentUserId, isOrga
               onSuccess={() => {
                 setIsEditExpenseOpen(false);
                 setSelectedExpense(null);
-                queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips', tripId, 'expenses'] });
-                queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips', tripId, 'expenses/summary'] });
+                queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips``, tripId, 'expenses'] });
+                queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`,tripId, 'expenses/summary'] });
                 toast({
                   title: "Expense updated successfully",
                   description: "The expense has been updated with your changes.",

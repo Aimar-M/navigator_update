@@ -15,7 +15,7 @@ interface PollsSectionProps {
   tripId: number;
 }
 
-
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 // Individual Poll Card Component
 const PollCard = ({ poll, tripId }: { poll: any; tripId: number }) => {

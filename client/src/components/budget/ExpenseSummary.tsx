@@ -37,7 +37,7 @@ const getCategoryColors = () => {
 const ExpenseSummary: React.FC<ExpenseSummaryProps> = ({ tripId, currentUserId }) => {
   // Fetch expense summary for this trip
   const { data: summary, isLoading, error } = useQuery({
-    queryKey: [`${API_BASE}/api/trips', tripId, 'expenses/summary'],
+    queryKey: [`${API_BASE}/api/trips`, tripId, 'expenses/summary'],
     enabled: !!tripId,
   });
 
