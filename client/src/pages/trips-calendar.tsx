@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/select";
 import { apiRequest } from '@/lib/queryClient';
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 // Custom calendar component
 const Calendar = ({ date, events, onDateChange }: { 
   date: Date, 
@@ -284,7 +286,7 @@ export default function TripsCalendar() {
         headers['Authorization'] = `Bearer ${token}`;
       }
       
-      const response = await apiRequest('GET', `${API_BASE}/api/trips');
+      const response = await apiRequest('GET', `${API_BASE}/api/trips`);
       if (!response.ok) throw new Error("Failed to fetch trips");
       return response.json();
     },
@@ -304,7 +306,7 @@ export default function TripsCalendar() {
       }
       
       // Use our new dedicated endpoint to get all activities
-      const response = await apiRequest('GET', `${API_BASE}/api/activities');
+      const response = await apiRequest('GET', `${API_BASE}/api/activities`);
       if (!response.ok) {
         throw new Error('Failed to fetch activities');
       }
