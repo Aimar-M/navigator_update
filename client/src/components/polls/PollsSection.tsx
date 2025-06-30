@@ -25,7 +25,7 @@ const PollCard = ({ poll, tripId }: { poll: any; tripId: number }) => {
   
   const voteMutation = useMutation({
     mutationFn: async (optionIndex: number) => {
-      const res = await apiRequest('POST', `/api/polls/${poll.id}/vote`, { optionIndex });
+      const res = await apiRequest('POST', `${API_BASE}/api/polls/${poll.id}/vote`, { optionIndex });
       
       if (!res.ok) {
         const error = await res.json();
@@ -36,19 +36,19 @@ const PollCard = ({ poll, tripId }: { poll: any; tripId: number }) => {
     },
     onSuccess: (data) => {
       // Immediately refresh both polls and messages
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/polls`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/messages`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/polls`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/messages`] });
       
       // Ensure UI updates with toast feedback
       setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/polls`] });
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/polls`] });
       }, 200);
     },
   });
   
   const removeVoteMutation = useMutation({
     mutationFn: async (voteId: number) => {
-      const res = await apiRequest('DELETE', `/api/polls/${poll.id}/votes/${voteId}`);
+      const res = await apiRequest('DELETE', `${API_BASE}/api/polls/${poll.id}/votes/${voteId}`);
       
       if (!res.ok) {
         const error = await res.json();
@@ -59,12 +59,12 @@ const PollCard = ({ poll, tripId }: { poll: any; tripId: number }) => {
     },
     onSuccess: (data) => {
       // Refresh both polls and messages data
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/polls`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/messages`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/polls`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/messages`] });
       
       // Force a refresh to update UI
       setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/polls`] });
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/polls`] });
       }, 200);
     },
   });
@@ -190,12 +190,12 @@ const PollsSection: React.FC<PollsSectionProps> = ({ tripId }) => {
   const { user } = useAuth();
   
   const { data: polls = [], isLoading, error, refetch } = useQuery<any[]>({
-    queryKey: [`/api/trips/${tripId}/polls`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}/polls`],
     enabled: !!tripId,
     refetchInterval: 2000, // Refetch more frequently to get updated votes
     queryFn: async () => {
       const token = localStorage.getItem('auth_token');
-      const response = await apiRequest('GET', `/api/trips/${tripId}/polls`);
+      const response = await apiRequest('GET', `${API_BASE}/api/trips/${tripId}/polls`);
       if (!response.ok) {
         throw new Error('Failed to fetch polls');
       }

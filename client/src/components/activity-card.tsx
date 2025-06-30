@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckIcon, XIcon, Trash2 } from "lucide-react";
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 interface ActivityCardProps {
   id: number;
   name: string;
@@ -62,16 +64,16 @@ export default function ActivityCard({
     try {
       setIsSubmitting(true);
       
-      await apiRequest("POST", `/api/activities/${id}/rsvp`, { status });
+      await apiRequest("POST", `${API_BASE}/api/activities/${id}/rsvp`, { status });
       
       // Invalidate and refetch activities to update the UI
       const currentUrl = window.location.pathname;
       const tripId = currentUrl.split('/')[2]; // Extract tripId from URL like /trip/39
       
       if (tripId) {
-        await queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/activities`] });
+        await queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/activities`] });
       }
-      await queryClient.invalidateQueries({ queryKey: [`/api/activities`] });
+      await queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/activities`] });
       
       toast({
         title: status === "going" ? "You're going!" : "You're not going",
@@ -101,16 +103,16 @@ export default function ActivityCard({
     try {
       setIsSubmitting(true);
       
-      await apiRequest("DELETE", `/api/activities/${id}`);
+      await apiRequest("DELETE", `${API_BASE}/api/activities/${id}`);
       
       // Invalidate and refetch activities to update the UI
       const currentUrl = window.location.pathname;
       const tripId = currentUrl.split('/')[2]; // Extract tripId from URL like /trip/39
       
       if (tripId) {
-        await queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/activities`] });
+        await queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/activities`] });
       }
-      await queryClient.invalidateQueries({ queryKey: [`/api/activities`] });
+      await queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/activities`] });
       
       toast({
         title: "Activity Deleted",

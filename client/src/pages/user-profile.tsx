@@ -29,12 +29,12 @@ export default function UserProfile() {
   const userId = params?.userId;
 
   const { data: profile, isLoading: profileLoading } = useQuery<UserProfileData>({
-    queryKey: [`/api/users/${userId}`],
+    queryKey: [`${API_BASE}/api/users/${userId}`],
     enabled: !!userId,
   });
 
   const { data: stats, isLoading: statsLoading } = useQuery<UserStats>({
-    queryKey: [`/api/users/${userId}/stats`],
+    queryKey: [`${API_BASE}/api/users/${userId}/stats`],
     enabled: !!userId,
   });
 

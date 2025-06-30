@@ -74,14 +74,14 @@ const FlightInfo: React.FC<FlightInfoProps> = ({ tripId, currentUserId }) => {
 
   // Fetch flights for this trip
   const { data: flights, isLoading, error } = useQuery({
-    queryKey: ['/api/trips', tripId, 'flights'],
+    queryKey: [`${API_BASE}/api/trips', tripId, 'flights'],
     enabled: !!tripId,
   });
 
   // Mutation for deleting a flight
   const deleteFlightMutation = useMutation({
     mutationFn: async (flightId: number) => {
-      return await apiRequest(`/api/flights/${flightId}`, {
+      return await apiRequest(`${API_BASE}/api/flights/${flightId}`, {
         method: 'DELETE'
       });
     },
@@ -91,7 +91,7 @@ const FlightInfo: React.FC<FlightInfoProps> = ({ tripId, currentUserId }) => {
         description: "The flight has been successfully deleted.",
         variant: "default",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/trips', tripId, 'flights'] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips', tripId, 'flights'] });
     },
     onError: (error) => {
       toast({
@@ -167,7 +167,7 @@ const FlightInfo: React.FC<FlightInfoProps> = ({ tripId, currentUserId }) => {
         </CardHeader>
         <CardContent>
           <p>There was an error loading the flight information. Please try again later.</p>
-          <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/trips', tripId, 'flights'] })}>
+          <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips', tripId, 'flights'] })}>
             Retry
           </Button>
         </CardContent>

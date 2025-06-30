@@ -17,6 +17,8 @@ import {
   Info
 } from "lucide-react";
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 interface RemovalEligibility {
   canRemove: boolean;
   reason?: string;
@@ -54,7 +56,7 @@ export function EnhancedMemberRemovalDialog({
 
   // Check removal eligibility
   const { data: eligibility, isLoading } = useQuery<RemovalEligibility>({
-    queryKey: [`/api/trips/${tripId}/members/${userId}/removal-eligibility`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}/members/${userId}/removal-eligibility`],
     enabled: isOpen && userId > 0,
     retry: false
   });
@@ -62,13 +64,13 @@ export function EnhancedMemberRemovalDialog({
   // Remove member mutation
   const removeMemberMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("DELETE", `/api/trips/${tripId}/members/${userId}`, {});
+      return await apiRequest("DELETE", `${API_BASE}/api/trips/${tripId}/members/${userId}`, {});
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/members`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/activities`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/expenses`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/expenses/balances`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/members`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/activities`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/expenses`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/expenses/balances`] });
       
       toast({
         title: "Member removed",

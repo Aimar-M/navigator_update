@@ -67,21 +67,21 @@ export default function InviteModal({ tripId, isOpen, onClose }: InviteModalProp
 
   // Query for fetching trip members to suggest past travel companions
   const { data: members = [], isLoading: isLoadingMembers } = useQuery({
-    queryKey: [`/api/trips/${tripId}/members`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}/members`],
     enabled: isOpen && tripId > 0,
     staleTime: 60000, // Cache for 1 minute
   });
   
   // Query for fetching all trips to find common travelers
   const { data: allTrips = [], isLoading: isLoadingTrips } = useQuery({
-    queryKey: ["/api/trips"],
+    queryKey: ["${API_BASE}/api/trips"],
     enabled: isOpen,
     staleTime: 60000, // Cache for 1 minute
   });
   
   // Fetch past companions (users who have been on trips with the current user)
   const { data: pastCompanions = [], isLoading: isLoadingCompanions } = useQuery({
-    queryKey: [`/api/trips/${tripId}/past-companions`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}/past-companions`],
     enabled: isOpen && tripId > 0,
     staleTime: 60000, // Cache for 1 minute
   });
@@ -102,7 +102,7 @@ export default function InviteModal({ tripId, isOpen, onClose }: InviteModalProp
 
   const fetchInvitationLinks = async () => {
     try {
-      const links = await apiRequest<InvitationLink[]>("GET", `/api/trips/${tripId}/invites`);
+      const links = await apiRequest<InvitationLink[]>("GET", `${API_BASE}/api/trips/${tripId}/invites`);
       setInviteLinks(links);
     } catch (error) {
       console.error("Failed to fetch invitation links", error);
@@ -274,7 +274,7 @@ export default function InviteModal({ tripId, isOpen, onClose }: InviteModalProp
           try {
             // Always send normalized lowercase username to the server
             const normalizedUsername = username.trim().toLowerCase();
-            const response = await apiRequest("POST", `/api/trips/${tripId}/members`, { username: normalizedUsername });
+            const response = await apiRequest("POST", `${API_BASE}/api/trips/${tripId}/members`, { username: normalizedUsername });
             return { username, success: true, response };
           } catch (error: any) {
             const errorMessage = error.message || "Unknown error";
@@ -387,7 +387,7 @@ export default function InviteModal({ tripId, isOpen, onClose }: InviteModalProp
       
       // Update the trip members list if we had any success
       if (successful.length > 0) {
-        queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/members`] });
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/members`] });
       }
     } catch (error) {
       toast({
@@ -443,7 +443,7 @@ export default function InviteModal({ tripId, isOpen, onClose }: InviteModalProp
   const generateInviteLink = async () => {
     setIsGeneratingLink(true);
     try {
-      const link = await apiRequest<InvitationLink>("POST", `/api/trips/${tripId}/invite`, {});
+      const link = await apiRequest<InvitationLink>("POST", `${API_BASE}/api/trips/${tripId}/invite`, {});
       setInviteLinks([link, ...inviteLinks]);
       toast({
         title: "Invitation link created",

@@ -98,17 +98,17 @@ export default function ExpensesPage() {
 
   // Fetch expenses
   const { data: expenses = [], isLoading: expensesLoading } = useQuery<Expense[]>({
-    queryKey: [`/api/trips/${tripId}/expenses`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}/expenses`],
   });
 
   // Fetch trip members
   const { data: members = [], isLoading: membersLoading } = useQuery<any[]>({
-    queryKey: [`/api/trips/${tripId}/members`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}/members`],
   });
 
   // Fetch balances
   const { data: balances = [], isLoading: balancesLoading } = useQuery<Balance[]>({
-    queryKey: [`/api/trips/${tripId}/expenses/balances`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}/expenses/balances`],
   });
 
   const { data: currentUser } = useQuery<{ id: number; name: string }>({
@@ -117,7 +117,7 @@ export default function ExpensesPage() {
 
   // Check user's RSVP status  
   const { data: trip } = useQuery({
-    queryKey: [`/api/trips/${tripId}`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}`],
   });
   
   const isOrganizer = currentUser && trip && (trip as any).organizer === (currentUser as any).id;
@@ -180,7 +180,7 @@ export default function ExpensesPage() {
         paidBy: parseInt(data.paidBy),
         splitWith: data.splitWith.map(id => parseInt(id))
       });
-      return await apiRequest("POST", `/api/trips/${tripId}/expenses`, {
+      return await apiRequest("POST", `${API_BASE}/api/trips/${tripId}/expenses`, {
         title: data.title,
         amount: parseFloat(data.amount),
         category: data.category,
@@ -203,8 +203,8 @@ export default function ExpensesPage() {
         splitWith: []
       });
       setIsAddDialogOpen(false);
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/expenses`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/expenses/balances`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/expenses`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/expenses/balances`] });
     },
     onError: () => {
       toast({

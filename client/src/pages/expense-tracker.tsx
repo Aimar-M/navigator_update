@@ -64,11 +64,11 @@ export default function ExpenseTracker() {
   const { toast } = useToast();
 
   const { data: expenses, isLoading: expensesLoading } = useQuery<Expense[]>({
-    queryKey: [`/api/trips/${tripId}/expenses`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}/expenses`],
   });
 
   const { data: balances, isLoading: balancesLoading } = useQuery<ExpenseBalance[]>({
-    queryKey: [`/api/trips/${tripId}/expenses/balances`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}/expenses/balances`],
   });
 
   const { data: currentUser } = useQuery<{ id: number; name: string; email: string }>({

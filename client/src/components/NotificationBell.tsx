@@ -27,6 +27,8 @@ interface PendingSettlement {
   tripName: string;
 }
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 export function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
@@ -34,27 +36,27 @@ export function NotificationBell() {
 
   // Fetch pending settlements requiring user confirmation
   const { data: pendingSettlements = [] } = useQuery<PendingSettlement[]>({
-    queryKey: ["/api/settlements/pending"],
+    queryKey: ["${API_BASE}/api/settlements/pending"],
     refetchInterval: 30000, // Poll every 30 seconds for new notifications
   });
 
   const confirmMutation = useMutation({
     mutationFn: async (settlementId: number) => {
-      return await apiRequest('POST', `/api/settlements/${settlementId}/confirm`, {});
+      return await apiRequest('POST', `${API_BASE}/api/settlements/${settlementId}/confirm`, {});
     },
     onSuccess: () => {
       toast({
         title: "Settlement Confirmed",
         description: "Payment has been marked as received.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/settlements/pending"] });
+      queryClient.invalidateQueries({ queryKey: ["${API_BASE}/api/settlements/pending"] });
       // Also invalidate trip expenses and balances to update visuals
       pendingSettlements.forEach(settlement => {
-        queryClient.invalidateQueries({ queryKey: [`/api/trips/${settlement.tripId}/expenses/balances`] });
-        queryClient.invalidateQueries({ queryKey: [`/api/trips/${settlement.tripId}/expenses`] });
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${settlement.tripId}/expenses/balances`] });
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${settlement.tripId}/expenses`] });
         // Force refetch instead of using cache
-        queryClient.refetchQueries({ queryKey: [`/api/trips/${settlement.tripId}/expenses/balances`] });
-        queryClient.refetchQueries({ queryKey: [`/api/trips/${settlement.tripId}/expenses`] });
+        queryClient.refetchQueries({ queryKey: [`${API_BASE}/api/trips/${settlement.tripId}/expenses/balances`] });
+        queryClient.refetchQueries({ queryKey: [`${API_BASE}/api/trips/${settlement.tripId}/expenses`] });
       });
     },
     onError: (error: any) => {

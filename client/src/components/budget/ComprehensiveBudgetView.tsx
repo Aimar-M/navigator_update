@@ -15,6 +15,8 @@ import {
   Home, Bus, ShoppingBag, PieChart
 } from "lucide-react";
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 interface ComprehensiveBudgetViewProps {
   tripId: number;
   destination: string;
@@ -49,7 +51,7 @@ const ComprehensiveBudgetView: React.FC<ComprehensiveBudgetViewProps> = ({ tripI
 
   // Fetch trip activities to show their costs
   const { data: activities } = useQuery({
-    queryKey: ['/api/trips', tripId, 'activities'],
+    queryKey: [`${API_BASE}/api/trips', tripId, 'activities`],
     enabled: !!tripId,
   });
 
@@ -474,6 +476,7 @@ const ComprehensiveBudgetView: React.FC<ComprehensiveBudgetViewProps> = ({ tripI
           )}
 
           {/* Activity expenses from trip plan */}
+          
           {activities && Array.isArray(activities) && activities.length > 0 && (
             <div className="mb-6">
               <h4 className="font-medium mb-3">Planned Activity Costs</h4>

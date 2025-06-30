@@ -109,7 +109,7 @@ export const CreatePollDialog = ({
     },
     onSuccess: () => {
       // Invalidate the polls query to refetch the data
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/polls`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/polls`] });
       setOpen(false);
       form.reset();
     },

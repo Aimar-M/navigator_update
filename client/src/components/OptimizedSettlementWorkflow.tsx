@@ -18,6 +18,8 @@ import {
   Zap
 } from "lucide-react";
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 interface OptimizedTransaction {
   fromUserId: number;
   fromUserName: string;
@@ -67,7 +69,7 @@ export function OptimizedSettlementWorkflow({
 
   // Fetch optimized settlement plan
   const { data: settlementData, isLoading, error } = useQuery<OptimizedSettlementData>({
-    queryKey: [`/api/settlements/${tripId}/optimized`],
+    queryKey: [`${API_BASE}/api/settlements/${tripId}/optimized`],
     enabled: isOpen,
   });
 
@@ -85,7 +87,7 @@ export function OptimizedSettlementWorkflow({
 
   // Get user-specific recommendations
   const { data: userRecommendations } = useQuery<{ recommendations: OptimizedTransaction[] }>({
-    queryKey: [`/api/settlements/${tripId}/user-recommendations/${currentUserId}`],
+    queryKey: [`${API_BASE}/api/settlements/${tripId}/user-recommendations/${currentUserId}`],
     enabled: isOpen,
   });
 

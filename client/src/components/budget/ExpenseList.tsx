@@ -122,14 +122,14 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ tripId, currentUserId, isOrga
 
   // Fetch expenses for this trip
   const { data: expenses = [], isLoading, error } = useQuery<ExpenseWithUser[]>({
-    queryKey: ['/api/trips', tripId, 'expenses'],
+    queryKey: [`${API_BASE}/api/trips', tripId, 'expenses'],
     enabled: !!tripId,
   });
 
   // Mutation for deleting an expense
   const deleteExpenseMutation = useMutation({
     mutationFn: async (expenseId: number) => {
-      return await apiRequest("DELETE", `/api/expenses/${expenseId}`);
+      return await apiRequest("DELETE", `${API_BASE}/api/expenses/${expenseId}`);
     },
     onSuccess: () => {
       toast({
@@ -137,8 +137,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ tripId, currentUserId, isOrga
         description: "The expense has been successfully deleted.",
         variant: "default",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/trips', tripId, 'expenses'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/trips', tripId, 'expenses/summary'] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips', tripId, 'expenses'] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips', tripId, 'expenses/summary'] });
     },
     onError: (error) => {
       toast({
@@ -212,7 +212,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ tripId, currentUserId, isOrga
         </CardHeader>
         <CardContent>
           <p>There was an error loading the expenses. Please try again later.</p>
-          <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/trips', tripId, 'expenses'] })}>
+          <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips', tripId, 'expenses'] })}>
             Retry
           </Button>
         </CardContent>
@@ -242,8 +242,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ tripId, currentUserId, isOrga
               tripId={tripId}
               onSuccess={() => {
                 setIsAddExpenseOpen(false);
-                queryClient.invalidateQueries({ queryKey: ['/api/trips', tripId, 'expenses'] });
-                queryClient.invalidateQueries({ queryKey: ['/api/trips', tripId, 'expenses/summary'] });
+                queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips', tripId, 'expenses'] });
+                queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips', tripId, 'expenses/summary'] });
               }}
             />
           </DialogContent>
@@ -360,8 +360,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ tripId, currentUserId, isOrga
               onSuccess={() => {
                 setIsEditExpenseOpen(false);
                 setSelectedExpense(null);
-                queryClient.invalidateQueries({ queryKey: ['/api/trips', tripId, 'expenses'] });
-                queryClient.invalidateQueries({ queryKey: ['/api/trips', tripId, 'expenses/summary'] });
+                queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips', tripId, 'expenses'] });
+                queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips', tripId, 'expenses/summary'] });
                 toast({
                   title: "Expense updated successfully",
                   description: "The expense has been updated with your changes.",

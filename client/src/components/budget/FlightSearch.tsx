@@ -102,7 +102,7 @@ const FlightSearch: React.FC<FlightSearchProps> = ({ tripId }) => {
   // Mutation for saving a flight to trip
   const saveFlightMutation = useMutation({
     mutationFn: async (flightData: any) => {
-      return await apiRequest(`/api/trips/${tripId}/flights`, {
+      return await apiRequest(`${API_BASE}/api/trips/${tripId}/flights`, {
         method: "POST",
         data: flightData,
       });
@@ -112,7 +112,7 @@ const FlightSearch: React.FC<FlightSearchProps> = ({ tripId }) => {
         title: "Flight saved",
         description: "Flight information has been added to your trip.",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/trips', tripId, 'flights'] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips', tripId, 'flights'] });
       setSelectedFlight(null);
     },
     onError: (error) => {
@@ -130,7 +130,7 @@ const FlightSearch: React.FC<FlightSearchProps> = ({ tripId }) => {
     setIsSearching(true);
     try {
       const formattedDate = format(data.date, "yyyy-MM-dd");
-      const response = await apiRequest(`/api/flights/search?departureCity=${encodeURIComponent(data.departureCity)}&arrivalCity=${encodeURIComponent(data.arrivalCity)}&date=${formattedDate}`, {
+      const response = await apiRequest(`${API_BASE}/api/flights/search?departureCity=${encodeURIComponent(data.departureCity)}&arrivalCity=${encodeURIComponent(data.arrivalCity)}&date=${formattedDate}`, {
         method: "GET",
       });
       setSearchResults(response || []);

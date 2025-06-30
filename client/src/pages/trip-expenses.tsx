@@ -99,19 +99,19 @@ export default function TripExpenses() {
   const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
 
   const { data: trip } = useQuery<any>({
-    queryKey: [`/api/trips/${tripId}`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}`],
   });
 
   const { data: members = [] } = useQuery<any[]>({
-    queryKey: [`/api/trips/${tripId}/members`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}/members`],
   });
 
   const { data: expenses = [] } = useQuery<Expense[]>({
-    queryKey: [`/api/trips/${tripId}/expenses`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}/expenses`],
   });
 
   const { data: balances = [] } = useQuery<Balance[]>({
-    queryKey: [`/api/trips/${tripId}/expenses/balances`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}/expenses/balances`],
   });
 
   // Get trip members to check admin status (using same data as members)
@@ -120,15 +120,15 @@ export default function TripExpenses() {
   // Mutation for deleting an expense
   const deleteExpenseMutation = useMutation({
     mutationFn: async (expenseId: number) => {
-      return await apiRequest("DELETE", `/api/expenses/${expenseId}`);
+      return await apiRequest("DELETE", `${API_BASE}/api/expenses/${expenseId}`);
     },
     onSuccess: () => {
       toast({
         title: "Expense deleted",
         description: "The expense has been successfully deleted.",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/expenses`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/expenses/balances`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/expenses`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/expenses/balances`] });
     },
     onError: (error) => {
       toast({
@@ -204,8 +204,8 @@ export default function TripExpenses() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/expenses`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/expenses/balances`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/expenses`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/expenses/balances`] });
       setIsAddExpenseOpen(false);
       form.reset();
       toast({

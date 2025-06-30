@@ -13,19 +13,19 @@ export default function TripBudget() {
 
   // Fetch trip details
   const { data: trip, isLoading: isLoadingTrip } = useQuery({
-    queryKey: [`/api/trips/${tripId}`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}`],
     enabled: !!tripId,
   });
 
   // Get trip member count
   const { data: members } = useQuery({
-    queryKey: [`/api/trips/${tripId}/members`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}/members`],
     enabled: !!tripId,
   });
 
   // Fetch trip activities
   const { data: activities } = useQuery({
-    queryKey: [`/api/trips/${tripId}/activities`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}/activities`],
     enabled: !!tripId,
   });
 

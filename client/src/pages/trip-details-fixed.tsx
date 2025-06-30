@@ -56,19 +56,19 @@ export default function TripDetailFixed() {
 
   // Fetch trip details
   const { data: trip, isLoading: isTripLoading } = useQuery<Trip>({
-    queryKey: ['/api/trips', tripId],
+    queryKey: [`${API_BASE}/api/trips', tripId],
     enabled: !!tripId && !!user,
   });
 
   // Fetch trip members
   const { data: members, isLoading: isMembersLoading } = useQuery<Member[]>({
-    queryKey: ['/api/trips', tripId, 'members'],
+    queryKey: [`${API_BASE}/api/trips', tripId, 'members'],
     enabled: !!tripId && !!user,
   });
 
   // Fetch trip activities
   const { data: activities, isLoading: isActivitiesLoading } = useQuery<Activity[]>({
-    queryKey: ['/api/trips', tripId, 'activities'],
+    queryKey: [`${API_BASE}/api/trips', tripId, 'activities'],
     enabled: !!tripId && !!user,
   });
 
@@ -238,7 +238,7 @@ export default function TripDetailFixed() {
                               variant="default" 
                               onClick={async () => {
                                 try {
-                                  await apiRequest('PUT', `/api/trips/${tripId}/members/${user.id}`, { status: 'confirmed' });
+                                  await apiRequest('PUT', `${API_BASE}/api/trips/${tripId}/members/${user.id}`, { status: 'confirmed' });
                                   // Refresh the members data
                                   window.location.reload();
                                 } catch (error) {
@@ -253,7 +253,7 @@ export default function TripDetailFixed() {
                               variant="outline" 
                               onClick={async () => {
                                 try {
-                                  await apiRequest('PUT', `/api/trips/${tripId}/members/${user.id}`, { status: 'declined' });
+                                  await apiRequest('PUT', `${API_BASE}/api/trips/${tripId}/members/${user.id}`, { status: 'declined' });
                                   // Navigate back to home page after declining
                                   navigate('/');
                                 } catch (error) {

@@ -72,13 +72,13 @@ export default function ExpenseDetails() {
 
   // Fetch expense details
   const { data: expense, isLoading } = useQuery<Expense>({
-    queryKey: [`/api/expenses/${expenseId}`],
+    queryKey: [`${API_BASE}/api/expenses/${expenseId}`],
     enabled: !!expenseId && !expenseId.startsWith('settlement-'),
   });
 
   // For settlement expenses, we need to get them from the expenses list
   const { data: expenses } = useQuery<Expense[]>({
-    queryKey: [`/api/trips/${tripId}/expenses`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}/expenses`],
     enabled: !!expenseId?.startsWith('settlement-'),
   });
 
@@ -87,18 +87,18 @@ export default function ExpenseDetails() {
 
   // Get trip data for permission checking
   const { data: trip } = useQuery<any>({
-    queryKey: [`/api/trips/${tripId}`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}`],
   });
 
   // Get trip members for admin status checking
   const { data: tripMembers = [] } = useQuery<any[]>({
-    queryKey: [`/api/trips/${tripId}/members`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}/members`],
   });
 
   // Delete mutation
   const deleteExpenseMutation = useMutation({
     mutationFn: async (expenseId: number | string) => {
-      return await apiRequest("DELETE", `/api/expenses/${expenseId}`);
+      return await apiRequest("DELETE", `${API_BASE}/api/expenses/${expenseId}`);
     },
     onSuccess: () => {
       toast({
@@ -106,10 +106,10 @@ export default function ExpenseDetails() {
         description: "The expense has been successfully deleted.",
       });
       // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/expenses`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/expenses/balances`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/activities`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/itinerary`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/expenses`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/expenses/balances`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/activities`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/itinerary`] });
       // Navigate back to expenses page
       setLocation(`/trips/${tripId}/expenses`);
     },

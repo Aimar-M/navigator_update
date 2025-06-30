@@ -10,13 +10,13 @@ export default function Polls() {
   const { user, isLoading: authLoading } = useAuth();
   
   const { data: trip, isLoading: tripLoading } = useQuery({
-    queryKey: [`/api/trips/${tripId}`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}`],
     enabled: !!tripId,
   });
 
   // Fetch trip members to check RSVP status
   const { data: members = [] } = useQuery({
-    queryKey: [`/api/trips/${tripId}/members`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}/members`],
     enabled: !!tripId && !!user,
   });
 

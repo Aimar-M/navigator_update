@@ -67,13 +67,13 @@ function Itinerary() {
 
   // Fetch trip details
   const { data: trip, isLoading: isTripLoading } = useQuery<Trip>({
-    queryKey: [`/api/trips/${tripId}`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}`],
     enabled: !!tripId && !!user,
   });
 
   // Fetch trip members to check RSVP status
   const { data: members = [] } = useQuery<TripMember[]>({
-    queryKey: [`/api/trips/${tripId}/members`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}/members`],
     enabled: !!tripId && !!user,
   });
 
@@ -86,7 +86,7 @@ function Itinerary() {
 
   // Fetch trip activities
   const { data: activities = [], isLoading: isActivitiesLoading } = useQuery({
-    queryKey: [`/api/trips/${tripId}/activities`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}/activities`],
     enabled: !!tripId && !!user,
   });
 
@@ -245,10 +245,10 @@ function Itinerary() {
   // Add activity mutation
   const addActivityMutation = useMutation({
     mutationFn: async (activityData: any) => {
-      return await apiRequest("POST", `/api/trips/${tripId}/activities`, activityData);
+      return await apiRequest("POST", `${API_BASE}/api/trips/${tripId}/activities`, activityData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/activities`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/activities`] });
       setIsAddActivityModalOpen(false);
       setActivityFormData({
         name: "",

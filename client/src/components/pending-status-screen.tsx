@@ -12,6 +12,8 @@ import { apiRequest } from "@/lib/queryClient";
 import Lottie from "lottie-react";
 import EnhancedItineraryPreview from "@/components/enhanced-itinerary-preview";
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 interface PendingStatusScreenProps {
   trip: {
     id: number;
@@ -132,12 +134,12 @@ export default function PendingStatusScreen({ trip, member }: PendingStatusScree
 
   // Fetch settlement options for paying the trip organizer
   const { data: settlementOptions, isLoading: optionsLoading, error: optionsError } = useQuery({
-    queryKey: [`/api/trips/${trip.id}/settlement-options/${trip.organizer}`, trip.downPaymentAmount || member?.paymentAmount],
+    queryKey: [`${API_BASE}/api/trips/${trip.id}/settlement-options/${trip.organizer}`, trip.downPaymentAmount || member?.paymentAmount],
     queryFn: async () => {
       if (!trip.organizer) return [];
       
       // Build URL with amount parameter if available
-      let url = `/api/trips/${trip.id}/settlement-options/${trip.organizer}`;
+      let url = `${API_BASE}/api/trips/${trip.id}/settlement-options/${trip.organizer}`;
       const amount = trip.downPaymentAmount || member?.paymentAmount;
       if (amount) {
         url += `?amount=${amount}`;
@@ -152,18 +154,18 @@ export default function PendingStatusScreen({ trip, member }: PendingStatusScree
 
   // Fetch trip members for the confirmed attendees section
   const { data: members } = useQuery({
-    queryKey: [`/api/trips/${trip.id}/members`],
+    queryKey: [`${API_BASE}/api/trips/${trip.id}/members`],
   });
 
   // Fetch activities preview for the trip
   const { data: activityPreview = [] } = useQuery<any[]>({
-    queryKey: [`/api/trips/${trip.id}/activities/preview`],
+    queryKey: [`${API_BASE}/api/trips/${trip.id}/activities/preview`],
     enabled: !!trip.id,
   });
 
   const submitPaymentMutation = useMutation({
     mutationFn: async ({ paymentMethod }: { paymentMethod: string }) => {
-      return await apiRequest('POST', `/api/trips/${trip.id}/members/${user?.id}/payment`, { 
+      return await apiRequest('POST', `${API_BASE}/api/trips/${trip.id}/members/${user?.id}/payment`, { 
         paymentMethod,
         paymentAmount: trip.downPaymentAmount 
       });
@@ -173,8 +175,8 @@ export default function PendingStatusScreen({ trip, member }: PendingStatusScree
         title: "Payment Submitted",
         description: "Your payment has been submitted and is pending confirmation.",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${trip.id}/members`] });
-      queryClient.invalidateQueries({ queryKey: ['/api/trips'] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${trip.id}/members`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
       setShowPaymentConfirmation(false);
       setPendingPaymentMethod(null);
     },
@@ -203,7 +205,7 @@ export default function PendingStatusScreen({ trip, member }: PendingStatusScree
 
   const confirmAttendanceMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest('PUT', `/api/trips/${trip.id}/members/${user?.id}/rsvp`, { 
+      return await apiRequest('PUT', `${API_BASE}/api/trips/${trip.id}/members/${user?.id}/rsvp`, { 
         rsvpStatus: 'confirmed' 
       });
     },
@@ -212,8 +214,8 @@ export default function PendingStatusScreen({ trip, member }: PendingStatusScree
         title: "RSVP Confirmed",
         description: "Your attendance has been confirmed! Welcome to the trip.",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${trip.id}/members`] });
-      queryClient.invalidateQueries({ queryKey: ['/api/trips'] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${trip.id}/members`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
     },
     onError: (error: any) => {
       toast({

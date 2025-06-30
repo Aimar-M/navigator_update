@@ -78,7 +78,7 @@ app.use((req, res, next) => {
         message: 'Route not found', 
         path: req.originalUrl,
         method: req.method,
-        availableRoutes: ['/api/health', '/api/auth/login', '/api/auth/register']
+        availableRoutes: [`${API_BASE}/api/health', `${API_BASE}/api/auth/login', `${API_BASE}/api/auth/register']
       });
     });
 

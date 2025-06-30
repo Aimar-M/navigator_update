@@ -44,7 +44,7 @@ export function SettlementWorkflow({ tripId, balance, isOpen, onClose }: Settlem
 
   // Get settlement options for the payee
   const { data: settlementOptions = [], isLoading: optionsLoading, error: optionsError } = useQuery<SettlementOption[]>({
-    queryKey: [`/api/trips/${tripId}/settlement-options/${balance.userId}?amount=${amount}`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}/settlement-options/${balance.userId}?amount=${amount}`],
     enabled: isOpen && owes, // Only fetch if user owes money
   });
 
@@ -63,21 +63,21 @@ export function SettlementWorkflow({ tripId, balance, isOpen, onClose }: Settlem
 
   // Get existing settlements for this trip
   const { data: existingSettlements = [] } = useQuery<any[]>({
-    queryKey: [`/api/trips/${tripId}/settlements`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}/settlements`],
     enabled: isOpen,
   });
 
   const initiateMutation = useMutation({
     mutationFn: async (data: { payeeId: number; amount: number; paymentMethod: string; notes: string }) => {
-      return await apiRequest('POST', `/api/trips/${tripId}/settlements/initiate`, data);
+      return await apiRequest('POST', `${API_BASE}/api/trips/${tripId}/settlements/initiate`, data);
     },
     onSuccess: () => {
       toast({
         title: "Settlement Initiated",
         description: "Payment settlement has been initiated. Waiting for confirmation from the recipient.",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/settlements`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/expenses/balances`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/settlements`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/expenses/balances`] });
       onClose();
     },
     onError: (error: any) => {

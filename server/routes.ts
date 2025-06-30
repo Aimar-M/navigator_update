@@ -4258,7 +4258,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.use('/api', router);
+  app.use(`${API_BASE}/api', router);
   
   return httpServer;
 }

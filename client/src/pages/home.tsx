@@ -39,7 +39,7 @@ export default function Home() {
       if (pendingInvitation && user && token) {
         try {
           // Accept the invitation to add user to trip membership (but with pending RSVP status)
-          const response = await apiRequest('POST', `/api/invite/${pendingInvitation}/accept`, {
+          const response = await apiRequest('POST', `${API_BASE}/api/invite/${pendingInvitation}/accept`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json',
@@ -97,7 +97,7 @@ export default function Home() {
         'Content-Type': 'application/json'
       };
       
-      const response = await apiRequest('PUT', `/api/trips/${tripId}`, {
+      const response = await apiRequest('PUT', `${API_BASE}/api/trips/${tripId}`, {
         headers,
         body: JSON.stringify({ isPinned: !trip.isPinned })
       });
@@ -133,7 +133,7 @@ export default function Home() {
         'Content-Type': 'application/json'
       };
       
-      const response = await apiRequest('PUT', `/api/trips/${tripId}`, {
+      const response = await apiRequest('PUT', `${API_BASE}/api/trips/${tripId}`, {
         headers,
         body: JSON.stringify({ isArchived: !trip.isArchived })
       });
@@ -397,7 +397,7 @@ export default function Home() {
                                       onClick={async () => {
                                         // Update status to confirmed
                                         const data = { status: 'confirmed' };
-                                        const response = await apiRequest('PUT', `/api/trips/${invitation.membership.tripId}/members/${user.id}`, data, {
+                                        const response = await apiRequest('PUT', `${API_BASE}/api/trips/${invitation.membership.tripId}/members/${user.id}`, data, {
                                           headers: {
                                             'Content-Type': 'application/json',
                                             'Authorization': `Bearer ${token}`
@@ -409,8 +409,8 @@ export default function Home() {
                                             description: "You're now confirmed for this trip"
                                           });
                                           // Refresh data
-                                          queryClient.invalidateQueries({ queryKey: ['/api/trips'] });
-                                          queryClient.invalidateQueries({ queryKey: ['/api/trips/memberships/pending'] });
+                                          queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips'] });
+                                          queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/memberships/pending'] });
                                         } else {
                                           throw new Error("Failed to confirm attendance");
                                         }
@@ -425,7 +425,7 @@ export default function Home() {
                                       onClick={async () => {
                                         // Update status to declined
                                         const data = { status: 'declined' };
-                                        const response = await apiRequest('PUT', `/api/trips/${invitation.membership.tripId}/members/${user.id}`, data, {
+                                        const response = await apiRequest('PUT', `${API_BASE}/api/trips/${invitation.membership.tripId}/members/${user.id}`, data, {
                                           headers: {
                                             'Content-Type': 'application/json',
                                             'Authorization': `Bearer ${token}`
@@ -437,8 +437,8 @@ export default function Home() {
                                             description: "You've been removed from this trip and it has been archived"
                                           });
                                           // Refresh data to show updated trip list and archived section
-                                          queryClient.invalidateQueries({ queryKey: ['/api/trips'] });
-                                          queryClient.invalidateQueries({ queryKey: ['/api/trips/memberships/pending'] });
+                                          queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips'] });
+                                          queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/memberships/pending'] });
                                         } else {
                                           throw new Error("Failed to decline invitation");
                                         }

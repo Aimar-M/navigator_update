@@ -21,13 +21,13 @@ export default function InvitationPage() {
 
   // Fetch invitation details
   const { data: inviteData, isLoading: inviteLoading, error: inviteError } = useQuery({
-    queryKey: [`/api/invite/${token}`],
+    queryKey: [`${API_BASE}/api/invite/${token}`],
     queryFn: async () => {
       try {
         // Make sure we're using the correct API endpoint
         console.log(`Fetching invitation details for token: ${token}`);
         // The server routes are mounted under /api
-        const response = await apiRequest('GET', `/api/invite/${token}`);
+        const response = await apiRequest('GET', `${API_BASE}/api/invite/${token}`);
         if (!response.ok) {
           const errorText = await response.text();
           console.error(`Error response: ${response.status}, ${errorText}`);
@@ -68,7 +68,7 @@ export default function InvitationPage() {
       }
       
       // Use a direct fetch with headers to ensure authentication works
-      const response = await apiRequest('POST', `/api/invite/${token}/accept`, {}, headers);
+      const response = await apiRequest('POST', `${API_BASE}/api/invite/${token}/accept`, {}, headers);
       
       if (!response.ok) {
         const errorData = await response.text();

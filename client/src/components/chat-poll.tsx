@@ -10,6 +10,8 @@ import UserAvatar from "./user-avatar";
 import { toast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 interface ChatPollProps {
   poll: any;
   tripId: number;
@@ -30,7 +32,7 @@ const ChatPoll = ({ poll, tripId }: ChatPollProps) => {
     mutationFn: async (optionIndex: number) => {
       return await apiRequest(
         'POST',
-        `/api/polls/${localPoll.id}/vote`,
+        `${API_BASE}/api/polls/${localPoll.id}/vote`,
         { optionIndex }
       );
     },
@@ -46,8 +48,8 @@ const ChatPoll = ({ poll, tripId }: ChatPollProps) => {
       setLocalPoll(updatedPoll);
       
       // Then refresh all the data to stay in sync
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/polls`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/messages`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/polls`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/messages`] });
       
       toast({
         title: 'Vote submitted',
@@ -68,7 +70,7 @@ const ChatPoll = ({ poll, tripId }: ChatPollProps) => {
     mutationFn: async (voteId: number) => {
       return await apiRequest(
         'DELETE',
-        `/api/polls/${localPoll.id}/votes/${voteId}`
+        `${API_BASE}/api/polls/${localPoll.id}/votes/${voteId}`
       );
     },
     onSuccess: (data) => {
@@ -95,8 +97,8 @@ const ChatPoll = ({ poll, tripId }: ChatPollProps) => {
       setLocalPoll(updatedPoll);
       
       // Then refresh all the data to stay in sync
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/polls`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/messages`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/polls`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/messages`] });
       
       toast({
         title: 'Vote removed',

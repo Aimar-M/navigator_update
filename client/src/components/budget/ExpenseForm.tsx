@@ -73,7 +73,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ tripId, expense, onSuccess })
       avatar?: string;
     };
   }>>({
-    queryKey: [`/api/trips/${tripId}/members`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}/members`],
     enabled: !!tripId,
   });
 
@@ -120,10 +120,10 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ tripId, expense, onSuccess })
 
       if (isEditing) {
         // Update existing expense
-        return await apiRequest("PUT", `/api/expenses/${expense.id}`, expenseData);
+        return await apiRequest("PUT", `${API_BASE}/api/expenses/${expense.id}`, expenseData);
       } else {
         // Create new expense
-        return await apiRequest("POST", `/api/trips/${tripId}/expenses`, expenseData);
+        return await apiRequest("POST", `${API_BASE}/api/trips/${tripId}/expenses`, expenseData);
       }
     },
     onSuccess: () => {

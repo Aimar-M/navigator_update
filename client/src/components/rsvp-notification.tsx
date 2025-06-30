@@ -34,7 +34,7 @@ export default function RSVPNotification() {
   const updateRSVPMutation = useMutation({
     mutationFn: async ({ tripId, rsvpStatus }: { tripId: number; rsvpStatus: string }) => {
       if (!user) throw new Error("User not authenticated");
-      return await apiRequest("PUT", `/api/trips/${tripId}/members/${user.id}/rsvp`, { rsvpStatus });
+      return await apiRequest("PUT", `${API_BASE}/api/trips/${tripId}/members/${user.id}/rsvp`, { rsvpStatus });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/trips/rsvp/pending"] });

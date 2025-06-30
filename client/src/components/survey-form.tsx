@@ -99,14 +99,14 @@ export default function SurveyForm({ tripId, onComplete }: SurveyFormProps) {
     setIsSubmitting(true);
     
     try {
-      await apiRequest("POST", `/api/trips/${tripId}/survey`, { questions });
+      await apiRequest("POST", `${API_BASE}/api/trips/${tripId}/survey`, { questions });
       
       toast({
         title: "Survey created",
         description: "Your survey has been created successfully.",
       });
       
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/survey`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/survey`] });
       onComplete();
     } catch (error) {
       toast({

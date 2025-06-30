@@ -48,7 +48,7 @@ export default function Chat() {
 
   // Fetch trip details
   const { data: trip, isLoading: isTripLoading } = useQuery({
-    queryKey: [`/api/trips/${tripId}`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}`],
     queryFn: async () => {
       // Get auth token for our token-based authentication
       const token = localStorage.getItem('auth_token');
@@ -68,7 +68,7 @@ export default function Chat() {
 
   // Fetch trip messages
   const { data: chatMessages, isLoading: isMessagesLoading } = useQuery({
-    queryKey: [`/api/trips/${tripId}/messages`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}/messages`],
     queryFn: async () => {
       // Get auth token for our token-based authentication
       const token = localStorage.getItem('auth_token');
@@ -88,13 +88,13 @@ export default function Chat() {
   
   // Fetch trip members to check RSVP status
   const { data: members = [] } = useQuery({
-    queryKey: [`/api/trips/${tripId}/members`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}/members`],
     enabled: !!tripId && !!user,
   });
 
   // Fetch polls for this trip to display in chat
   const { data: polls = [] } = useQuery({
-    queryKey: [`/api/trips/${tripId}/polls`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}/polls`],
     refetchInterval: 10000, // Refresh every 10 seconds
     queryFn: async () => {
       const token = localStorage.getItem('auth_token');

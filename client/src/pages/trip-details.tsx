@@ -137,22 +137,22 @@ export default function TripDetails() {
 
   // Fetch trip details
   const { data: trip, isLoading } = useQuery<Trip>({
-    queryKey: [`/api/trips/${tripId}`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}`],
   });
 
   // Fetch trip members
   const { data: members = [], isLoading: isMembersLoading } = useQuery<TripMember[]>({
-    queryKey: [`/api/trips/${tripId}/members`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}/members`],
     enabled: !!tripId,
   });
 
   // Trip update mutation
   const updateTripMutation = useMutation({
     mutationFn: async (updatedData: any) => {
-      return await apiRequest("PUT", `/api/trips/${tripId}`, updatedData);
+      return await apiRequest("PUT", `${API_BASE}/api/trips/${tripId}`, updatedData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}`] });
       setIsEditing(false);
       toast({
         title: "Trip updated",
@@ -171,12 +171,12 @@ export default function TripDetails() {
   // RSVP status update mutation
   const updateRSVPMutation = useMutation({
     mutationFn: async ({ userId, rsvpStatus }: { userId: number; rsvpStatus: string }) => {
-      return await apiRequest("PUT", `/api/trips/${tripId}/members/${userId}/rsvp`, { rsvpStatus });
+      return await apiRequest("PUT", `${API_BASE}/api/trips/${tripId}/members/${userId}/rsvp`, { rsvpStatus });
     },
     onSuccess: () => {
       // Refresh all trip-related queries to update access immediately
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/members`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/members`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/trips"] });
       queryClient.invalidateQueries({ queryKey: ["/api/trips/memberships/pending"] });
       
@@ -197,10 +197,10 @@ export default function TripDetails() {
   // Admin settings update mutation
   const updateAdminSettingsMutation = useMutation({
     mutationFn: async (settings: { adminOnlyItinerary: boolean }) => {
-      return await apiRequest("PATCH", `/api/trips/${tripId}/admin-settings`, settings);
+      return await apiRequest("PATCH", `${API_BASE}/api/trips/${tripId}/admin-settings`, settings);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}`] });
       toast({
         title: "Settings updated",
         description: "Admin settings have been successfully updated"
@@ -218,10 +218,10 @@ export default function TripDetails() {
   // Member admin status update mutation
   const updateMemberAdminMutation = useMutation({
     mutationFn: async ({ userId, isAdmin }: { userId: number; isAdmin: boolean }) => {
-      return await apiRequest("PATCH", `/api/trips/${tripId}/members/${userId}/admin`, { isAdmin });
+      return await apiRequest("PATCH", `${API_BASE}/api/trips/${tripId}/members/${userId}/admin`, { isAdmin });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/members`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/members`] });
       toast({
         title: "Admin access updated",
         description: "Member admin access has been successfully updated"
@@ -247,16 +247,16 @@ export default function TripDetails() {
       removeActivities: boolean; 
       removeExpenses: boolean; 
     }) => {
-      return await apiRequest("DELETE", `/api/trips/${tripId}/members/${userId}`, {
+      return await apiRequest("DELETE", `${API_BASE}/api/trips/${tripId}/members/${userId}`, {
         removeActivities,
         removeExpenses
       });
     },
     onSuccess: (_, { userId }) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/members`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/activities`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/expenses`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/members`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/activities`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/expenses`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}`] });
       
       const memberName = memberToRemove?.user?.name || memberToRemove?.user?.username || 'Member';
       toast({
@@ -423,7 +423,7 @@ export default function TripDetails() {
         isOrganizer={user?.id === trip.organizer}
         onImageUpdate={(imageUrl) => {
           // Update the trip data locally
-          queryClient.setQueryData([`/api/trips/${tripId}`], (oldData: any) => ({
+          queryClient.setQueryData([`${API_BASE}/api/trips/${tripId}`], (oldData: any) => ({
             ...oldData,
             cover: imageUrl
           }));
@@ -1065,10 +1065,10 @@ export default function TripDetails() {
         isOpen={enhancedRemovalDialog.isOpen}
         onClose={() => setEnhancedRemovalDialog({ isOpen: false, userId: 0, userName: '' })}
         onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/members`] });
-          queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/activities`] });
-          queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/expenses`] });
-          queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}`] });
+          queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/members`] });
+          queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/activities`] });
+          queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/expenses`] });
+          queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}`] });
         }}
       />
     </TripDetailLayout>

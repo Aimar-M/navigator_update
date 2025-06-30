@@ -23,19 +23,19 @@ export default function TripDetailFixed() {
 
   // Fetch trip details
   const { data: trip, isLoading: isTripLoading } = useQuery({
-    queryKey: ['/api/trips', tripId],
+    queryKey: [`${API_BASE}/api/trips', tripId],
     enabled: !!tripId && !!user,
   });
 
   // Fetch trip members
   const { data: members, isLoading: isMembersLoading } = useQuery({
-    queryKey: ['/api/trips', tripId, 'members'],
+    queryKey: [`${API_BASE}/api/trips', tripId, 'members'],
     enabled: !!tripId && !!user,
   });
 
   // Fetch trip activities
   const { data: activities, isLoading: isActivitiesLoading } = useQuery({
-    queryKey: ['/api/trips', tripId, 'activities'],
+    queryKey: [`${API_BASE}/api/trips', tripId, 'activities'],
     enabled: !!tripId && !!user,
   });
 
@@ -192,7 +192,7 @@ export default function TripDetailFixed() {
                                 headers['Authorization'] = `Bearer ${token}`;
                               }
                               
-                              const response = await apiRequest('PUT', `/api/trips/${tripId}/members/${user.id}`, { status: 'confirmed' });
+                              const response = await apiRequest('PUT', `${API_BASE}/api/trips/${tripId}/members/${user.id}`, { status: 'confirmed' });
                               
                               if (!response.ok) throw new Error('Failed to accept invitation');
                               
@@ -218,7 +218,7 @@ export default function TripDetailFixed() {
                                 headers['Authorization'] = `Bearer ${token}`;
                               }
                               
-                              const response = await apiRequest('PUT', `/api/trips/${tripId}/members/${user.id}`, { status: 'declined' });
+                              const response = await apiRequest('PUT', `${API_BASE}/api/trips/${tripId}/members/${user.id}`, { status: 'declined' });
                               
                               if (!response.ok) throw new Error('Failed to decline invitation');
                               

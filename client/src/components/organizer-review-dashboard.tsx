@@ -10,6 +10,8 @@ import UserAvatar from "@/components/user-avatar";
 import { toast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 interface Member {
   tripId: number;
   userId: number;
@@ -62,16 +64,16 @@ export default function OrganizerReviewDashboard({
 
   const confirmPaymentMutation = useMutation({
     mutationFn: async (userId: number) => {
-      return apiRequest('POST', `/api/trips/${tripId}/members/${userId}/confirm-payment`);
+      return apiRequest('POST', `${API_BASE}/api/trips/${tripId}/members/${userId}/confirm-payment`);
     },
     onMutate: async (userId: number) => {
       // Optimistic update: immediately hide the member from pending list
       setConfirmedUserIds(prev => new Set(Array.from(prev).concat(userId)));
     },
     onSuccess: (_, userId) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/trips', tripId, 'members'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/trips', tripId] });
-      queryClient.invalidateQueries({ queryKey: ['/api/trips'] });
+      queryClient.invalidateQueries({ queryKey: ['${API_BASE}/api/trips', tripId, 'members'] });
+      queryClient.invalidateQueries({ queryKey: ['${API_BASE}/api/trips', tripId] });
+      queryClient.invalidateQueries({ queryKey: ['${API_BASE}/api/trips'] });
       
       const member = members.find(m => m.userId === userId);
       toast({
@@ -100,16 +102,16 @@ export default function OrganizerReviewDashboard({
 
   const rejectPaymentMutation = useMutation({
     mutationFn: async (userId: number) => {
-      return apiRequest('POST', `/api/trips/${tripId}/members/${userId}/reject-payment`);
+      return apiRequest('POST', `${API_BASE}/api/trips/${tripId}/members/${userId}/reject-payment`);
     },
     onMutate: async (userId: number) => {
       // Optimistic update: immediately hide the member from pending list
       setRejectedUserIds(prev => new Set(Array.from(prev).concat(userId)));
     },
     onSuccess: (_, userId) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/trips', tripId, 'members'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/trips', tripId] });
-      queryClient.invalidateQueries({ queryKey: ['/api/trips'] });
+      queryClient.invalidateQueries({ queryKey: ['${API_BASE}/api/trips', tripId, 'members'] });
+      queryClient.invalidateQueries({ queryKey: ['${API_BASE}/api/trips', tripId] });
+      queryClient.invalidateQueries({ queryKey: ['${API_BASE}/api/trips'] });
       
       const member = members.find(m => m.userId === userId);
       toast({

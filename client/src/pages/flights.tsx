@@ -30,19 +30,19 @@ export default function Flights() {
 
   // Fetch flights for this trip
   const { data: flights = [], isLoading: isFlightsLoading, refetch: refetchFlights } = useQuery({
-    queryKey: [`/api/trips/${tripId}/flights`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}/flights`],
     enabled: !!tripId
   });
 
   // Fetch trip details
   const { data: trip } = useQuery({
-    queryKey: [`/api/trips/${tripId}`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}`],
     enabled: !!tripId
   });
 
   // Fetch trip members to get user information
   const { data: members = [] } = useQuery({
-    queryKey: [`/api/trips/${tripId}/members`],
+    queryKey: [`${API_BASE}/api/trips/${tripId}/members`],
     enabled: !!tripId
   });
 
@@ -54,7 +54,7 @@ export default function Flights() {
   // Add flight mutation
   const addFlightMutation = useMutation({
     mutationFn: async (data: { flightNumber: string; departureDate: string }) => {
-      return await apiRequest("POST", `/api/trips/${tripId}/flights`, data);
+      return await apiRequest("POST", `${API_BASE}/api/trips/${tripId}/flights`, data);
     },
     onSuccess: () => {
       refetchFlights();
@@ -78,7 +78,7 @@ export default function Flights() {
   // Edit flight mutation
   const editFlightMutation = useMutation({
     mutationFn: async (data: { flightNumber: string; departureDate: string }) => {
-      return await apiRequest("PUT", `/api/flights/${editingFlight.id}`, data);
+      return await apiRequest("PUT", `${API_BASE}/api/flights/${editingFlight.id}`, data);
     },
     onSuccess: () => {
       refetchFlights();
@@ -102,7 +102,7 @@ export default function Flights() {
   // Delete flight mutation
   const deleteFlightMutation = useMutation({
     mutationFn: async (flightId: number) => {
-      return await apiRequest("DELETE", `/api/flights/${flightId}`);
+      return await apiRequest("DELETE", `${API_BASE}/api/flights/${flightId}`);
     },
     onSuccess: () => {
       refetchFlights();

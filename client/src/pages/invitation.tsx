@@ -120,13 +120,13 @@ export default function InvitationPage() {
   const [, setLocation] = useLocation();
 
   const { data: invitationData, isLoading, error } = useQuery<InvitationData>({
-    queryKey: [`/api/invite/${token}`],
+    queryKey: [`${API_BASE}/api/invite/${token}`],
     enabled: !!token,
   });
 
   // Fetch activities preview for the trip
   const { data: activityPreview = [] } = useQuery<any[]>({
-    queryKey: [`/api/trips/${invitationData?.trip.id}/activities/preview`],
+    queryKey: [`${API_BASE}/api/trips/${invitationData?.trip.id}/activities/preview`],
     enabled: !!invitationData?.trip.id,
   });
 

@@ -37,7 +37,7 @@ export default function RSVPPaymentWorkflow({
 
   const submitPaymentMutation = useMutation({
     mutationFn: async (method: string) => {
-      return apiRequest(`/api/trips/${tripId}/members/${userId}/payment`, "POST", { paymentMethod: method });
+      return apiRequest(`${API_BASE}/api/trips/${tripId}/members/${userId}/payment`, "POST", { paymentMethod: method });
     },
     onSuccess: () => {
       toast({
@@ -47,8 +47,8 @@ export default function RSVPPaymentWorkflow({
           : "Payment processed successfully. Your RSVP is now confirmed!",
       });
       setIsPaymentDialogOpen(false);
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/members`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/members`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}`] });
       onPaymentSubmitted?.();
     },
     onError: (error: any) => {
@@ -62,14 +62,14 @@ export default function RSVPPaymentWorkflow({
 
   const confirmPaymentMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest(`/api/trips/${tripId}/members/${userId}/confirm-payment`, "POST");
+      return apiRequest(`${API_BASE}/api/trips/${tripId}/members/${userId}/confirm-payment`, "POST");
     },
     onSuccess: () => {
       toast({
         title: "Payment Confirmed",
         description: "Member payment has been confirmed and RSVP updated.",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/members`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/members`] });
       onPaymentConfirmed?.();
     },
     onError: (error: any) => {

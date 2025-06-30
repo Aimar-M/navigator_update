@@ -78,7 +78,7 @@ export default function Profile() {
     setIsSubmitting(true);
 
     try {
-      const response = await apiRequest('PUT', '/api/users/profile', {
+      const response = await apiRequest('PUT', `${API_BASE}/api/users/profile', {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,

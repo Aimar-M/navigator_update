@@ -130,7 +130,7 @@ export default function Chats() {
         headers['Authorization'] = `Bearer ${token}`;
       }
       
-      const response = await apiRequest('GET', '/api/trips');
+      const response = await apiRequest('GET', `${API_BASE}/api/trips');
       if (!response.ok) throw new Error("Failed to fetch trips");
       return response.json();
     },
@@ -150,7 +150,7 @@ export default function Chats() {
       }
       
       // Use our new endpoint that gets all messages across trips
-      const response = await apiRequest('GET', '/api/messages');
+      const response = await apiRequest('GET', `${API_BASE}/api/messages');
       if (!response.ok) {
         throw new Error("Failed to fetch messages");
       }

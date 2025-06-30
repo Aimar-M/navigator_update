@@ -72,7 +72,7 @@ export default function ActivityDetails() {
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
 
   const { data: activity, isLoading } = useQuery<ActivityDetail>({
-    queryKey: [`/api/activities/${activityId}`],
+    queryKey: [`${API_BASE}/api/activities/${activityId}`],
   });
 
   const { data: currentUser } = useQuery<{ id: number; name: string; email: string }>({
@@ -81,13 +81,13 @@ export default function ActivityDetails() {
 
   // Fetch trip details to check admin permissions
   const { data: trip } = useQuery<Trip>({
-    queryKey: [`/api/trips/${activity?.tripId}`],
+    queryKey: [`${API_BASE}/api/trips/${activity?.tripId}`],
     enabled: !!activity?.tripId,
   });
 
   // Fetch trip members to check admin status
   const { data: members = [] } = useQuery<TripMember[]>({
-    queryKey: [`/api/trips/${activity?.tripId}/members`],
+    queryKey: [`${API_BASE}/api/trips/${activity?.tripId}/members`],
     enabled: !!activity?.tripId,
   });
 
@@ -99,19 +99,19 @@ export default function ActivityDetails() {
 
   const rsvpMutation = useMutation({
     mutationFn: async (status: string) => {
-      return await apiRequest("POST", `/api/activities/${activityId}/rsvp`, { status });
+      return await apiRequest("POST", `${API_BASE}/api/activities/${activityId}/rsvp`, { status });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/activities/${activityId}`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/activities/${activityId}`] });
       if (activity?.tripId) {
-        queryClient.invalidateQueries({ queryKey: [`/api/trips/${activity.tripId}/activities`] });
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${activity.tripId}/activities`] });
       }
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("DELETE", `/api/activities/${activityId}`);
+      return await apiRequest("DELETE", `${API_BASE}/api/activities/${activityId}`);
     },
     onSuccess: () => {
       toast({
@@ -131,7 +131,7 @@ export default function ActivityDetails() {
 
   const transferOwnershipMutation = useMutation({
     mutationFn: async (newOwnerId: number) => {
-      return await apiRequest("PUT", `/api/activities/${activityId}/transfer-ownership`, { newOwnerId });
+      return await apiRequest("PUT", `${API_BASE}/api/activities/${activityId}/transfer-ownership`, { newOwnerId });
     },
     onSuccess: () => {
       toast({
@@ -140,10 +140,10 @@ export default function ActivityDetails() {
       });
       setTransferDialogOpen(false);
       setSelectedNewOwner("");
-      queryClient.invalidateQueries({ queryKey: [`/api/activities/${activityId}`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/activities/${activityId}`] });
       if (activity?.tripId) {
-        queryClient.invalidateQueries({ queryKey: [`/api/trips/${activity.tripId}/activities`] });
-        queryClient.invalidateQueries({ queryKey: [`/api/trips/${activity.tripId}/expenses`] });
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${activity.tripId}/activities`] });
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${activity.tripId}/expenses`] });
       }
     },
     onError: (error: any) => {
