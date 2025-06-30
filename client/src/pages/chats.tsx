@@ -13,6 +13,8 @@ import { formatDateTime, formatDate, getInitials } from "@/lib/utils";
 import UserAvatar from "@/components/user-avatar";
 import { apiRequest } from '@/lib/queryClient';
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 // Chat list item component
 const ChatItem = ({ trip, lastMessages, currentUser }: { trip: any, lastMessages: any[], currentUser: any }) => {
   const [, navigate] = useLocation();
@@ -130,7 +132,7 @@ export default function Chats() {
         headers['Authorization'] = `Bearer ${token}`;
       }
       
-      const response = await apiRequest('GET', `${API_BASE}/api/trips');
+      const response = await apiRequest('GET', `${API_BASE}/api/trips`);
       if (!response.ok) throw new Error("Failed to fetch trips");
       return response.json();
     },
@@ -150,7 +152,7 @@ export default function Chats() {
       }
       
       // Use our new endpoint that gets all messages across trips
-      const response = await apiRequest('GET', `${API_BASE}/api/messages');
+      const response = await apiRequest('GET', `${API_BASE}/api/messages`);
       if (!response.ok) {
         throw new Error("Failed to fetch messages");
       }
@@ -173,7 +175,7 @@ export default function Chats() {
   
   // Get the latest message timestamp for each trip
   const getLatestMessageTimestamp = React.useCallback((tripId: number) => {
-    const messages = lastMessages?.filter(msg => msg.tripId === tripId) || [];
+    const messages = lastMessages?.filter((msg: any) => msg.tripId === tripId) || [];
     if (messages.length > 0) {
       return new Date(messages[0].timestamp).getTime();
     }
