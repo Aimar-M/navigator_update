@@ -15,7 +15,6 @@ const app = express();
 
 app.use(express.json()); // <-- Make sure this is before CORS
 
-const API_BASE = import.meta.env.VITE_API_URL || '';
 
 app.use(cors({
   origin: [
@@ -51,7 +50,7 @@ app.use((req, res, next) => {
 
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (path.startsWith("${API_BASE}/api")) {
+    if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
@@ -80,7 +79,7 @@ app.use((req, res, next) => {
         message: 'Route not found', 
         path: req.originalUrl,
         method: req.method,
-        availableRoutes: [`${API_BASE}/api/health`, `${API_BASE}/api/auth/login`, `${API_BASE}/api/auth/register`]
+        availableRoutes: ["/api/health", "/api/auth/login", "/api/auth/register"]
       });
     });
 
@@ -113,7 +112,7 @@ app.use((req, res, next) => {
       reusePort: true,
     }, () => {
       log(`🚀 Server running on port ${port}`);
-      log(`📡 API available at http://0.0.0.0:${port}/${API_BASE}/api`);
+      log(`📡 API available at http://0.0.0.0:${port}/api`);
       log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
     });
   } catch (error) {
