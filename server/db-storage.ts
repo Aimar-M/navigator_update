@@ -96,7 +96,7 @@ export class DatabaseStorage {
   //   return uniqueTrips;
   // }
 
-  async function getTripsByUser(userId: number) {
+  async getTripsByUser(userId: number) {
     // Get trips where user is the organizer
     const organizerTrips = await db.select().from(trips).where(eq(trips.organizer, userId));
   
