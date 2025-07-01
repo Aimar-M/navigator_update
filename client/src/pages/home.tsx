@@ -68,6 +68,8 @@ export default function Home() {
     handlePendingInvitation();
   }, [user, token, queryClient]);
   
+  console.log(user, token, API_BASE);
+
   // Use React Query with proper dependencies to avoid setState during render
   const { data: trips, isLoading } = useQuery({
     queryKey: [`${API_BASE}/api/trips`, !!user, token],
