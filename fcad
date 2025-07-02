@@ -1,0 +1,58 @@
+[33mc925581[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m HEAD@{0}: commit: add all these
+[33m5e56a0d[m HEAD@{1}: reset: moving to 5e56a0d6817740e53dc2f5f7f1b7d5dcd734069c
+[33ma1e6034[m HEAD@{2}: reset: moving to a1e6034bcc72c62a8e0791b060804883d5f576e0
+[33mb6bf23d[m HEAD@{3}: reset: moving to b6bf23d02e0e238cfd94209ccc2577bac5676a65
+[33md639e89[m HEAD@{4}: commit: restoring order into the file tree
+[33mfb01759[m HEAD@{5}: commit: what a nonsense sidequest
+[33mb69f1a3[m HEAD@{6}: commit: ad
+[33mba9fbea[m HEAD@{7}: commit: ad
+[33m9cea900[m HEAD@{8}: commit: ad
+[33meba1de3[m HEAD@{9}: commit: ad
+[33m6d06f84[m HEAD@{10}: commit: ad
+[33me563942[m HEAD@{11}: commit: sda
+[33mb6bf23d[m HEAD@{12}: commit: sda
+[33m45a98c1[m HEAD@{13}: commit: back
+[33m329a224[m HEAD@{14}: commit: not sure this will work
+[33m864ed02[m HEAD@{15}: commit: persistence issues?
+[33m554b605[m HEAD@{16}: commit: async function fixed
+[33m1e0d2e3[m HEAD@{17}: commit: console log
+[33m1187909[m HEAD@{18}: commit: amd
+[33ma1e6034[m HEAD@{19}: commit: final commit fingers crosssed
+[33m4219be7[m HEAD@{20}: commit: final commit fingers crosssed
+[33m0e5822e[m HEAD@{21}: commit: final commit fingers crosssed
+[33ma00eb6b[m HEAD@{22}: commit: final commit fingers crosssed
+[33m5e56a0d[m HEAD@{23}: commit: test
+[33m1a2f8be[m HEAD@{24}: commit: fixing syntax issues
+[33mc6fff59[m HEAD@{25}: commit: backtick still
+[33mb0f7a08[m HEAD@{26}: commit: fixing backtick
+[33m491d5e2[m HEAD@{27}: commit: fixing backtick
+[33m01d3634[m HEAD@{28}: commit: adding these
+[33mf47d36b[m HEAD@{29}: commit: double quotes removed
+[33mfb5a2da[m HEAD@{30}: commit: think this is going to work, fixing all the routing calls to backend)
+[33mab1be5e[m HEAD@{31}: commit: eh last push, client env file backend url
+[33ma6081e7[m HEAD@{32}: commit: really close no regex
+[33mdc680ae[m HEAD@{33}: commit: ...
+[33m8a92df9[m HEAD@{34}: commit: use express.json
+[33me7d8cfc[m HEAD@{35}: commit: lets see
+[33mc300eff[m HEAD@{36}: commit: not sure this will work
+[33m470b0ba[m HEAD@{37}: commit: not sure this will work
+[33m9db22c2[m HEAD@{38}: commit: stronger cors script
+[33m361d774[m HEAD@{39}: commit: port + cors error hopefully
+[33mf4fdcbf[m HEAD@{40}: commit: opening host port
+[33mfefe304[m HEAD@{41}: commit: the routes had a /api after all
+[33mc35e8cd[m HEAD@{42}: commit: all domains
+[33m790af47[m HEAD@{43}: commit: it was never /api, changing routes
+[33m28d65fb[m HEAD@{44}: commit: no way that slash was the problem, cors error
+[33m7969966[m HEAD@{45}: commit: just the allowed origin, solving a 404 error
+[33md8eb0f6[m HEAD@{46}: commit: vite api url not vite api base url
+[33mf43e343[m HEAD@{47}: commit: vite api url not vite api base url
+[33m7147c09[m HEAD@{48}: commit: allowing em all
+[33me8f2650[m HEAD@{49}: commit: allowing new url
+[33m1b35481[m HEAD@{50}: commit: hope this fixed the chat issue
+[33mc8f9921[m HEAD@{51}: commit: fixing routing issues fe
+[33m28b0043[m HEAD@{52}: commit: quick tweak to vercel.json
+[33m2b30dd4[m HEAD@{53}: commit: checking updated backend call
+[33m3e90ae3[m HEAD@{54}: commit: updating the spa routing for vercel
+[33m0a3f98d[m HEAD@{55}: commit: SPA fallback for vercel
+[33mcdd57bf[m HEAD@{56}: Branch: renamed refs/heads/master to refs/heads/main
+[33mcdd57bf[m HEAD@{58}: commit (initial): initial commit for fresh deployment
