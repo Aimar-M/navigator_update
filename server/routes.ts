@@ -397,6 +397,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = ensureUser(req, res);
       if (!user) return; // Response already sent by ensureUser
       
+      
       // Convert string dates to Date objects before validation
       const data = {
         ...req.body,
@@ -442,9 +443,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = ensureUser(req, res);
       if (!user) return; // Response already sent by ensureUser
+
+      console.log("Authenticated user:", user.id);
       
       const trips = await storage.getTripsByUser(user.id);
+      console.log("Trips found for user:", trips);
+
       const tripMemberships = await storage.getTripMembershipsByUser(user.id);
+      console.log("Trip memberships for user:", tripMemberships);
+
       
       // Filter trips to only include those where user has confirmed RSVP status OR is the organizer
       const confirmedTrips = trips.filter(trip => {
