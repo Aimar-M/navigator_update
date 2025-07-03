@@ -72,7 +72,7 @@ export default function Home() {
 
   // Use React Query with proper dependencies to avoid setState during render
   const { data: trips, isLoading } = useQuery({
-    queryKey: [`${API_BASE}/api/trips`, !!user, token],
+    queryKey: [`${API_BASE}/api/trips`],
     queryFn: async () => {
       if (!user || !token) return [];
 
@@ -88,6 +88,7 @@ export default function Home() {
       return response.json();
     },
     enabled: !!user && !!token,
+    staleTime:0,
   });
   
   // Define mutations for pinning and archiving trips
