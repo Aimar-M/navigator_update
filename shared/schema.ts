@@ -146,7 +146,7 @@ export const insertUserTripSettingsSchema = createInsertSchema(userTripSettings)
 });
 
 // TripMembers schema (to handle trip participants)
-export const tripMembers = pgTable("trip_members", {
+export const tripMembers = pgTable("tripMembers", {
   tripId: integer("trip_id").notNull().references(() => trips.id),
   userId: integer("user_id").notNull().references(() => users.id),
   status: text("status").notNull().default("pending"), // pending, confirmed, declined (invitation status)

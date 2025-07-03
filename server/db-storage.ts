@@ -102,9 +102,9 @@ export class DatabaseStorage {
   
     // Get trips where user is a member
     const memberTripIds = await db
-      .select({ tripId: trip_members.tripId })
-      .from(trip_members)
-      .where(eq(trip_members.userId, userId));
+      .select({ tripId: tripMembers.tripId })
+      .from(tripMembers)
+      .where(eq(tripMembers.userId, userId));
   
     const memberTrips = await db
       .select()
