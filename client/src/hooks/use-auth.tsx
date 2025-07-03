@@ -44,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         // Check if we have a token
         const token = localStorage.getItem('auth_token');
+        console.log("auth check: token from localStorage:", token);
         
         if (token) {
           // Add token to authorization header
@@ -52,9 +53,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
           
           const response = await fetch(`${API_BASE}/api/auth/me`, { headers });
+          console.log("Auth check: /api/auth/me response status:", response.status);
           
           if (response.ok) {
             const userData = await response.json();
+            console.log("Auth check: userData from /api/auth/me:", userData);
             setUser(userData);
             
             // Connect WebSocket if user is logged in
@@ -64,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
           } else {
             // If token is invalid, remove it
+            console.log("Auth check: token is invalid, removing it from localStorage");
             localStorage.removeItem('auth_token');
           }
         }
