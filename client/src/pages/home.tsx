@@ -75,6 +75,8 @@ export default function Home() {
     queryKey: [`${API_BASE}/api/trips`, !!user, token],
     queryFn: async () => {
       if (!user || !token) return [];
+
+      console.log('Fetching trips from API');
       
       // Add token to authorization header
       const headers: Record<string, string> = {
