@@ -254,6 +254,26 @@ export default function Home() {
         trip.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         trip.destination.toLowerCase().includes(searchTerm.toLowerCase()));
   }).sort(sortTripsByPinnedAndProximity);
+
+  // debugging 
+  const currentDateToday = new Date();
+
+  console.log("All trips:", allTripsIncludingPending);
+  console.log("Current date:", currentDateToday);
+  allTripsIncludingPending.forEach(trip => {
+    console.log(
+      "Trip:",
+      trip.name,
+      "Start:",
+      trip.startDate,
+      "End:",
+      trip.endDate,
+      "Parsed End:",
+      new Date(trip.endDate)
+    );
+  });
+
+  
   
   // Upcoming trips = trips with end date on or after current date
   const upcomingTrips = allTripsIncludingPending.filter((trip: any) => {
