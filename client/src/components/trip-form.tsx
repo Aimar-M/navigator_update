@@ -85,7 +85,7 @@ export default function TripForm({ onComplete }: TripFormProps) {
       
       // Use fetch directly with authentication token
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`${API_BASE}/api/trips`, {
+      const response = await fetch(`\${API_BASE}/api/trips`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
