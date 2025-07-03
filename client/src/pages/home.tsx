@@ -33,6 +33,8 @@ export default function Home() {
   const queryClient = useQueryClient();
 
   const token = user ? localStorage.getItem('auth_token') : null;
+
+  console.log("user:", user, "token:", token);
   
   // Handle pending invitation by ensuring it gets processed through proper RSVP workflow
   useEffect(() => {

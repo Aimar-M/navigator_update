@@ -106,16 +106,14 @@ export default function TripForm({ onComplete }: TripFormProps) {
         title: "Trip created",
         description: "Your trip has been created successfully.",
       });
-
-      window.location.href = "/";
       
-    //   await queryClient.refetchQueries({ queryKey: [`${API_BASE}/api/trips`], exact: false });
+      await queryClient.refetchQueries({ queryKey: [`${API_BASE}/api/trips`], exact: false });
       
-    //   if (onComplete) {
-    //     onComplete();
-    //   } else {
-    //     navigate(`/trips/${trip.id}`);
-    //   }
+      if (onComplete) {
+        onComplete();
+      } else {
+        navigate(`/trips/${trip.id}`);
+      }
     } 
     catch (error) {
       toast({
