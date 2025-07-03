@@ -107,7 +107,7 @@ export default function TripForm({ onComplete }: TripFormProps) {
         description: "Your trip has been created successfully.",
       });
       
-      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
+      await queryClient.refetchQueries({ queryKey: [`${API_BASE}/api/trips`], exact: false });
       
       if (onComplete) {
         onComplete();
