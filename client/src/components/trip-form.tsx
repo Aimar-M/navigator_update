@@ -20,6 +20,7 @@ interface TripFormProps {
 
 export default function TripForm({ onComplete }: TripFormProps) {
   const { user } = useAuth();
+  const token = user ? localStorage.getItem('auth_token') : null;
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);

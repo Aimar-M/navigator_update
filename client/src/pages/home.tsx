@@ -21,7 +21,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest } from '@/lib/queryClient';
 
-console.log("VITE_API_URL:", import.meta.env.VITE_API_URL);
+console.log("=== VITE_API_URL: ====", import.meta.env.VITE_API_URL);
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
