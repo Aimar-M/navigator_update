@@ -74,7 +74,7 @@ export default function Home() {
 
   // Use React Query with proper dependencies to avoid setState during render
   const { data: trips, isLoading } = useQuery({
-    queryKey: [`${API_BASE}/api/trips`],
+    queryKey: [`${API_BASE}/api/trips`,user?.id,token],
     queryFn: async () => {
       if (!user || !token) return [];
 
