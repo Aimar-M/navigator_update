@@ -21,7 +21,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest } from '@/lib/queryClient';
 
-console.log("=== VITE_API_URL: ====", import.meta.env.VITE_API_URL);
+
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -82,9 +82,10 @@ export default function Home() {
       // // if (!user || !token) return [];
 
       console.log('Fetching trips from API');
-      fetch('https://navigatorupdate-production.up.railway.app/api/trips', {
-        headers: { Authorization: 'Bearer 42' }
-      }).then(r => r.json()).then(console.log).catch(console.error);
+      console.log(API_BASE);
+      // fetch('https://navigatorupdate-production.up.railway.app/api/trips', {
+      //   headers: { Authorization: 'Bearer 42' }
+      // }).then(r => r.json()).then(console.log).catch(console.error);
       
       // Add token to authorization header
       const headers: Record<string, string> = {
@@ -93,16 +94,7 @@ export default function Home() {
       };
       
       const response = await apiRequest('GET', `${API_BASE}/api/trips`, { headers });
-      const text = await response.text();
-      console.log("get trips response:", text);
-      try{
-        const data = JSON.parse(text);
-        console.log('parsed data: data');
-        return data;
-      } catch (e) {
-        console.error('JSON parse error:', e);
-        return [];
-      }
+      console.log(response)
       if (!response.ok) throw new Error("Failed to fetch trips");
       return response.json();
     },
