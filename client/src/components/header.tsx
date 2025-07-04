@@ -35,7 +35,7 @@ export default function Header() {
   const { data: pendingInvitations } = useQuery({
     queryKey: [`${API_BASE}/api/trips/memberships/pending`, !!user, token],
     queryFn: async () => {
-      if (!user || !token) return [];
+      // if (!user || !token) return [];
       
       const headers: Record<string, string> = {
         'Authorization': `Bearer ${token}`

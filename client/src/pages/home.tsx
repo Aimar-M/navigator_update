@@ -79,7 +79,7 @@ export default function Home() {
   const { data: trips, isLoading } = useQuery({
     queryKey: [`${API_BASE}/api/trips`,user?.id,token],
     queryFn: async () => {
-      // if (!user || !token) return [];
+      // // if (!user || !token) return [];
 
       console.log('Fetching trips from API');
       
@@ -173,7 +173,7 @@ export default function Home() {
   const { data: pendingInvitations, isLoading: pendingInvitationsLoading } = useQuery({
     queryKey: [`${API_BASE}/api/trips/invitations/pending`, !!user, token],
     queryFn: async () => {
-      if (!user || !token) return [];
+      // if (!user || !token) return [];
       
       const headers: Record<string, string> = {
         'Authorization': `Bearer ${token}`
