@@ -96,7 +96,7 @@ export default function Home() {
       const response = await apiRequest('GET', `${API_BASE}/api/trips`, { headers });
       console.log('Response!!:', response);
       // if (!response.ok) throw new Error("Failed to fetch trips");
-      return response.json();
+      return response;
     },
     enabled: !!user && !!token,
     staleTime:0,
