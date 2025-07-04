@@ -89,6 +89,7 @@ export default function Home() {
       };
       
       const response = await apiRequest('GET', `${API_BASE}/api/trips`, { headers });
+      console.log("get trips response:", response.text());
       if (!response.ok) throw new Error("Failed to fetch trips");
       return response.json();
     },
