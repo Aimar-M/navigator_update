@@ -45,12 +45,17 @@ export async function apiRequest<T = any>(
 
   console.log("apiRequest: about to fetch", fullUrl, headers);
 
-  const res = await fetch(fullUrl, {
+  const fetchOptions: RequestInit = {
     method,
     headers,
     credentials: 'include',
-    body: data ? JSON.stringify(data) : undefined,
-  });
+  };
+
+  if (data && method !== 'GET' && method !== 'HEAD') {
+    fetchOptions.body = JSON.stringify(data);
+  }
+
+  const res = await fetch(fullUrl, fetchOptions);
 
   console.log("apiRequest: got response", res);
 

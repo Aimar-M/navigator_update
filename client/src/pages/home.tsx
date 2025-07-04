@@ -93,10 +93,12 @@ export default function Home() {
         'Content-Type': 'application/json'
       };
       try
-      {const response = await apiRequest('GET', `${API_BASE}/api/trips`, { headers });
+      {
+      const response = await apiRequest('GET', `${API_BASE}/api/trips`);
       console.log('Response!!:', response);
       // if (!response.ok) throw new Error("Failed to fetch trips");
-      return response;} catch (e){
+      return response;
+    } catch (e){
         console.error('error in queryFN home page:', e);
         throw e;
       }
