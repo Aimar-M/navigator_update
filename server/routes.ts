@@ -109,7 +109,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(200).json({ 
       status: 'ok', 
       timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || 'development',
+      environment: process.env.NODE_ENV || 'production',
       uptime: process.uptime(),
       memory: process.memoryUsage(),
       version: process.version

@@ -44,15 +44,22 @@ export async function apiRequest<T = any>(
   const baseUrl = import.meta.env.VITE_API_URL;
   const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
 
+  console.log("apiRequest: about to fetch", fullUrl, headers);
+
   const res = await fetch(fullUrl, {
     method,
     headers,
-    credentials: 'include', // Include cookies for session auth
+    credentials: 'include',
     body: data ? JSON.stringify(data) : undefined,
   });
 
+  console.log("apiRequest: got response", res);
+
   await throwIfResNotOk(res);
-  return res.json();
+
+  const json = await res.json();
+  console.log("apiRequest: parsed json", json);
+  return json;
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";

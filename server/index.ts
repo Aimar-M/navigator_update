@@ -8,7 +8,7 @@ config();
 
 console.log('🚀 Starting server...');
 console.log('📁 Current directory:', process.cwd());
-console.log('🌍 Environment:', process.env.NODE_ENV || 'development');
+console.log('🌍 Environment:', process.env.NODE_ENV || 'production');
 console.log('🔧 Port:', process.env.PORT || '5000');
 
 const app = express();
@@ -23,8 +23,8 @@ app.use(cors({
     "https://navigator-update.vercel.app",
     "https://navigator-update-git-main-aimar-ms-projects.vercel.app",
     "https://navigator-update-1zbs9iahz-aimar-ms-projects.vercel.app",
-    // Allow all origins in development
-    ...(process.env.NODE_ENV === 'development' ? ['http://localhost:*'] : [])
+    // Allow all origins in production
+    ...(process.env.NODE_ENV === 'production' ? ['http://localhost:*'] : [])
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
@@ -91,11 +91,11 @@ app.use((req, res, next) => {
       throw err;
     });
 
-    // importantly only setup vite in development and after
+    // importantly only setup vite in production and after
     // setting up all the other routes so the catch-all route
     // doesn't interfere with the other routes
-    if (app.get("env") === "development") {
-      console.log('🔧 Setting up Vite for development...');
+    if (app.get("env") === "production") {
+      console.log('🔧 Setting up Vite for production...');
       await setupVite(app, server);
     } else {
       console.log('🔧 Setting up static file serving for production...');
@@ -113,7 +113,7 @@ app.use((req, res, next) => {
     }, () => {
       log(`🚀 Server running on port ${port}`);
       log(`📡 API available at http://0.0.0.0:${port}/api`);
-      log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+      log(`🌐 Environment: ${process.env.NODE_ENV || 'production'}`);
     });
   } catch (error) {
     console.error('❌ Server startup failed:', error);
