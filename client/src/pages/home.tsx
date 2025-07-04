@@ -85,11 +85,21 @@ export default function Home() {
       
       // Add token to authorization header
       const headers: Record<string, string> = {
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
       };
       
       const response = await apiRequest('GET', `${API_BASE}/api/trips`, { headers });
-      console.log("get trips response:", response.text());
+      const text = await response.text();
+      console.log("get trips response:", text);
+      try{
+        const data = JSON.parse(text);
+        console.log('parsed data: data');
+        return data;
+      } catch (e) {
+        console.error('JSON parse error:', e);
+        return [];
+      }
       if (!response.ok) throw new Error("Failed to fetch trips");
       return response.json();
     },
