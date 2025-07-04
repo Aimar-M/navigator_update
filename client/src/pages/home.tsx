@@ -79,7 +79,7 @@ export default function Home() {
   const { data: trips, isLoading } = useQuery({
     queryKey: [`${API_BASE}/api/trips`,user?.id,token],
     queryFn: async () => {
-      if (!user || !token) return [];
+      // if (!user || !token) return [];
 
       console.log('Fetching trips from API');
       
