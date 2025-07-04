@@ -82,6 +82,9 @@ export default function Home() {
       // // if (!user || !token) return [];
 
       console.log('Fetching trips from API');
+      fetch('https://navigatorupdate-production.up.railway.app/api/trips', {
+        headers: { Authorization: 'Bearer 42' }
+      }).then(r => r.json()).then(console.log).catch(console.error);
       
       // Add token to authorization header
       const headers: Record<string, string> = {
