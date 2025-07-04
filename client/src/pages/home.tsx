@@ -92,11 +92,14 @@ export default function Home() {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       };
-      
-      const response = await apiRequest('GET', `${API_BASE}/api/trips`, { headers });
+      try
+      {const response = await apiRequest('GET', `${API_BASE}/api/trips`, { headers });
       console.log('Response!!:', response);
       // if (!response.ok) throw new Error("Failed to fetch trips");
-      return response;
+      return response;} catch (e){
+        console.error('error in queryFN home page:', e);
+        throw e;
+      }
     },
     enabled: !!user && !!token,
     staleTime:0,

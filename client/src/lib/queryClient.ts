@@ -34,7 +34,6 @@ export async function apiRequest<T = any>(
   data?: unknown | undefined,
 ): Promise<T> {
   console.log("apiRequest called:", method, url, data);
-
   // Set up headers with authentication token
   const headers: Record<string, string> = data ? { "Content-Type": "application/json" } : {};
   const token = localStorage.getItem('auth_token');
