@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Send, ArrowLeft, PieChart, Plus, ChevronDown } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { wsClient } from "@/lib/websocket";
@@ -28,6 +28,7 @@ export default function Chat() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isFromChatsPage, setIsFromChatsPage] = useState(false);
+  const queryClient = useQueryClient();
   
   // Check if we navigated from the chats page and update last visit timestamp
   useEffect(() => {
@@ -237,6 +238,8 @@ export default function Chat() {
 
       // Clear input after sending
       setMessage("");
+      // Invalidate the messages query so it refetches
+      queryClient.invalidateQueries([`${API_BASE}/api/trips/${tripId}/messages`]);
     } catch (error) {
       console.error("Error sending message:", error);
     } finally {
