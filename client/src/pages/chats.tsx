@@ -152,13 +152,7 @@ export default function Chats() {
       }
       
       // Use our new endpoint that gets all messages across trips
-      const response = await apiRequest('GET', `${API_BASE}/api/messages`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch messages");
-      }
-      
-      const messages = await response.json();
-      // Sort messages by timestamp descending (newest first)
+      const messages = await apiRequest('GET', `${API_BASE}/api/messages`);
       return messages.sort((a: any, b: any) => 
         new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
       );
