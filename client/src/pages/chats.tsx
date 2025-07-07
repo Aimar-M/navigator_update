@@ -133,8 +133,8 @@ export default function Chats() {
       }
       
       const response = await apiRequest('GET', `${API_BASE}/api/trips`);
-      if (!response.ok) throw new Error("Failed to fetch trips");
-      return response.json();
+      // if (!response.ok) throw new Error("Failed to fetch trips");
+      return response;
     },
     enabled: !!user,
   });
