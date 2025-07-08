@@ -100,6 +100,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       setUser(userData);
       
+      // Invalidate trips and pending invitations after login
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/memberships/pending`] });
+      
       // Connect WebSocket after login
       wsClient.connect(userData.id, []);
       
