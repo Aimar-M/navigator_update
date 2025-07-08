@@ -18,7 +18,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -57,6 +57,7 @@ export default function InviteModal({ tripId, isOpen, onClose }: InviteModalProp
   const [activeTab, setActiveTab] = useState("username");
   const [isValidating, setIsValidating] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Fetch existing invitation links when the modal opens
   useEffect(() => {

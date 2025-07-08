@@ -54,9 +54,9 @@ export default function Home() {
           });
           
           if (response.ok) {
-            // Refresh data to show the pending trip card
-            queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/memberships/pending`] });
-            queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
+            // Invalidate queries so trip list and pending invitations auto-refresh
+            queryClient.invalidateQueries([`${API_BASE}/api/trips`]);
+            queryClient.invalidateQueries([`${API_BASE}/api/trips/memberships/pending`]);
           } else {
             console.error('Failed to accept invitation:', response.statusText);
           }
