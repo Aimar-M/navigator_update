@@ -45,21 +45,16 @@ export default function Home() {
       if (pendingInvitation && user && token) {
         try {
           // Accept the invitation to add user to trip membership (but with pending RSVP status)
-          const response = await apiRequest('POST', `${API_BASE}/api/invite/${pendingInvitation}/accept`, {
+          await apiRequest('POST', `${API_BASE}/api/invite/${pendingInvitation}/accept`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json',
             },
             credentials: 'include',
           });
-          
-          if (response.ok) {
-            // Invalidate queries so trip list and pending invitations auto-refresh
-            queryClient.invalidateQueries([`${API_BASE}/api/trips`]);
-            queryClient.invalidateQueries([`${API_BASE}/api/trips/memberships/pending`]);
-          } else {
-            console.error('Failed to accept invitation:', response.statusText);
-          }
+          // Invalidate queries so trip list and pending invitations auto-refresh
+          queryClient.invalidateQueries([`${API_BASE}/api/trips`]);
+          queryClient.invalidateQueries([`${API_BASE}/api/trips/memberships/pending`]);
         } catch (error) {
           console.error('Error accepting invitation:', error);
         } finally {
