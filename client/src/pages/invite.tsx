@@ -26,7 +26,6 @@ export default function InvitationPage() {
     queryKey: [`${API_BASE}/api/invite/${token}`],
     queryFn: async () => {
       try {
-        console.log(`Fetching invitation details for token: ${token}`);
         const data = await apiRequest('GET', `${API_BASE}/api/invite/${token}`);
         console.log("Invitation data:", data);
         return data;
