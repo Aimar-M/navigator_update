@@ -100,10 +100,16 @@ export default function InviteModal({ tripId, isOpen, onClose }: InviteModalProp
     }));
   }, [pastCompanions]);
 
+  const frontendBase = typeof window !== 'undefined' ? window.location.origin : '';
   const fetchInvitationLinks = async () => {
     try {
       const links = await apiRequest<InvitationLink[]>("GET", `${API_BASE}/api/trips/${tripId}/invites`);
-      setInviteLinks(links);
+      // Update inviteUrl to use frontend domain
+      const updatedLinks = links.map(link => ({
+        ...link,
+        inviteUrl: `${frontendBase}/invite/${link.token}`
+      }));
+      setInviteLinks(updatedLinks);
     } catch (error) {
       console.error("Failed to fetch invitation links", error);
     }
@@ -444,7 +450,9 @@ export default function InviteModal({ tripId, isOpen, onClose }: InviteModalProp
     setIsGeneratingLink(true);
     try {
       const link = await apiRequest<InvitationLink>("POST", `${API_BASE}/api/trips/${tripId}/invite`, {});
-      setInviteLinks([link, ...inviteLinks]);
+      // Update inviteUrl to use frontend domain
+      const updatedLink = { ...link, inviteUrl: `${frontendBase}/invite/${link.token}` };
+      setInviteLinks([updatedLink, ...inviteLinks]);
       toast({
         title: "Invitation link created",
         description: "Share this link with friends to invite them to your trip!",

@@ -12,6 +12,8 @@ import Header from "@/components/header";
 import MobileNavigation from "@/components/mobile-navigation";
 import { apiRequest } from "@/lib/queryClient";
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 export default function InvitationPage() {
   const { token } = useParams<{ token: string }>();
   const [, navigate] = useLocation();
@@ -24,16 +26,8 @@ export default function InvitationPage() {
     queryKey: [`${API_BASE}/api/invite/${token}`],
     queryFn: async () => {
       try {
-        // Make sure we're using the correct API endpoint
         console.log(`Fetching invitation details for token: ${token}`);
-        // The server routes are mounted under /api
-        const response = await apiRequest('GET', `${API_BASE}/api/invite/${token}`);
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`Error response: ${response.status}, ${errorText}`);
-          throw new Error(`Failed to fetch invitation details: ${response.status} ${errorText}`);
-        }
-        const data = await response.json();
+        const data = await apiRequest('GET', `${API_BASE}/api/invite/${token}`);
         console.log("Invitation data:", data);
         return data;
       } catch (error) {
@@ -45,44 +39,35 @@ export default function InvitationPage() {
 
   const handleAcceptInvitation = async () => {
     if (!user) {
-      // Save the invitation token in localStorage to accept it after login
       localStorage.setItem('pendingInvitation', token);
-      
       toast({
         title: 'Authentication Required',
         description: 'Please sign in or register to join this trip',
       });
-      
       navigate('/login');
       return;
     }
-
     setAcceptingInvite(true);
     try {
-      // Get the auth token from localStorage
       const authToken = localStorage.getItem('auth_token');
       const headers: Record<string, string> = {};
-      
       if (authToken) {
         headers['Authorization'] = `Bearer ${authToken}`;
       }
-      
-      // Use a direct fetch with headers to ensure authentication works
-      const response = await apiRequest('POST', `${API_BASE}/api/invite/${token}/accept`, {}, headers);
-      
+      // Use fetch directly to POST with headers
+      const response = await fetch(`${API_BASE}/api/invite/${token}/accept`, {
+        method: 'POST',
+        headers,
+      });
       if (!response.ok) {
         const errorData = await response.text();
         throw new Error(errorData || 'Failed to accept invitation');
       }
-      
       const result = await response.json();
-      
       toast({
         title: 'Success!',
         description: 'You have joined the trip',
       });
-      
-      // Navigate to the trip page
       navigate(`/trips/${result.tripId}`);
     } catch (error) {
       console.error('Error accepting invitation:', error);

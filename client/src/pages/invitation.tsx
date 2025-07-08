@@ -15,6 +15,9 @@ import navigatorText from "@assets/ab_Navigator2-09_1749673915685.png";
 import Lottie from "lottie-react";
 import EnhancedItineraryPreview from "@/components/enhanced-itinerary-preview";
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
+
 // Simple travel-themed Lottie animation data
 const travelAnimation: any = {
   "v": "5.5.7",
