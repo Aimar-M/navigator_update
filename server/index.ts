@@ -13,8 +13,7 @@ console.log('🔧 Port:', process.env.PORT || '5000');
 
 const app = express();
 
-app.use(express.json()); // <-- Make sure this is before CORS
-
+app.use(express.json({ limit: '10mb' })); // <-- Increased limit for large image uploads
 
 app.use(cors({
   origin: [
@@ -113,10 +112,4 @@ app.use((req, res, next) => {
     }, () => {
       log(`🚀 Server running on port ${port}`);
       log(`📡 API available at http://0.0.0.0:${port}/api`);
-      log(`🌐 Environment: ${process.env.NODE_ENV || 'production'}`);
-    });
-  } catch (error) {
-    console.error('❌ Server startup failed:', error);
-    process.exit(1);
-  }
-})();
+      log(`
