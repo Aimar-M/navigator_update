@@ -73,7 +73,6 @@ app.use((req, res, next) => {
 
     // 404 handler for unmatched routes
     app.use('*', (req: Request, res: Response) => {
-      console.log(`❌ 404 - Route not found: ${req.method} ${req.originalUrl}`);
       res.status(404).json({ 
         message: 'Route not found', 
         path: req.originalUrl,
@@ -112,4 +111,9 @@ app.use((req, res, next) => {
     }, () => {
       log(`🚀 Server running on port ${port}`);
       log(`📡 API available at http://0.0.0.0:${port}/api`);
-      log(`
+    });
+  } catch (error) {
+    console.error('Error starting server:', error);
+    process.exit(1);
+  }
+})();
