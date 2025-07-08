@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { loginUser, registerUser, logoutUser, getAuthToken, setAuthToken, removeAuthToken, getPendingInvitation, removePendingInvitation } from "@/lib/auth";
 import { wsClient } from "@/lib/websocket";
+import { useQueryClient } from "@tanstack/react-query";
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -37,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     // Check if the user is logged in when the app loads
@@ -127,6 +129,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       setUser(newUser);
+      
+      // Invalidate trips and pending invitations after registration
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/memberships/pending`] });
       
       // Connect WebSocket after registration
       wsClient.connect(newUser.id, []);
