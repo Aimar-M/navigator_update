@@ -36,7 +36,7 @@ export default function Profile() {
 
   // Fetch user profile data
   const { data: profile, isLoading: isProfileLoading } = useQuery({
-    queryKey: ["${API_BASE}/api/auth/me"],
+    queryKey: [`${API_BASE}/api/auth/me`],
     enabled: !!user,
   });
 

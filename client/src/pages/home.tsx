@@ -53,8 +53,8 @@ export default function Home() {
             credentials: 'include',
           });
           // Invalidate queries so trip list and pending invitations auto-refresh
-          queryClient.invalidateQueries([`${API_BASE}/api/trips`]);
-          queryClient.invalidateQueries([`${API_BASE}/api/trips/memberships/pending`]);
+          queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
+          queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/memberships/pending`] });
         } catch (error) {
           console.error('Error accepting invitation:', error);
         } finally {

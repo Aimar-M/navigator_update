@@ -20,8 +20,8 @@ export default function TripTabs({ tripId, isConfirmedMember = true }: TripTabsP
     { name: "Itinerary", href: `/trips/${tripId}/itinerary` },
     { name: "Chat", href: `/trips/${tripId}/chat` },
     { name: "Group Expense Tracker", href: `/trips/${tripId}/expenses` },
-    { name: "Budget", href: `/trips/${tripId}/budget` },
-    { name: "Flights", href: `/trips/${tripId}/flights` },
+    // { name: "Budget", href: `/trips/${tripId}/budget` },
+    // { name: "Flights", href: `/trips/${tripId}/flights` },
     { name: "Polls", href: `/trips/${tripId}/polls` },
   ];
 
