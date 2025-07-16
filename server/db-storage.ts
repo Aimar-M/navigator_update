@@ -8,7 +8,7 @@ import {
   InvitationLink, InsertInvitationLink,
   users, trips, tripMembers, activities, activityRsvp, 
   messages, surveyQuestions, surveyResponses, expenses, expenseSplits, settlements,
-  polls, pollVotes, invitationLinks
+  polls, pollVotes, invitationLinks, userTripSettings
 } from "@shared/schema";
 import { eq, and, desc, sql, ilike, inArray } from "drizzle-orm";
 export class DatabaseStorage {
@@ -1119,11 +1119,53 @@ export class DatabaseStorage {
 
   // Add missing methods for app functionality
   async getUserTripSettings(userId: number, tripId: number): Promise<any> {
-    return { isPinned: false, isArchived: false };
+    const [settings] = await db
+      .select()
+      .from(userTripSettings)
+      .where(
+        and(
+          eq(userTripSettings.userId, userId),
+          eq(userTripSettings.tripId, tripId)
+        )
+      );
+    return settings || null;
   }
 
-  async createOrUpdateUserTripSettings(settings:{userId: number, tripId: number, settings: any}): Promise<any> {
-    return settings;
+  async createOrUpdateUserTripSettings(settings: { userId: number, tripId: number, isPinned?: boolean, isArchived?: boolean }): Promise<any> {
+    // Check if settings already exist
+    const [existing] = await db
+      .select()
+      .from(userTripSettings)
+      .where(
+        and(
+          eq(userTripSettings.userId, settings.userId),
+          eq(userTripSettings.tripId, settings.tripId)
+        )
+      );
+    if (existing) {
+      // Update existing settings
+      const [updated] = await db
+        .update(userTripSettings)
+        .set({
+          ...settings,
+          updatedAt: new Date()
+        })
+        .where(
+          and(
+            eq(userTripSettings.userId, settings.userId),
+            eq(userTripSettings.tripId, settings.tripId)
+          )
+        )
+        .returning();
+      return updated;
+    } else {
+      // Create new settings
+      const [newSettings] = await db
+        .insert(userTripSettings)
+        .values(settings)
+        .returning();
+      return newSettings;
+    }
   }
 
   async getPollsByTrip(tripId: number): Promise<any[]> {
