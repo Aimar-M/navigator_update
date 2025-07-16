@@ -1122,7 +1122,7 @@ export class DatabaseStorage {
     return { isPinned: false, isArchived: false };
   }
 
-  async createOrUpdateUserTripSettings(userId: number, tripId: number, settings: any): Promise<any> {
+  async createOrUpdateUserTripSettings(settings:{userId: number, tripId: number, settings: any}): Promise<any> {
     return settings;
   }
 
