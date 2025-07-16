@@ -99,6 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       setUser(userData);
+      queryClient.clear(); // Clear all cached queries after login
       
       // Invalidate trips and pending invitations after login
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
@@ -133,6 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       setUser(newUser);
+      queryClient.clear(); // Clear all cached queries after registration
       
       // Invalidate trips and pending invitations after registration
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
@@ -161,6 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Remove the token from localStorage
       removeAuthToken();
       setUser(null);
+      queryClient.clear(); // Clear all cached queries after logout
       wsClient.disconnect();
       navigate("/login");
     } catch (error) {

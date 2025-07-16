@@ -4111,7 +4111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const trip = await storage.getTrip(settlement.tripId);
           return {
             ...settlement,
-            payerName: payer?.name || 'Unknown',
+            payerName: payer?.name || payer?.username || 'Unknown',
             tripName: trip?.name || 'Unknown Trip',
           };
         })

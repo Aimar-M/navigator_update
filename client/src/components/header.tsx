@@ -138,7 +138,7 @@ export default function Header() {
         {user ? (
           <div className="flex items-center space-x-2">
             {/* Budget Dashboard Button */}
-            <Button
+            {/* <Button
               variant="ghost"
               size="icon"
               className="text-gray-500 hover:bg-gray-100"
@@ -146,7 +146,7 @@ export default function Header() {
               title="Budget Dashboard"
             >
               <PieChart className="h-5 w-5" />
-            </Button>
+            </Button> */}
 
             <NotificationBell />
 
