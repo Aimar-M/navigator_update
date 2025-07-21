@@ -95,12 +95,18 @@ export default function Header() {
     if (notification.type === 'invite') {
       navigate(`/trips/${notification.data.trip.id}`);
     }
-    
-    // Mark as read
+    // Mark as read in localStorage
+    const readIds = JSON.parse(localStorage.getItem('readNotifications') || '[]');
+    if (!readIds.includes(notification.id)) {
+      const newReadIds = [...readIds, notification.id];
+      localStorage.setItem('readNotifications', JSON.stringify(newReadIds));
+    }
+    // Mark as read in state
     setNotifications(prev => prev.map(n => 
       n.id === notification.id ? {...n, isRead: true} : n
     ));
-    
+    // Update hasNotifications
+    setHasNotifications(prev => prev && notifications.some(n => !n.isRead && n.id !== notification.id));
     // Close dropdown
     setNotificationsOpen(false);
   };
