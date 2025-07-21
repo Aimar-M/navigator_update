@@ -1144,16 +1144,15 @@ export class DatabaseStorage {
           )
         );
       if (existing) {
-        // Update existing settings
+        // Always update isArchived and updatedAt, and isPinned if provided
+        const updateData: any = {
+          isArchived: settings.isArchived ?? existing.isArchived,
+          updatedAt: new Date()
+        };
+        if (settings.isPinned !== undefined) updateData.isPinned = settings.isPinned;
         const [updated] = await db
           .update(userTripSettings)
-          .set({
-            userId: settings.userId,
-            tripId: settings.tripId,
-            isPinned: settings.isPinned ?? false,
-            isArchived: settings.isArchived ?? false,
-            updatedAt: new Date()
-          })
+          .set(updateData)
           .where(
             and(
               eq(userTripSettings.userId, settings.userId),
