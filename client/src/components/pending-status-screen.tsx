@@ -145,7 +145,12 @@ export default function PendingStatusScreen({ trip, member }: PendingStatusScree
         url += `?amount=${amount}`;
       }
       
-      const response = await fetch(url);
+      const token = localStorage.getItem('auth_token');
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const response = await fetch(url, { headers });
       if (!response.ok) throw new Error('Failed to fetch settlement options');
       return response.json();
     },
