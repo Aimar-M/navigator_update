@@ -33,6 +33,7 @@ export default function Home() {
   const [showArchived, setShowArchived] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState("upcoming");
 
   const token = user ? localStorage.getItem('auth_token') : null;
 
@@ -90,7 +91,7 @@ export default function Home() {
       try
       {
       const response = await apiRequest('GET', `${API_BASE}/api/trips`);
-      console.log('Response!!:', response);
+      // console.log('Response!!:', response);
       // if (!response.ok) throw new Error("Failed to fetch trips");
       return response;
     } catch (e){
@@ -100,7 +101,6 @@ export default function Home() {
     },
     enabled: !!user && !!token,
     staleTime:0,
-    refetchInterval: 2000,
   });
   
   // Define mutations for pinning and archiving trips
@@ -354,7 +354,15 @@ export default function Home() {
               </div>
             ) : trips && trips.length > 0 ? (
               <div className="space-y-1">
-                <Tabs defaultValue="upcoming" className="w-full">
+                <Tabs
+                  defaultValue="upcoming"
+                  value={activeTab}
+                  onValueChange={(val) => {
+                    setActiveTab(val);
+                    setShowArchived(val === "archived");
+                  }}
+                  className="w-full"
+                >
                   <TabsList className="w-full justify-start px-4 pb-2">
                     <TabsTrigger value="upcoming" className="text-xs">Upcoming</TabsTrigger>
                     <TabsTrigger value="archived" className="text-xs">Archived</TabsTrigger>
