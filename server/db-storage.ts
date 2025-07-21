@@ -1133,6 +1133,9 @@ export class DatabaseStorage {
 
   async createOrUpdateUserTripSettings(settings: { userId: number, tripId: number, isPinned?: boolean, isArchived?: boolean }): Promise<any> {
     try {
+      if (settings.isPinned === undefined && settings.isArchived === undefined) {
+        throw new Error('No values to set: isPinned or isArchived must be provided');
+      }
       // Check if settings already exist
       const [existing] = await db
         .select()
@@ -1144,12 +1147,13 @@ export class DatabaseStorage {
           )
         );
       if (existing) {
-        // Always update isArchived and updatedAt, and isPinned if provided
-        const updateData: any = {
-          isArchived: settings.isArchived ?? existing.isArchived,
-          updatedAt: new Date()
-        };
+        // Only update fields that are defined, always include updatedAt
+        const updateData: any = { updatedAt: new Date() };
         if (settings.isPinned !== undefined) updateData.isPinned = settings.isPinned;
+        if (settings.isArchived !== undefined) updateData.isArchived = settings.isArchived;
+        if (Object.keys(updateData).length === 1) { // Only updatedAt
+          throw new Error('No values to set: isPinned or isArchived must be provided');
+        }
         const [updated] = await db
           .update(userTripSettings)
           .set(updateData)
@@ -1342,6 +1346,26 @@ export class DatabaseStorage {
         )
       )
       .orderBy(desc(settlements.createdAt));
+  }
+
+  // Auto-archive all trips for a user where the end date is in the past and not already archived for the user.
+  async autoArchivePastTripsForUser(userId: number): Promise<void> {
+    const now = new Date();
+    // Get all trips for the user
+    const trips = await this.getTripsByUser(userId);
+    for (const trip of trips) {
+      if (trip.endDate && new Date(trip.endDate) < now) {
+        // Check user trip settings
+        const settings = await this.getUserTripSettings(userId, trip.id);
+        if (!settings || !settings.isArchived) {
+          await this.createOrUpdateUserTripSettings({
+            userId,
+            tripId: trip.id,
+            isArchived: true
+          });
+        }
+      }
+    }
   }
 }
 
