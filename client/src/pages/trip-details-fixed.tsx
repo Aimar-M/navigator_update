@@ -173,12 +173,18 @@ export default function TripDetailFixed() {
           {/* Trip Content */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Trip Cover Photo Card */}
-            <div className="md:col-span-2 bg-white rounded-xl shadow-sm overflow-hidden">
-              <img 
-                src={trip?.cover || "https://images.unsplash.com/photo-1583422409516-2895a77efded?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1200&h=600"}
-                alt={`${trip?.destination ?? ''} view`} 
-                className="w-full h-48 md:h-64 object-cover" 
-              />
+            <div className="md:col-span-2 bg-white rounded-xl shadow-sm overflow-hidden flex items-center justify-center h-48 md:h-64 relative">
+              {trip.cover ? (
+                <img 
+                  src={trip.cover}
+                  alt={`${trip.destination} view`} 
+                  className="w-full h-full object-cover" 
+                />
+              ) : (
+                <span className="text-4xl font-pacifico text-gray-900 text-center px-2 truncate w-full">
+                  {trip.name}
+                </span>
+              )}
               <div className="p-4">
                 <p className="text-gray-700">
                   {trip?.description || `Explore ${trip?.destination ?? ''} with friends! This trip will be an amazing adventure filled with great experiences and memories.`}
