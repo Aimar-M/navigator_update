@@ -76,7 +76,7 @@ export default function Header() {
           type: 'invite',
           title: `Trip Invitation: ${invitation.trip?.name}`,
           message: `${invitation.organizer?.name || invitation.organizer?.username} invited you to join their trip`,
-          time: new Date(),
+          time: invitation.membership.joinedAt,
           data: invitation,
           isRead: false
         });
