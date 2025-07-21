@@ -49,23 +49,44 @@ export default function TripCard({
             isActive ? "border-2 border-primary-600" : "border"
           )}
         >
-          {/* Trip Image Section */}
-          <div className="h-32 w-full bg-white flex items-center justify-center">
-            <span className="text-4xl font-pacifico text-gray-900 text-center px-2 truncate w-full">
-              {name}
-            </span>
-            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-transparent via-white/0 to-white/20 opacity-0 transition-all duration-700 group-hover:opacity-100 group-hover:rotate-12 pointer-events-none"></div>
-            <div className="absolute inset-0 opacity-0 bg-gradient-to-r from-primary-200/20 via-primary-300/10 to-primary-200/20 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
-            <Badge
-              variant="outline"
-              className={cn(
-                "absolute top-2 right-2 text-xs font-medium px-2.5 py-0.5 rounded-full transition-all duration-300 hover:scale-110 hover:shadow-sm",
-                getTripStatusColor(status)
-              )}
-            >
-              {status}
-            </Badge>
-          </div>
+          {/* Trip Cover Section */}
+          {imageUrl ? (
+            <div className="h-32 w-full relative overflow-hidden">
+              <img
+                src={imageUrl}
+                alt={name}
+                className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+              />
+              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-transparent via-white/0 to-white/20 opacity-0 transition-all duration-700 group-hover:opacity-100 group-hover:rotate-12 pointer-events-none"></div>
+              <div className="absolute inset-0 opacity-0 bg-gradient-to-r from-primary-200/20 via-primary-300/10 to-primary-200/20 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
+              <Badge
+                variant="outline"
+                className={cn(
+                  "absolute top-2 right-2 text-xs font-medium px-2.5 py-0.5 rounded-full transition-all duration-300 hover:scale-110 hover:shadow-sm",
+                  getTripStatusColor(status)
+                )}
+              >
+                {status}
+              </Badge>
+            </div>
+          ) : (
+            <div className="h-32 w-full bg-white flex items-center justify-center relative overflow-hidden">
+              <span className="text-4xl font-pacifico text-gray-900 text-center px-2 truncate w-full">
+                {name}
+              </span>
+              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-transparent via-white/0 to-white/20 opacity-0 transition-all duration-700 group-hover:opacity-100 group-hover:rotate-12 pointer-events-none"></div>
+              <div className="absolute inset-0 opacity-0 bg-gradient-to-r from-primary-200/20 via-primary-300/10 to-primary-200/20 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
+              <Badge
+                variant="outline"
+                className={cn(
+                  "absolute top-2 right-2 text-xs font-medium px-2.5 py-0.5 rounded-full transition-all duration-300 hover:scale-110 hover:shadow-sm",
+                  getTripStatusColor(status)
+                )}
+              >
+                {status}
+              </Badge>
+            </div>
+          )}
           <CardContent className="p-4 relative z-10 transition-all duration-300 group-hover:bg-opacity-95">
             <div className="flex flex-col">
               <h3 className="font-semibold text-lg text-gray-900 relative transition-all duration-300 group-hover:text-primary-600">
