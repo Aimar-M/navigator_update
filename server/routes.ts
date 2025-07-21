@@ -17,6 +17,7 @@ import {
 import { z } from "zod";
 import bcrypt from 'bcrypt';
 const saltRounds = 10;
+const passwordRules = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
 
 
 interface WebSocketClient extends WebSocket {
@@ -181,6 +182,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userData = insertUserSchema.parse(req.body);
       // Check if username already exists
+      if(!passwordRules.test(userData.password)) {
+        return res.status(400).json({
+          message: "password must be at least 8 characters and include; Uppercase, Lowercase, number, and a special character"
+        });
+      }
       const existingUser = await storage.getUserByUsername(userData.username);
       if (existingUser) {
         return res.status(400).json({ message: 'Username already taken' });
@@ -192,6 +198,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       // Hash the password before saving
       userData.password = await bcrypt.hash(userData.password, saltRounds);
+      
       // Create user
       const user = await storage.createUser(userData);
       // Don't send password in the response
