@@ -79,13 +79,20 @@ export default function Profile() {
     e.preventDefault();
     setIsSubmitting(true);
 
+    // Ensure Venmo username starts with '@'
+    const venmo = formData.venmoUsername?.trim();
+    const safeFormData = {
+      ...formData,
+      venmoUsername: venmo ? (venmo.startsWith('@') ? venmo : '@' + venmo.replace(/^@*/, '')) : ''
+    };
+
     try {
       const response = await apiRequest('PUT', `${API_BASE}/api/users/profile`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(safeFormData)
       });
 
       if (!response.ok) {

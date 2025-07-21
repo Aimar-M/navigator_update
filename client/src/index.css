@@ -111,6 +111,10 @@
   border-radius: 2px;
 }
 
+.font-pacifico {
+  font-family: 'Pacifico', cursive;
+}
+
 @media (min-width: 768px) {
   .content-container {
     height: calc(100vh - 64px);
