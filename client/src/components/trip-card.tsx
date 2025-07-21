@@ -71,7 +71,7 @@ export default function TripCard({
             </div>
           ) : (
             <div className="h-32 w-full bg-white flex items-center justify-center relative overflow-hidden">
-              <span className="text-4xl font-pacifico text-gray-900 text-center px-2 truncate w-full">
+              <span className="text-4xl font-pacifico text-gray-900 text-center px-2">
                 {name}
               </span>
               <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-transparent via-white/0 to-white/20 opacity-0 transition-all duration-700 group-hover:opacity-100 group-hover:rotate-12 pointer-events-none"></div>

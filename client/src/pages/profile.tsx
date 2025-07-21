@@ -87,17 +87,9 @@ export default function Profile() {
     };
 
     try {
-      const response = await apiRequest('PUT', `${API_BASE}/api/users/profile`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-        },
+      await apiRequest('PUT', `${API_BASE}/api/users/profile`, {
         body: JSON.stringify(safeFormData)
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to update profile');
-      }
 
       // Refresh profile data
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/auth/me`] });
