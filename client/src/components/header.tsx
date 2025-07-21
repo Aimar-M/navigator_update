@@ -58,6 +58,8 @@ export default function Header() {
   useEffect(() => {
     if (!pendingInvitations) return;
     
+    // Get read notification IDs from localStorage
+    const readIds = JSON.parse(localStorage.getItem('readNotifications') || '[]');
     const newNotifications: Array<{
       id: string;
       type: string;
@@ -71,20 +73,21 @@ export default function Header() {
     // Add trip invitation notifications
     if (pendingInvitations.length > 0) {
       pendingInvitations.forEach((invitation: any) => {
+        const notifId = `invite-${invitation.membership.tripId}`;
         newNotifications.push({
-          id: `invite-${invitation.membership.tripId}`,
+          id: notifId,
           type: 'invite',
           title: `Trip Invitation: ${invitation.trip?.name}`,
           message: `${invitation.organizer?.name || invitation.organizer?.username} invited you to join their trip`,
           time: invitation.membership.joinedAt,
           data: invitation,
-          isRead: false
+          isRead: readIds.includes(notifId)
         });
       });
     }
     
     // Set has notifications flag
-    setHasNotifications(newNotifications.length > 0);
+    setHasNotifications(newNotifications.some(n => !n.isRead));
     setNotifications(newNotifications);
   }, [pendingInvitations]);
   
@@ -103,6 +106,11 @@ export default function Header() {
   };
   
   const handleMarkAllAsRead = () => {
+    // Store all notification IDs as read in localStorage
+    const allIds = notifications.map(n => n.id);
+    const readIds = JSON.parse(localStorage.getItem('readNotifications') || '[]');
+    const newReadIds = Array.from(new Set([...readIds, ...allIds]));
+    localStorage.setItem('readNotifications', JSON.stringify(newReadIds));
     setNotifications(prev => prev.map(n => ({...n, isRead: true})));
     setHasNotifications(false);
   };
