@@ -52,7 +52,7 @@ export default function TripCard({
           {/* Trip Image Section */}
           <div className={cn(
             "h-32 w-full relative overflow-hidden", 
-            !imageUrl && defaultBackgroundClass
+            !imageUrl && "bg-white"
           )}>
             {imageUrl ? (
               <img 
@@ -61,8 +61,10 @@ export default function TripCard({
                 className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-white font-bold text-xl group overflow-hidden">
-                {/* Empty colorful background without text */}
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="text-gray-900 font-bold text-2xl text-center px-2 truncate w-full">
+                  {name}
+                </span>
               </div>
             )}
             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-transparent via-white/0 to-white/20 opacity-0 transition-all duration-700 group-hover:opacity-100 group-hover:rotate-12 pointer-events-none"></div>
