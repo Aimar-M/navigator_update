@@ -51,6 +51,7 @@ export default function Header() {
       }
     },
     enabled: !!user && !!token,
+    refetchInterval: 2000,
   });
   
   // Update notifications when data changes
