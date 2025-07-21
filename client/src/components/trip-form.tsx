@@ -77,7 +77,6 @@ export default function TripForm({ onComplete }: TripFormProps) {
       const tripData = {
         ...formData,
         organizer: user.id,
-        cover: getRandomDestinationImage(),
         status: "planning",
         startDate,
         endDate,
