@@ -110,18 +110,8 @@ export default function Home() {
       const trip = trips?.find((t: any) => t.id === tripId);
       if (!trip) throw new Error("Trip not found");
       
-      const headers: Record<string, string> = {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      };
-      
-      const response = await apiRequest('PUT', `${API_BASE}/api/trips/${tripId}`, {
-        headers,
-        body: JSON.stringify({ isPinned: !trip.isPinned })
-      });
-      
-      if (!response.ok) throw new Error("Failed to update trip");
-      return response.json();
+      // Only send the payload directly
+      return await apiRequest('PUT', `${API_BASE}/api/trips/${tripId}`, { isPinned: !trip.isPinned });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
@@ -146,18 +136,8 @@ export default function Home() {
       const trip = trips?.find((t: any) => t.id === tripId);
       if (!trip) throw new Error("Trip not found");
       
-      const headers: Record<string, string> = {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      };
-      
-      const response = await apiRequest('PUT', `${API_BASE}/api/trips/${tripId}`, {
-        headers,
-        body: JSON.stringify({ isArchived: !trip.isArchived })
-      });
-      
-      if (!response.ok) throw new Error("Failed to update trip");
-      return response.json();
+      // Only send the payload directly
+      return await apiRequest('PUT', `${API_BASE}/api/trips/${tripId}`, { isArchived: !trip.isArchived });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
