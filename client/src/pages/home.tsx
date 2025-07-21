@@ -100,6 +100,7 @@ export default function Home() {
     },
     enabled: !!user && !!token,
     staleTime:0,
+    refetchInterval: 2000,
   });
   
   // Define mutations for pinning and archiving trips
