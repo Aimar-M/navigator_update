@@ -194,12 +194,7 @@ const PollsSection: React.FC<PollsSectionProps> = ({ tripId }) => {
     enabled: !!tripId,
     refetchInterval: 2000, // Refetch more frequently to get updated votes
     queryFn: async () => {
-      const token = localStorage.getItem('auth_token');
-      const response = await apiRequest('GET', `${API_BASE}/api/trips/${tripId}/polls`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch polls');
-      }
-      return response.json();
+      return await apiRequest('GET', `${API_BASE}/api/trips/${tripId}/polls`);
     }
   });
 

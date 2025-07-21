@@ -197,7 +197,7 @@ const CityAutocomplete: React.FC<CityAutocompleteProps> = ({
     }
   };
 
-  // Add manually entered city ONLY if it exists in the dataset
+   // Add manually entered city ONLY if it exists in the dataset
   const addManualCity = (cityName: string) => {
     const found = citiesData.find(city => city.name.toLowerCase() === cityName.toLowerCase());
     if (
