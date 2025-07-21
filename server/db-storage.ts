@@ -1147,7 +1147,10 @@ export class DatabaseStorage {
       const [updated] = await db
         .update(userTripSettings)
         .set({
-          ...settings,
+          userId: settings.userId,
+          tripId: settings.tripId,
+          isPinned: settings.isPinned ?? false,
+          isArchived: settings.isArchived ?? false,
           updatedAt: new Date()
         })
         .where(
@@ -1162,7 +1165,14 @@ export class DatabaseStorage {
       // Create new settings
       const [newSettings] = await db
         .insert(userTripSettings)
-        .values(settings)
+        .values({
+          userId: settings.userId,
+          tripId: settings.tripId,
+          isPinned: settings.isPinned ?? false,
+          isArchived: settings.isArchived ?? false,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
         .returning();
       return newSettings;
     }
