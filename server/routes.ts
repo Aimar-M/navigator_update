@@ -15,6 +15,8 @@ import {
   User
 } from "@shared/schema";
 import { z } from "zod";
+import bcrypt from 'bcrypt';
+const saltRounds = 10;
 
 
 interface WebSocketClient extends WebSocket {
@@ -178,28 +180,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   router.post('/auth/register', async (req: Request, res: Response) => {
     try {
       const userData = insertUserSchema.parse(req.body);
-      
       // Check if username already exists
       const existingUser = await storage.getUserByUsername(userData.username);
       if (existingUser) {
         return res.status(400).json({ message: 'Username already taken' });
       }
-      
       // Check if email already exists
       const existingEmail = await storage.getUserByEmail(userData.email);
       if (existingEmail) {
         return res.status(400).json({ message: 'Email already registered' });
       }
-      
+      // Hash the password before saving
+      userData.password = await bcrypt.hash(userData.password, saltRounds);
       // Create user
       const user = await storage.createUser(userData);
-      
       // Don't send password in the response
       const { password, ...userWithoutPassword } = user;
-      
       // Generate token (in this simple implementation, just use the user ID)
       const token = user.id.toString();
-      
       // Return user data with token
       res.status(201).json({
         ...userWithoutPassword,
@@ -216,37 +214,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
   router.post('/auth/login', async (req: Request, res: Response) => {
     try {
       const { username, password } = req.body;
-      
       if (!username || !password) {
         return res.status(400).json({ message: 'Username and password are required' });
       }
-      
       // Debug log to help diagnose issues
       console.log(`Attempting login for user: ${username}`);
-      
       const user = await storage.getUserByUsername(username);
-      
       // Debug log to check if user was found
       console.log('User found in database:', !!user);
-      
-      if (!user || user.password !== password) {
+      if (!user) {
         console.log('Login failed: Invalid username or password');
         return res.status(401).json({ message: 'Invalid username or password' });
       }
-      
+      // Check if password is hashed (bcrypt hashes start with $2)
+      let isMatch = false;
+      if (user.password && user.password.startsWith('$2')) {
+        isMatch = await bcrypt.compare(password, user.password);
+      } else {
+        // Legacy: compare plaintext
+        isMatch = password === user.password;
+        // If match, upgrade to hash
+        if (isMatch) {
+          const newHash = await bcrypt.hash(password, saltRounds);
+          await storage.updateUser(user.id, { password: newHash });
+        }
+      }
+      if (!isMatch) {
+        console.log('Login failed: Invalid username or password');
+        return res.status(401).json({ message: 'Invalid username or password' });
+      }
       // Don't send password in the response
       const { password: _, ...userWithoutPassword } = user;
-      
       // Set session for session-based authentication
       if (req.session) {
         req.session.userId = user.id;
       }
-      
       // Generate token (in this simple implementation, just use the user ID)
       const token = `${user.id}`;
-      
       console.log('Login successful for:', username);
-      
       // Return user data with token
       res.json({
         ...userWithoutPassword,
@@ -1136,11 +1141,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Handle "cannot attend" responses - remove member and archive trip for them
       if (status === 'declined') {
         // Archive the trip for this user before removing them
-        await storage.createOrUpdateUserTripSettings(
+        await storage.createOrUpdateUserTripSettings({
           userId,
           tripId,
-          {isPinned: false,
-            isArchived: true}
+          isPinned: false,
+          isArchived: true}
         );
         
         // Remove the user from the trip
