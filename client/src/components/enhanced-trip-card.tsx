@@ -102,45 +102,61 @@ export default function EnhancedTripCard({
             )}
           >
             {/* Trip Image Section */}
-            <div className={cn(
-              "h-32 w-full relative overflow-hidden", 
-              !imageUrl && defaultBackgroundClass
-            )}>
-              {imageUrl ? (
+            {imageUrl ? (
+              <div className="h-32 w-full relative overflow-hidden">
                 <img 
                   src={imageUrl} 
                   alt={name} 
                   className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
                 />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-white font-bold text-xl group overflow-hidden">
-                  <div className="transition-all duration-300 group-hover:scale-125 group-hover:rotate-3 relative">
-                    {destination.slice(0, 2).toUpperCase()}
-                    <div className="absolute bottom-0 left-0 h-1 w-full bg-white/40 transform translate-y-6 transition-all duration-500 group-hover:translate-y-0"></div>
-                  </div>
-                </div>
-              )}
-              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-transparent via-white/0 to-white/20 opacity-0 transition-all duration-700 group-hover:opacity-100 group-hover:rotate-12 pointer-events-none"></div>
-              <div className="absolute inset-0 opacity-0 bg-gradient-to-r from-primary-200/20 via-primary-300/10 to-primary-200/20 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
-              {isPending ? (
-                <Badge
-                  variant="outline"
-                  className="absolute top-2 right-2 text-xs font-medium px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-800 border-orange-300"
-                >
-                  Pending
-                </Badge>
-              ) : (
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "absolute top-2 right-2 text-xs font-medium px-2.5 py-0.5 rounded-full transition-all duration-300 hover:scale-110 hover:shadow-sm",
-                    getTripStatusColor(status)
-                  )}
-                >
-                  {status}
-                </Badge>
-              )}
-            </div>
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-transparent via-white/0 to-white/20 opacity-0 transition-all duration-700 group-hover:opacity-100 group-hover:rotate-12 pointer-events-none"></div>
+                <div className="absolute inset-0 opacity-0 bg-gradient-to-r from-primary-200/20 via-primary-300/10 to-primary-200/20 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
+                {isPending ? (
+                  <Badge
+                    variant="outline"
+                    className="absolute top-2 right-2 text-xs font-medium px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-800 border-orange-300"
+                  >
+                    Pending
+                  </Badge>
+                ) : (
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "absolute top-2 right-2 text-xs font-medium px-2.5 py-0.5 rounded-full transition-all duration-300 hover:scale-110 hover:shadow-sm",
+                      getTripStatusColor(status)
+                    )}
+                  >
+                    {status}
+                  </Badge>
+                )}
+              </div>
+            ) : (
+              <div className="h-32 w-full bg-white flex items-center justify-center relative overflow-hidden">
+                <span className="text-4xl font-pacifico text-gray-900 text-center px-2 truncate w-full">
+                  {name}
+                </span>
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-transparent via-white/0 to-white/20 opacity-0 transition-all duration-700 group-hover:opacity-100 group-hover:rotate-12 pointer-events-none"></div>
+                <div className="absolute inset-0 opacity-0 bg-gradient-to-r from-primary-200/20 via-primary-300/10 to-primary-200/20 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
+                {isPending ? (
+                  <Badge
+                    variant="outline"
+                    className="absolute top-2 right-2 text-xs font-medium px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-800 border-orange-300"
+                  >
+                    Pending
+                  </Badge>
+                ) : (
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "absolute top-2 right-2 text-xs font-medium px-2.5 py-0.5 rounded-full transition-all duration-300 hover:scale-110 hover:shadow-sm",
+                      getTripStatusColor(status)
+                    )}
+                  >
+                    {status}
+                  </Badge>
+                )}
+              </div>
+            )}
             
             <CardContent className="p-4 relative z-10 transition-all duration-300 group-hover:bg-opacity-95">
               <div className="flex flex-col">
