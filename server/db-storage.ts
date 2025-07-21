@@ -1132,49 +1132,54 @@ export class DatabaseStorage {
   }
 
   async createOrUpdateUserTripSettings(settings: { userId: number, tripId: number, isPinned?: boolean, isArchived?: boolean }): Promise<any> {
-    // Check if settings already exist
-    const [existing] = await db
-      .select()
-      .from(userTripSettings)
-      .where(
-        and(
-          eq(userTripSettings.userId, settings.userId),
-          eq(userTripSettings.tripId, settings.tripId)
-        )
-      );
-    if (existing) {
-      // Update existing settings
-      const [updated] = await db
-        .update(userTripSettings)
-        .set({
-          userId: settings.userId,
-          tripId: settings.tripId,
-          isPinned: settings.isPinned ?? false,
-          isArchived: settings.isArchived ?? false,
-          updatedAt: new Date()
-        })
+    try {
+      // Check if settings already exist
+      const [existing] = await db
+        .select()
+        .from(userTripSettings)
         .where(
           and(
             eq(userTripSettings.userId, settings.userId),
             eq(userTripSettings.tripId, settings.tripId)
           )
-        )
-        .returning();
-      return updated;
-    } else {
-      // Create new settings
-      const [newSettings] = await db
-        .insert(userTripSettings)
-        .values({
-          userId: settings.userId,
-          tripId: settings.tripId,
-          isPinned: settings.isPinned ?? false,
-          isArchived: settings.isArchived ?? false,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        })
-        .returning();
-      return newSettings;
+        );
+      if (existing) {
+        // Update existing settings
+        const [updated] = await db
+          .update(userTripSettings)
+          .set({
+            userId: settings.userId,
+            tripId: settings.tripId,
+            isPinned: settings.isPinned ?? false,
+            isArchived: settings.isArchived ?? false,
+            updatedAt: new Date()
+          })
+          .where(
+            and(
+              eq(userTripSettings.userId, settings.userId),
+              eq(userTripSettings.tripId, settings.tripId)
+            )
+          )
+          .returning();
+        return updated;
+      } else {
+        // Create new settings
+        const [newSettings] = await db
+          .insert(userTripSettings)
+          .values({
+            userId: settings.userId,
+            tripId: settings.tripId,
+            isPinned: settings.isPinned ?? false,
+            isArchived: settings.isArchived ?? false,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          })
+          .returning();
+        return newSettings;
+      }
+    } catch (error) {
+      console.error('Error in createOrUpdateUserTripSettings:', error);
+      throw error;
     }
   }
 
