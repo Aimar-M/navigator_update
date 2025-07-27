@@ -74,7 +74,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const { userId, tripIds } = event.data;
           ws.userId = userId;
           ws.tripIds = tripIds;
-
+        }
       } catch (err) {
         console.error('WebSocket message error:', err);
       }
