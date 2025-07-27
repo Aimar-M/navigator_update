@@ -279,6 +279,8 @@ export default function Profile() {
                 <CardTitle>Edit Profile</CardTitle>
               </CardHeader>
               <CardContent>
+                {/* Profile Completion Progress Bar and Checklist */}
+                <ProfileCompletionBar formData={formData} />
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -439,6 +441,47 @@ export default function Profile() {
       </main>
 
       <MobileNavigation />
+    </div>
+  );
+}
+
+function ProfileCompletionBar({ formData }: { formData: any }) {
+  // Define required fields for completion
+  const fields = [
+    { key: 'firstName', label: 'First Name' },
+    { key: 'lastName', label: 'Last Name' },
+    { key: 'bio', label: 'Bio' },
+    { key: 'location', label: 'Location' },
+    { key: 'venmoUsername', label: 'Venmo Username' },
+    { key: 'paypalEmail', label: 'PayPal Email' },
+  ];
+  const completed = fields.filter(f => formData[f.key] && formData[f.key].trim() !== '').length;
+  const percent = Math.round((completed / fields.length) * 100);
+
+  return (
+    <div className="mb-6">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm font-medium text-gray-700">Profile Completion</span>
+        <span className="text-xs text-gray-500">{percent}%</span>
+      </div>
+      <div className="w-full bg-gray-200 rounded-full h-2.5 mb-3">
+        <div
+          className="bg-blue-600 h-2.5 rounded-full transition-all"
+          style={{ width: `${percent}%` }}
+        ></div>
+      </div>
+      <ul className="text-xs text-gray-600 space-y-1">
+        {fields.map(f => (
+          <li key={f.key} className="flex items-center gap-2">
+            {formData[f.key] && formData[f.key].trim() !== '' ? (
+              <span className="inline-block w-3 h-3 bg-green-500 rounded-full"></span>
+            ) : (
+              <span className="inline-block w-3 h-3 bg-gray-300 rounded-full"></span>
+            )}
+            {f.label}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
