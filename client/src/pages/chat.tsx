@@ -169,6 +169,9 @@ export default function Chat() {
   useEffect(() => {
     if (!user || !tripId) return;
 
+    console.log("Setting up WebSocket for trip:", tripId);
+    console.log("WebSocket status:", wsClient.getStatus());
+
     // Update WebSocket trip IDs
     wsClient.updateTripIds([tripId]);
     
@@ -181,6 +184,7 @@ export default function Chat() {
       
       // Check if this message is for the current trip
       if (data.data && data.data.tripId === tripId) {
+        console.log("Message is for current trip, processing...");
         // Format message to match the expected structure
         const formattedMessage = {
           id: `msg-${data.data.id}`,
@@ -195,7 +199,14 @@ export default function Chat() {
         };
         
         console.log("Formatted new message:", formattedMessage);
-        setMessages(prev => [...prev, formattedMessage]);
+        setMessages(prev => {
+          console.log("Previous messages:", prev);
+          const newMessages = [...prev, formattedMessage];
+          console.log("New messages array:", newMessages);
+          return newMessages;
+        });
+      } else {
+        console.log("Message not for current trip or missing data:", data);
       }
     };
 

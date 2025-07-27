@@ -2017,8 +2017,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       // Broadcast via WebSocket for real-time updates
+      console.log(`Broadcasting message to ${tripId} via WebSocket`);
+      console.log('Connected clients:', wss.clients.size);
+      
       wss.clients.forEach((client: WebSocketClient) => {
+        console.log('Client tripIds:', client.tripIds, 'Client readyState:', client.readyState);
         if (client.readyState === WebSocket.OPEN && client.tripIds?.includes(tripId)) {
+          console.log('Sending message to client');
           client.send(JSON.stringify({
             type: 'new_message',
             data: messageWithUser
