@@ -85,10 +85,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
             content
           });
           
+          // Get user details for the message
+          const userData = await storage.getUser(message.userId);
+          const { password, ...userWithoutPassword } = userData!;
+          
+          // Format message for WebSocket broadcast
+          const formattedMessage = {
+            id: message.id,
+            content: message.content,
+            timestamp: message.timestamp.toISOString(),
+            tripId: message.tripId,
+            userId: message.userId,
+            user: {
+              id: userWithoutPassword.id,
+              name: userWithoutPassword.name || userWithoutPassword.username || 'Anonymous',
+              avatar: userWithoutPassword.avatar
+            }
+          };
+          
           // Broadcast to all clients in this trip
           broadcastToTrip(wss, tripId, {
             type: 'new_message',
-            data: message
+            data: formattedMessage
           });
         }
       } catch (err) {
@@ -2032,25 +2050,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       };
       
-      // Broadcast via WebSocket
-      wss.clients.forEach((client: WebSocketClient) => {
-        if (client.readyState === WebSocket.OPEN && client.tripIds?.includes(tripId)) {
-          // Format message for WebSocket broadcast
-          const formattedMessage = {
-            id: message.id,
-            content: message.content,
-            timestamp: message.timestamp.toISOString(),
-            tripId: message.tripId,
-            userId: message.userId,
-            user: userWithoutPassword
-          };
-          
-          client.send(JSON.stringify({
-            type: 'new_message',
-            data: formattedMessage
-          }));
-        }
-      });
+      // Note: WebSocket broadcasting is now handled in the WebSocket message handler
+      // to avoid duplicate messages when messages are sent via WebSocket
       
       res.status(201).json(messageWithUser);
     } catch (error) {

@@ -178,10 +178,13 @@ export default function Chat() {
     // Listen for new messages
     const handleNewMessage = (data: any) => {
       console.log("Received new WebSocket message:", data);
-      if (data.data.tripId === tripId) {
-        // Format message to match ChatMessage component format
+      
+      // Check if this message is for the current trip
+      if (data.data && data.data.tripId === tripId) {
+        // Format message to match the expected structure
         const formattedMessage = {
-          id: data.data.id,
+          id: `msg-${data.data.id}`,
+          type: 'message',
           content: data.data.content,
           timestamp: data.data.timestamp,
           user: {
@@ -214,10 +217,14 @@ export default function Chat() {
 
     setIsSubmitting(true);
     try {
-      // Get auth token for our token-based authentication
+      // Send message via WebSocket for real-time delivery
+      wsClient.send('chat_message', {
+        tripId: tripId,
+        content: message
+      });
+
+      // Also send via HTTP for persistence
       const token = localStorage.getItem('auth_token');
-      
-      // Add token to authorization header
       const headers: Record<string, string> = {
         "Content-Type": "application/json"
       };
@@ -238,7 +245,8 @@ export default function Chat() {
 
       // Clear input after sending
       setMessage("");
-      // Invalidate the messages query so it refetches
+      
+      // Invalidate the messages query to ensure consistency
       queryClient.invalidateQueries([`${API_BASE}/api/trips/${tripId}/messages`]);
     } catch (error) {
       console.error("Error sending message:", error);
