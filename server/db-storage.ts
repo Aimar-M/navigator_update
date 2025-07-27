@@ -1336,7 +1336,9 @@ export class DatabaseStorage {
   }
 
   async getPendingSettlementsForUser(userId: number): Promise<Settlement[]> {
-    return await db
+    console.log("Getting pending settlements for user:", userId);
+    
+    const results = await db
       .select()
       .from(settlements)
       .where(
@@ -1346,6 +1348,17 @@ export class DatabaseStorage {
         )
       )
       .orderBy(desc(settlements.createdAt));
+    
+    console.log("Found pending settlements:", results.length, "for user:", userId);
+    console.log("Settlement details:", results.map(s => ({
+      id: s.id,
+      payerId: s.payerId,
+      payeeId: s.payeeId,
+      status: s.status,
+      amount: s.amount
+    })));
+    
+    return results;
   }
 
   // Auto-archive all trips for a user where the end date is in the past and not already archived for the user.

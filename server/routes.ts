@@ -4023,6 +4023,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         notes: notes || null,
       });
 
+      console.log("Settlement created:", {
+        id: settlement.id,
+        tripId: settlement.tripId,
+        payerId: settlement.payerId,
+        payeeId: settlement.payeeId,
+        amount: settlement.amount,
+        status: settlement.status,
+        initiatedAt: settlement.initiatedAt
+      });
+
       res.json(settlement);
     } catch (error) {
       console.error("Error initiating settlement:", error);
