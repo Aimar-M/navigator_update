@@ -247,7 +247,7 @@ export default function Chat() {
       setMessage("");
       
       // Invalidate the messages query to ensure consistency
-      queryClient.invalidateQueries([`${API_BASE}/api/trips/${tripId}/messages`]);
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/messages`] });
     } catch (error) {
       console.error("Error sending message:", error);
     } finally {
