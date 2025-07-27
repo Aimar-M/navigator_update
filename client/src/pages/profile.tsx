@@ -63,6 +63,23 @@ export default function Profile() {
     }
   }, [profile]);
 
+  // 1. Save formData to localStorage on change
+  useEffect(() => {
+    if (isEditing) {
+      localStorage.setItem('profileEditDraft', JSON.stringify(formData));
+    }
+  }, [formData, isEditing]);
+
+  // 2. On mount (when entering edit mode), restore from localStorage if present
+  useEffect(() => {
+    if (isEditing) {
+      const draft = localStorage.getItem('profileEditDraft');
+      if (draft) {
+        setFormData(JSON.parse(draft));
+      }
+    }
+  }, [isEditing]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
@@ -108,11 +125,13 @@ export default function Profile() {
       });
     } finally {
       setIsSubmitting(false);
+      localStorage.removeItem('profileEditDraft');
     }
   };
 
   const cancelEdit = () => {
     setIsEditing(false);
+    localStorage.removeItem('profileEditDraft');
     // Reset form data to original values
     if (profile) {
       const profileData = profile as any;
