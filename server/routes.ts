@@ -74,41 +74,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const { userId, tripIds } = event.data;
           ws.userId = userId;
           ws.tripIds = tripIds;
-        } else if (event.type === 'chat_message' && ws.userId) {
-          // Handle new chat messages
-          const { tripId, content } = event.data;
-          
-          // Save message to database
-          const message = await storage.createMessage({
-            tripId,
-            userId: ws.userId,
-            content
-          });
-          
-          // Get user details for the message
-          const userData = await storage.getUser(message.userId);
-          const { password, ...userWithoutPassword } = userData!;
-          
-          // Format message for WebSocket broadcast
-          const formattedMessage = {
-            id: message.id,
-            content: message.content,
-            timestamp: message.timestamp.toISOString(),
-            tripId: message.tripId,
-            userId: message.userId,
-            user: {
-              id: userWithoutPassword.id,
-              name: userWithoutPassword.name || userWithoutPassword.username || 'Anonymous',
-              avatar: userWithoutPassword.avatar
-            }
-          };
-          
-          // Broadcast to all clients in this trip
-          broadcastToTrip(wss, tripId, {
-            type: 'new_message',
-            data: formattedMessage
-          });
-        }
+
       } catch (err) {
         console.error('WebSocket message error:', err);
       }
@@ -177,7 +143,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // First find the user
       const user = await storage.getUserByUsername(username);
       if (!user) {
-        return res.status(404).json({ isMember: false, message: 'User not found' });
+        return rges.status(404).json({ isMember: false, message: 'User not found' });
       }
       
       // Then check if they're a member
@@ -2050,8 +2016,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       };
       
-      // Note: WebSocket broadcasting is now handled in the WebSocket message handler
-      // to avoid duplicate messages when messages are sent via WebSocket
+      // Broadcast via WebSocket for real-time updates
+      wss.clients.forEach((client: WebSocketClient) => {
+        if (client.readyState === WebSocket.OPEN && client.tripIds?.includes(tripId)) {
+          client.send(JSON.stringify({
+            type: 'new_message',
+            data: messageWithUser
+          }));
+        }
+      });
       
       res.status(201).json(messageWithUser);
     } catch (error) {

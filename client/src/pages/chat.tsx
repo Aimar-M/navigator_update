@@ -217,13 +217,7 @@ export default function Chat() {
 
     setIsSubmitting(true);
     try {
-      // Send message via WebSocket for real-time delivery
-      wsClient.send('chat_message', {
-        tripId: tripId,
-        content: message
-      });
-
-      // Also send via HTTP for persistence
+      // Send message via HTTP - the server will handle WebSocket broadcasting
       const token = localStorage.getItem('auth_token');
       const headers: Record<string, string> = {
         "Content-Type": "application/json"
