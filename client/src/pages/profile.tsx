@@ -104,9 +104,8 @@ export default function Profile() {
     };
 
     try {
-      await apiRequest('PUT', `${API_BASE}/api/users/profile`, {
-        body: JSON.stringify(safeFormData)
-      });
+      // FIX: Send the data as a plain object, not as a stringified JSON in a 'body' property
+      await apiRequest('PUT', `${API_BASE}/api/users/profile`, safeFormData);
 
       // Refresh profile data
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/auth/me`] });
@@ -126,6 +125,20 @@ export default function Profile() {
     } finally {
       setIsSubmitting(false);
       localStorage.removeItem('profileEditDraft');
+      // Always reset formData to latest profile after save
+      if (profile) {
+        const profileData = profile as any;
+        setFormData({
+          username: profileData.username || "",
+          email: profileData.email || "",
+          firstName: profileData.firstName || "",
+          lastName: profileData.lastName || "",
+          bio: profileData.bio || "",
+          location: profileData.location || "",
+          venmoUsername: profileData.venmoUsername || "",
+          paypalEmail: profileData.paypalEmail || "",
+        });
+      }
     }
   };
 
