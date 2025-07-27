@@ -85,6 +85,7 @@ export default function Chat() {
       return response.json();
     },
     enabled: !!tripId && !!user,
+    staleTime: 0, // Always consider data stale to allow refetching
   });
   
   // Fetch trip members to check RSVP status
@@ -256,8 +257,10 @@ export default function Chat() {
       // Clear input after sending
       setMessage("");
       
-      // Don't invalidate queries - let WebSocket handle real-time updates
-      // This prevents conflicts between WebSocket messages and refetched data
+      // Invalidate and refetch messages to ensure all users see the new message
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/messages`] });
+      // Force a refetch to ensure immediate update
+      queryClient.refetchQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/messages`] });
     } catch (error) {
       console.error("Error sending message:", error);
     } finally {
