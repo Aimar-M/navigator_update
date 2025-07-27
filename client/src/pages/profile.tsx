@@ -174,6 +174,8 @@ export default function Profile() {
           {/* Profile Header */}
           <Card>
             <CardContent className="p-6">
+              {/* Profile Completion Bar goes here */}
+              <ProfileCompletionBar formData={profileData} />
               <div className="flex items-start justify-between mb-6">
                 <div className="flex items-center space-x-4">
                   <div className="relative">
