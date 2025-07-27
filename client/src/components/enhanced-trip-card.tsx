@@ -20,6 +20,7 @@ interface EnhancedTripCardProps {
   rsvpStatus?: string;
   onPin?: (id: number) => void;
   onArchive?: (id: number) => void;
+  shouldPulse?: boolean;
 }
 
 export default function EnhancedTripCard({
@@ -38,6 +39,7 @@ export default function EnhancedTripCard({
   rsvpStatus,
   onPin,
   onArchive,
+  shouldPulse = false,
 }: EnhancedTripCardProps) {
   // Generate a default background image based on the destination name
   const generateDefaultImage = () => {
@@ -98,7 +100,8 @@ export default function EnhancedTripCard({
               isActive ? "border-2 border-primary-600" : "border",
               isArchived ? "opacity-60" : "opacity-100",
               isPending ? "opacity-75 border-orange-300 bg-orange-50/50" : "",
-              isPinned ? "ring-2 ring-amber-300" : ""
+              isPinned ? "ring-2 ring-amber-300" : "",
+              shouldPulse ? "animate-pulse border-blue-500" : ""
             )}
           >
             {/* Trip Image Section */}

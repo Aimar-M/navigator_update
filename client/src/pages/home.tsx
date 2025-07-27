@@ -301,6 +301,8 @@ export default function Home() {
     return null;
   }
 
+  const notifications = JSON.parse(localStorage.getItem('readNotifications') || '[]');
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
@@ -388,6 +390,7 @@ export default function Home() {
                             rsvpStatus={trip.rsvpStatus}
                             onPin={handlePinTrip}
                             onArchive={handleArchiveTrip}
+                            shouldPulse={notifications.some(n => n.type === 'downpayment' && n.data && n.data.tripId === trip.id && !n.isRead)}
                           />
                         </div>
                       ))
@@ -510,6 +513,7 @@ export default function Home() {
                             rsvpStatus={trip.rsvpStatus}
                             onPin={handlePinTrip}
                             onArchive={handleArchiveTrip}
+                            shouldPulse={notifications.some(n => n.type === 'downpayment' && n.data && n.data.tripId === trip.id && !n.isRead)}
                           />
                         </div>
                       ))
