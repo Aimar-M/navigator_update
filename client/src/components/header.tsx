@@ -86,6 +86,11 @@ export default function Header() {
       });
     }
     
+    // Sort notifications by time (newest first)
+    newNotifications.sort((a, b) => 
+      new Date(b.time).getTime() - new Date(a.time).getTime()
+    );
+    
     // Set has notifications flag
     setHasNotifications(newNotifications.some(n => !n.isRead));
     setNotifications(newNotifications);

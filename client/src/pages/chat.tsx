@@ -206,7 +206,7 @@ export default function Chat() {
 
     return () => {
       wsClient.off('new_message', handleNewMessage);
-      wsClient.onStatusChange(null);
+      // Note: WebSocket status change listener doesn't need explicit cleanup
     };
   }, [user, tripId]);
 

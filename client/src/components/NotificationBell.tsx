@@ -35,9 +35,24 @@ export function NotificationBell() {
   const queryClient = useQueryClient();
 
   // Fetch pending settlements requiring user confirmation
-  const { data: pendingSettlements = [] } = useQuery<PendingSettlement[]>({
+  const { data: pendingSettlements = [], isLoading, error } = useQuery<PendingSettlement[]>({
     queryKey: [`${API_BASE}/api/settlements/pending`],
     refetchInterval: 30000, // Poll every 30 seconds for new notifications
+    enabled: true, // Always enable the query
+    select: (data) => {
+      console.log("Raw settlement data:", data);
+      // Sort by initiatedAt timestamp (newest first)
+      return data.sort((a, b) => 
+        new Date(b.initiatedAt).getTime() - new Date(a.initiatedAt).getTime()
+      );
+    }
+  });
+
+  console.log("NotificationBell debug:", {
+    pendingSettlements,
+    isLoading,
+    error: error?.message,
+    count: pendingSettlements.length
   });
 
   const confirmMutation = useMutation({

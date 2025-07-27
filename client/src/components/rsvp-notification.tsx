@@ -30,7 +30,13 @@ export default function RSVPNotification() {
   // Fetch pending RSVP trips
   const { data: pendingTrips = [], isLoading } = useQuery<PendingTrip[]>({
     queryKey: [`${API_BASE}/api/trips/rsvp/pending`],
-    enabled: !!user
+    enabled: !!user,
+    select: (data) => {
+      // Sort by joinedAt timestamp (newest first)
+      return data.sort((a, b) => 
+        new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime()
+      );
+    }
   });
 
   // RSVP status update mutation
