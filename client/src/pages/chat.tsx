@@ -228,6 +228,9 @@ export default function Chat() {
 
     setIsSubmitting(true);
     try {
+      console.log("Sending message via HTTP...");
+      console.log("WebSocket status before sending:", wsClient.getStatus());
+      
       // Send message via HTTP - the server will handle WebSocket broadcasting
       const token = localStorage.getItem('auth_token');
       const headers: Record<string, string> = {
@@ -247,12 +250,14 @@ export default function Chat() {
       if (!response.ok) {
         throw new Error("Failed to send message");
       }
+      
+      console.log("Message sent successfully via HTTP");
 
       // Clear input after sending
       setMessage("");
       
-      // Invalidate the messages query to ensure consistency
-      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/messages`] });
+      // Don't invalidate queries - let WebSocket handle real-time updates
+      // This prevents conflicts between WebSocket messages and refetched data
     } catch (error) {
       console.error("Error sending message:", error);
     } finally {
