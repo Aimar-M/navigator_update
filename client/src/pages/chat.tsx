@@ -86,6 +86,7 @@ export default function Chat() {
     },
     enabled: !!tripId && !!user,
     staleTime: 0, // Always consider data stale to allow refetching
+    refetchInterval: 5000, // Refetch every 5 seconds to catch any missed WebSocket messages
   });
   
   // Fetch trip members to check RSVP status
@@ -176,6 +177,12 @@ export default function Chat() {
     // Update WebSocket trip IDs
     wsClient.updateTripIds([tripId]);
     
+    // Add status change listener to debug WebSocket connection
+    const handleStatusChange = (status: string) => {
+      console.log("WebSocket status changed to:", status);
+    };
+    wsClient.onStatusChange(handleStatusChange);
+    
     // Mark this chat as visited when opening it
     localStorage.setItem(`lastChatVisit_${tripId}`, new Date().toISOString());
 
@@ -186,26 +193,10 @@ export default function Chat() {
       // Check if this message is for the current trip
       if (data.data && data.data.tripId === tripId) {
         console.log("Message is for current trip, processing...");
-        // Format message to match the expected structure
-        const formattedMessage = {
-          id: `msg-${data.data.id}`,
-          type: 'message',
-          content: data.data.content,
-          timestamp: data.data.timestamp,
-          user: {
-            id: data.data.user.id,
-            name: data.data.user.name,
-            avatar: data.data.user.avatar
-          }
-        };
         
-        console.log("Formatted new message:", formattedMessage);
-        setMessages(prev => {
-          console.log("Previous messages:", prev);
-          const newMessages = [...prev, formattedMessage];
-          console.log("New messages array:", newMessages);
-          return newMessages;
-        });
+        // Instead of manually updating state, invalidate the query to refetch
+        // This ensures consistency and handles the message properly
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/messages`] });
       } else {
         console.log("Message not for current trip or missing data:", data);
       }
@@ -215,6 +206,7 @@ export default function Chat() {
 
     return () => {
       wsClient.off('new_message', handleNewMessage);
+      wsClient.onStatusChange(null);
     };
   }, [user, tripId]);
 
@@ -257,10 +249,8 @@ export default function Chat() {
       // Clear input after sending
       setMessage("");
       
-      // Invalidate and refetch messages to ensure all users see the new message
+      // Invalidate messages query to trigger refetch for all users
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/messages`] });
-      // Force a refetch to ensure immediate update
-      queryClient.refetchQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/messages`] });
     } catch (error) {
       console.error("Error sending message:", error);
     } finally {
