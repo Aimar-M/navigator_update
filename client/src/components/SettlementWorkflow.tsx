@@ -81,6 +81,7 @@ export function SettlementWorkflow({ tripId, balance, isOpen, onClose }: Settlem
       });
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/settlements`] });
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/expenses/balances`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/settlements/pending`] });
       onClose();
     },
     onError: (error: any) => {

@@ -65,8 +65,9 @@ export function NotificationBell() {
         description: "Payment has been marked as received.",
       });
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/settlements/pending`] });
-      // Also invalidate trip expenses and balances to update visuals
+      // Also invalidate trip expenses, balances, and settlements list to update visuals
       pendingSettlements.forEach(settlement => {
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${settlement.tripId}/settlements`] });
         queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${settlement.tripId}/expenses/balances`] });
         queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${settlement.tripId}/expenses`] });
         // Force refetch instead of using cache
