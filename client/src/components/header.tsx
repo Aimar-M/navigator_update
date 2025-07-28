@@ -226,10 +226,13 @@ export default function Header() {
                             <p className="text-sm font-medium">{notification.title}</p>
                             <p className="text-xs text-gray-500">{notification.message}</p>
                             <p className="text-xs text-gray-400">
-                              {notification.time && new Date(notification.time).toLocaleTimeString([], {
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
+                              {notification.time && (
+                                <>
+                                  {new Date(notification.time).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' })}
+                                  {" "}
+                                  {new Date(notification.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </>
+                              )}
                             </p>
                           </div>
                         </div>
