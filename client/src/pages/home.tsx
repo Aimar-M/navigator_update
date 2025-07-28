@@ -205,25 +205,16 @@ export default function Home() {
     organizer: invitation.organizer
   })) || [];
 
-  // Helper to sort trips by pinned status first, then by date proximity
-  const sortTripsByPinnedAndProximity = (tripA: any, tripB: any) => {
+  // Helper to sort trips by pinned status first, then by created date (newest first)
+  const sortTripsByPinnedAndCreated = (tripA: any, tripB: any) => {
     // Pinned trips always come first
-    if (tripA.isPinned && !tripB.isPinned) {
-      return -1;
-    }
-    if (!tripA.isPinned && tripB.isPinned) {
-      return 1;
-    }
-    
-    // If both are pinned or both are not pinned, sort by date proximity
-    const dateA = new Date(tripA.startDate);
-    const dateB = new Date(tripB.startDate);
-    
-    // Calculate difference from today
-    const diffA = Math.abs(dateA.getTime() - currentDate.getTime());
-    const diffB = Math.abs(dateB.getTime() - currentDate.getTime());
-    
-    return diffA - diffB; // Closest dates first
+    if (tripA.isPinned && !tripB.isPinned) return -1;
+    if (!tripA.isPinned && tripB.isPinned) return 1;
+
+    // If both are pinned or both are not pinned, sort by createdAt (newest first)
+    const dateA = new Date(tripA.createdAt);
+    const dateB = new Date(tripB.createdAt);
+    return dateB.getTime() - dateA.getTime();
   };
   
   // Handler functions for pinning and archiving
@@ -246,7 +237,7 @@ export default function Home() {
       (searchTerm === "" || 
         trip.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         trip.destination.toLowerCase().includes(searchTerm.toLowerCase()));
-  }).sort(sortTripsByPinnedAndProximity);
+  }).sort(sortTripsByPinnedAndCreated);
 
   // debugging 
   const currentDateToday = new Date();
@@ -276,7 +267,7 @@ export default function Home() {
       (searchTerm === "" || 
         trip.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         trip.destination.toLowerCase().includes(searchTerm.toLowerCase()));
-  }).sort(sortTripsByPinnedAndProximity);
+  }).sort(sortTripsByPinnedAndCreated);
   
   // All trips (filtered for search and archive status)
   const filteredTrips = allTripsIncludingPending.filter((trip: any) => {
@@ -284,7 +275,7 @@ export default function Home() {
       (searchTerm === "" || 
         trip.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         trip.destination.toLowerCase().includes(searchTerm.toLowerCase()));
-  }).sort(sortTripsByPinnedAndProximity);
+  }).sort(sortTripsByPinnedAndCreated);
   
   // Invitations are handled separately through pendingInvitations
 
