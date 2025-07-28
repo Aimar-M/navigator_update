@@ -264,11 +264,6 @@ export default function Header() {
                     <div className="cursor-pointer w-full flex">Profile</div>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/settings">
-                    <div className="cursor-pointer w-full flex">Settings</div>
-                  </Link>
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
                   Log out
