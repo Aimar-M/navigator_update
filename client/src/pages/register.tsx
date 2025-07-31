@@ -36,12 +36,51 @@ export default function Register() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    // Clear username error when user starts typing
+    if (name === 'username' && errors.username) {
+      setErrors(prev => ({ ...prev, username: '' }));
+    }
   };
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
     
-    if (!formData.username.trim()) newErrors.username = "Username is required";
+    // Username validation with strict rules
+    if (!formData.username.trim()) {
+      newErrors.username = "Username is required";
+    } else {
+      const username = formData.username.trim();
+      
+      // Check for capital letters
+      if (/[A-Z]/.test(username)) {
+        newErrors.username = "Username cannot contain capital letters";
+      }
+      // Check for spaces
+      else if (/\s/.test(username)) {
+        newErrors.username = "Username cannot contain spaces";
+      }
+      // Check for special characters (only allow letters, numbers, underscores, and hyphens)
+      else if (!/^[a-z0-9_-]+$/.test(username)) {
+        newErrors.username = "Username can only contain lowercase letters, numbers, underscores, and hyphens";
+      }
+      // Check length (3-20 characters)
+      else if (username.length < 3) {
+        newErrors.username = "Username must be at least 3 characters long";
+      }
+      else if (username.length > 20) {
+        newErrors.username = "Username must be 20 characters or less";
+      }
+      // Check if it starts with a letter or number (not underscore or hyphen)
+      else if (!/^[a-z0-9]/.test(username)) {
+        newErrors.username = "Username must start with a letter or number";
+      }
+      // Check if it ends with a letter or number (not underscore or hyphen)
+      else if (!/[a-z0-9]$/.test(username)) {
+        newErrors.username = "Username must end with a letter or number";
+      }
+    }
+    
     if (!formData.email.trim()) newErrors.email = "Email is required";
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email is invalid";
     
@@ -104,6 +143,9 @@ export default function Register() {
                 {errors.username && (
                   <p className="text-sm text-red-500">{errors.username}</p>
                 )}
+                <p className="text-xs text-gray-500">
+                  Username must be 3-20 characters, lowercase letters, numbers, underscores, and hyphens only. Cannot start or end with special characters.
+                </p>
               </div>
 
               <div className="space-y-2">
