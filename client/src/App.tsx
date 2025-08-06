@@ -22,6 +22,9 @@ import BudgetDashboard from "@/pages/budget-dashboard";
 import ActivityDetails from "@/pages/activity-details";
 import ExpenseTracker from "@/pages/expense-tracker";
 import ExpenseDetails from "@/pages/expense-details";
+import ForgotPassword from "@/pages/forgot-password";
+import ResetPassword from "@/pages/reset-password";
+import ConfirmEmail from "@/pages/confirm-email";
 
 function Router() {
   return (
@@ -48,6 +51,9 @@ function Router() {
       <Route path="/trips/:tripId/expenses/:expenseId" component={ExpenseDetails} />
       <Route path="/profile" component={Profile} />
       <Route path="/user/:userId" component={UserProfile} />
+      <Route path="/forgot-password" component={ForgotPassword} />
+      <Route path="/reset-password" component={ResetPassword} />
+      <Route path="/confirm-email" component={ConfirmEmail} />
       <Route component={NotFound} />
     </Switch>
   );

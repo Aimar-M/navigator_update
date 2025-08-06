@@ -27,6 +27,16 @@ export class DatabaseStorage {
     return user || undefined;
   }
 
+  async getUserByEmailConfirmationToken(token: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.emailConfirmationToken, token));
+    return user || undefined;
+  }
+
+  async getUserByPasswordResetToken(token: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.passwordResetToken, token));
+    return user || undefined;
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db
       .insert(users)

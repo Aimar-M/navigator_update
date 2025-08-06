@@ -16,6 +16,8 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from 'bcrypt';
+import { v4: uuidv4 } from 'uuid';
+import { sendEmail } from './email';
 const saltRounds = 10;
 const passwordRules = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
 
@@ -183,8 +185,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Hash the password before saving
       userData.password = await bcrypt.hash(userData.password, saltRounds);
       
+      const emailConfirmationToken = uuidv4();
+      userData.emailConfirmed = false;
+      userData.emailConfirmationToken = emailConfirmationToken;
+      
       // Create user
       const user = await storage.createUser(userData);
+      
+      // Send confirmation email (log to console)
+      const confirmUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/confirm-email?token=${emailConfirmationToken}`;
+      await sendEmail(user.email, 'Confirm your email', `
+        <h1>Confirm your email</h1>
+        <p>Click the link below to confirm your email address:</p>
+        <a href="${confirmUrl}">${confirmUrl}</a>
+      `);
+      
       // Don't send password in the response
       const { password, ...userWithoutPassword } = user;
       // Generate token (in this simple implementation, just use the user ID)
@@ -233,6 +248,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!isMatch) {
         console.log('Login failed: Invalid username or password');
         return res.status(401).json({ message: 'Invalid username or password' });
+      }
+      // Block login if email is not confirmed
+      if (!user.emailConfirmed) {
+        return res.status(403).json({ message: 'Please confirm your email before logging in.' });
       }
       // Don't send password in the response
       const { password: _, ...userWithoutPassword } = user;
@@ -4260,6 +4279,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error getting user settlement recommendations:", error);
       res.status(500).json({ message: "Failed to get settlement recommendations" });
+    }
+  });
+
+  // Email confirmation endpoint
+  router.get('/auth/confirm-email', async (req: Request, res: Response) => {
+    const { token } = req.query;
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({ message: 'Invalid or missing token' });
+    }
+    // Find user by token
+    const user = await storage.getUserByEmailConfirmationToken(token);
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired confirmation token' });
+    }
+    // Mark email as confirmed and clear the token
+    await storage.updateUser(user.id, {
+      emailConfirmed: true,
+      emailConfirmationToken: null
+    });
+    res.json({ message: 'Email confirmed successfully' });
+  });
+
+  // Forgot password endpoint
+  router.post('/auth/forgot-password', async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ message: 'Email is required' });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        // Don't reveal if email exists or not for security
+        return res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
+      }
+
+      // Generate password reset token
+      const resetToken = uuidv4();
+      const resetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+
+      // Update user with reset token
+      await storage.updateUser(user.id, {
+        passwordResetToken: resetToken,
+        passwordResetExpires: resetExpires
+      });
+
+      // Send password reset email
+      const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}`;
+      await sendEmail(user.email, 'Reset your password', `
+        <h1>Reset your password</h1>
+        <p>Click the link below to reset your password. This link will expire in 1 hour.</p>
+        <a href="${resetUrl}">${resetUrl}</a>
+        <p>If you didn't request this password reset, you can safely ignore this email.</p>
+      `);
+
+      res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
+  // Reset password endpoint
+  router.post('/auth/reset-password', async (req: Request, res: Response) => {
+    try {
+      const { token, password } = req.body;
+      if (!token || !password) {
+        return res.status(400).json({ message: 'Token and password are required' });
+      }
+
+      // Validate password strength
+      if(!passwordRules.test(password)) {
+        return res.status(400).json({
+          message: "Password must be at least 8 characters and include; Uppercase, Lowercase, number, and a special character"
+        });
+      }
+
+      // Find user by reset token
+      const user = await storage.getUserByPasswordResetToken(token);
+      if (!user) {
+        return res.status(400).json({ message: 'Invalid or expired reset token' });
+      }
+
+      // Check if token has expired
+      if (user.passwordResetExpires && new Date() > user.passwordResetExpires) {
+        return res.status(400).json({ message: 'Reset token has expired' });
+      }
+
+      // Hash the new password
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+      // Update user with new password and clear reset token
+      await storage.updateUser(user.id, {
+        password: hashedPassword,
+        passwordResetToken: null,
+        passwordResetExpires: null
+      });
+
+      res.json({ message: 'Password reset successfully' });
+    } catch (error) {
+      console.error('Reset password error:', error);
+      res.status(500).json({ message: 'Server error' });
     }
   });
 

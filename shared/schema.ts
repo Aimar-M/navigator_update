@@ -31,6 +31,10 @@ export const users = pgTable("users", {
   legacyRemoved: boolean("legacy_removed").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  emailConfirmed: boolean("email_confirmed").default(false),
+  emailConfirmationToken: text("email_confirmation_token"),
+  passwordResetToken: text("password_reset_token"),
+  passwordResetExpires: timestamp("password_reset_expires"),
 });
 
 export const usersRelations = relations(users, ({ many }) => ({
