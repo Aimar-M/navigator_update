@@ -16,8 +16,12 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from 'bcrypt';
-import { v4: uuidv4 } from 'uuid';
 import { sendEmail } from './email';
+
+// Generate a random token for password reset
+function generateToken(): string {
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+}
 const saltRounds = 10;
 const passwordRules = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
 
@@ -185,7 +189,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Hash the password before saving
       userData.password = await bcrypt.hash(userData.password, saltRounds);
       
-      const emailConfirmationToken = uuidv4();
+      const emailConfirmationToken = generateToken();
       userData.emailConfirmed = false;
       userData.emailConfirmationToken = emailConfirmationToken;
       
@@ -4316,7 +4320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Generate password reset token
-      const resetToken = uuidv4();
+      const resetToken = generateToken();
       const resetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
 
       // Update user with reset token
