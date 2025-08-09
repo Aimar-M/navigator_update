@@ -10,7 +10,7 @@ import {
   messages, surveyQuestions, surveyResponses, expenses, expenseSplits, settlements,
   polls, pollVotes, invitationLinks, userTripSettings
 } from "@shared/schema";
-import { eq, and, desc, sql, ilike, inArray } from "drizzle-orm";
+import { eq, and, desc, sql, ilike, inArray, isNotNull, lt } from "drizzle-orm";
 export class DatabaseStorage {
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -35,6 +35,30 @@ export class DatabaseStorage {
   async getUserByPasswordResetToken(token: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.passwordResetToken, token));
     return user || undefined;
+  }
+
+  async cleanupExpiredPasswordResetTokens(): Promise<number> {
+    try {
+      const now = new Date();
+      const result = await db
+        .update(users)
+        .set({
+          passwordResetToken: null,
+          passwordResetExpires: null
+        })
+        .where(
+          and(
+            isNotNull(users.passwordResetExpires),
+            lt(users.passwordResetExpires, now)
+          )
+        );
+      
+      console.log(`🧹 Cleaned up expired password reset tokens`);
+      return 1; // Return count of affected rows
+    } catch (error) {
+      console.error('❌ Error cleaning up expired tokens:', error);
+      return 0;
+    }
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {

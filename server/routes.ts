@@ -22,6 +22,41 @@ import { sendEmail } from './email';
 function generateToken(): string {
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
+
+// Simple rate limiting for forgot password requests
+const forgotPasswordAttempts = new Map<string, { count: number; lastAttempt: number }>();
+const MAX_ATTEMPTS = 3; // Maximum attempts per hour
+const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour in milliseconds
+
+function isRateLimited(email: string): boolean {
+  const now = Date.now();
+  const attempts = forgotPasswordAttempts.get(email);
+  
+  if (!attempts) {
+    return false;
+  }
+  
+  // Reset if window has passed
+  if (now - attempts.lastAttempt > RATE_LIMIT_WINDOW) {
+    forgotPasswordAttempts.delete(email);
+    return false;
+  }
+  
+  return attempts.count >= MAX_ATTEMPTS;
+}
+
+function recordForgotPasswordAttempt(email: string): void {
+  const now = Date.now();
+  const attempts = forgotPasswordAttempts.get(email);
+  
+  if (attempts) {
+    attempts.count++;
+    attempts.lastAttempt = now;
+  } else {
+    forgotPasswordAttempts.set(email, { count: 1, lastAttempt: now });
+  }
+}
+
 const saltRounds = 10;
 const passwordRules = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
 
@@ -198,10 +233,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Send confirmation email (log to console)
       const confirmUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/confirm-email?token=${emailConfirmationToken}`;
-      await sendEmail(user.email, 'Confirm your email', `
-        <h1>Confirm your email</h1>
-        <p>Click the link below to confirm your email address:</p>
-        <a href="${confirmUrl}">${confirmUrl}</a>
+      await sendEmail(user.email, 'Welcome to Navigator - Confirm your email', `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Confirm Your Email</title>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+            .button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; margin: 20px 0; }
+            .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+            .welcome { background: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 5px; margin: 20px 0; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>🚢 Navigator</h1>
+            <p>Welcome aboard!</p>
+          </div>
+          <div class="content">
+            <h2>Hello ${userData.name}!</h2>
+            <p>Welcome to Navigator! We're excited to have you join our travel planning community.</p>
+            
+            <div class="welcome">
+              <strong>🎉 Almost there!</strong> To complete your registration, please confirm your email address by clicking the button below.
+            </div>
+            
+            <div style="text-align: center;">
+              <a href="${confirmUrl}" class="button">Confirm My Email</a>
+            </div>
+            
+            <p>If the button above doesn't work, you can copy and paste this link into your browser:</p>
+            <p style="word-break: break-all; color: #667eea;">${confirmUrl}</p>
+            
+            <p>Once confirmed, you'll be able to:</p>
+            <ul>
+              <li>Create and join amazing trips</li>
+              <li>Plan activities with friends</li>
+              <li>Track expenses and budgets</li>
+              <li>And much more!</li>
+            </ul>
+            
+            <p>Need help? Contact our support team.</p>
+          </div>
+          <div class="footer">
+            <p>This email was sent from Navigator - Your travel planning companion</p>
+            <p>© ${new Date().getFullYear()} Navigator. All rights reserved.</p>
+          </div>
+        </body>
+        </html>
       `);
       
       // Don't send password in the response
@@ -4308,39 +4391,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Forgot password endpoint
   router.post('/auth/forgot-password', async (req: Request, res: Response) => {
     try {
+      console.log('🔐 Forgot password request received:', { 
+        body: req.body, 
+        timestamp: new Date().toISOString() 
+      });
+
       const { email } = req.body;
       if (!email) {
+        console.log('❌ Forgot password failed: No email provided');
         return res.status(400).json({ message: 'Email is required' });
       }
 
+      // Check rate limiting
+      if (isRateLimited(email)) {
+        console.log(`🚫 Rate limited: ${email} has exceeded maximum attempts`);
+        return res.status(429).json({ 
+          message: 'Too many password reset attempts. Please try again later.',
+          retryAfter: '1 hour'
+        });
+      }
+
+      console.log(`🔐 Looking up user with email: ${email}`);
       const user = await storage.getUserByEmail(email);
+      
       if (!user) {
+        console.log(`🔐 No user found with email: ${email} (returning generic message for security)`);
+        // Record attempt even for non-existent users to prevent email enumeration
+        recordForgotPasswordAttempt(email);
         // Don't reveal if email exists or not for security
         return res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
       }
+
+      console.log(`🔐 User found: ${user.username} (ID: ${user.id})`);
+
+      // Record successful attempt
+      recordForgotPasswordAttempt(email);
 
       // Generate password reset token
       const resetToken = generateToken();
       const resetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
 
+      console.log(`🔐 Generated reset token: ${resetToken.substring(0, 8)}...`);
+      console.log(`🔐 Token expires at: ${resetExpires.toISOString()}`);
+
       // Update user with reset token
+      console.log(`🔐 Updating user ${user.id} with reset token...`);
       await storage.updateUser(user.id, {
         passwordResetToken: resetToken,
         passwordResetExpires: resetExpires
       });
+      console.log(`✅ User ${user.id} updated with reset token`);
 
       // Send password reset email
       const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}`;
-      await sendEmail(user.email, 'Reset your password', `
-        <h1>Reset your password</h1>
-        <p>Click the link below to reset your password. This link will expire in 1 hour.</p>
-        <a href="${resetUrl}">${resetUrl}</a>
-        <p>If you didn't request this password reset, you can safely ignore this email.</p>
+      console.log(`🔐 Sending password reset email to: ${user.email}`);
+      console.log(`🔐 Reset URL: ${resetUrl}`);
+      
+      await sendEmail(user.email, 'Reset your Navigator password', `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Reset Your Password</title>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+            .button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; margin: 20px 0; }
+            .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+            .warning { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>🚢 Navigator</h1>
+            <p>Password Reset Request</p>
+          </div>
+          <div class="content">
+            <h2>Hello!</h2>
+            <p>We received a request to reset your password for your Navigator account.</p>
+            <p>Click the button below to create a new password. This link will expire in <strong>1 hour</strong> for security reasons.</p>
+            
+            <div style="text-align: center;">
+              <a href="${resetUrl}" class="button">Reset My Password</a>
+            </div>
+            
+            <div class="warning">
+              <strong>⚠️ Security Notice:</strong> If you didn't request this password reset, please ignore this email. Your password will remain unchanged.
+            </div>
+            
+            <p>If the button above doesn't work, you can copy and paste this link into your browser:</p>
+            <p style="word-break: break-all; color: #667eea;">${resetUrl}</p>
+            
+            <p>Need help? Contact our support team.</p>
+          </div>
+          <div class="footer">
+            <p>This email was sent from Navigator - Your travel planning companion</p>
+            <p>© ${new Date().getFullYear()} Navigator. All rights reserved.</p>
+          </div>
+        </body>
+        </html>
       `);
 
+      console.log(`✅ Password reset email sent successfully to: ${user.email}`);
       res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
     } catch (error) {
-      console.error('Forgot password error:', error);
+      console.error('❌ Forgot password error:', error);
+      console.error('❌ Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -4363,24 +4525,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Find user by reset token
       const user = await storage.getUserByPasswordResetToken(token);
       if (!user) {
+        console.log(`❌ Reset password failed: Invalid token: ${token.substring(0, 8)}...`);
         return res.status(400).json({ message: 'Invalid or expired reset token' });
       }
 
+      console.log(`🔐 Reset password request for user: ${user.username} (ID: ${user.id})`);
+
       // Check if token has expired
       if (user.passwordResetExpires && new Date() > user.passwordResetExpires) {
+        console.log(`❌ Reset password failed: Token expired for user ${user.id}`);
+        // Clear expired token
+        await storage.updateUser(user.id, {
+          passwordResetToken: null,
+          passwordResetExpires: null
+        });
         return res.status(400).json({ message: 'Reset token has expired' });
       }
+
+      console.log(`✅ Token validation successful for user ${user.id}`);
 
       // Hash the new password
       const hashedPassword = await bcrypt.hash(password, saltRounds);
 
       // Update user with new password and clear reset token
+      console.log(`🔐 Updating password for user ${user.id}`);
       await storage.updateUser(user.id, {
         password: hashedPassword,
         passwordResetToken: null,
         passwordResetExpires: null
       });
 
+      console.log(`✅ Password reset successful for user ${user.id}`);
       res.json({ message: 'Password reset successfully' });
     } catch (error) {
       console.error('Reset password error:', error);

@@ -71,6 +71,25 @@ app.use((req, res, next) => {
     console.log('🔧 Setting up routes...');
     const server = await registerRoutes(app);
 
+    // Setup cleanup for expired password reset tokens
+    console.log('🧹 Setting up cleanup for expired tokens...');
+    const cleanupExpiredTokens = async () => {
+      try {
+        // Import storage to access the cleanup method
+        const { storage } = await import('./db-storage');
+        console.log('🧹 Cleaning up expired password reset tokens...');
+        const cleanedCount = await storage.cleanupExpiredPasswordResetTokens();
+        console.log(`✅ Token cleanup completed. Cleaned ${cleanedCount} expired tokens.`);
+      } catch (error) {
+        console.error('❌ Error during token cleanup:', error);
+      }
+    };
+
+    // Run cleanup every hour
+    setInterval(cleanupExpiredTokens, 60 * 60 * 1000);
+    // Run initial cleanup
+    cleanupExpiredTokens();
+
     // 404 handler for unmatched routes
     app.use('*', (req: Request, res: Response) => {
       res.status(404).json({ 
