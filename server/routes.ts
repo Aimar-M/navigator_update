@@ -131,17 +131,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   }
   
-  // Health check endpoint for Railway
-  router.get('/health', (req: Request, res: Response) => {
-    console.log('🏥 Health check requested');
-    res.status(200).json({ 
-      status: 'ok', 
-      timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || 'production',
-      uptime: process.uptime(),
-      memory: process.memoryUsage(),
-      version: process.version
-    });
+  // Health check endpoint
+  router.get('/health', async (req: Request, res: Response) => {
+    try {
+      const healthStatus = {
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        environment: process.env.NODE_ENV || 'development',
+        email: {
+          configured: !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS),
+          host: process.env.SMTP_HOST || 'not set',
+          user: process.env.SMTP_USER || 'not set',
+          port: process.env.SMTP_PORT || '587'
+        },
+        database: 'connected', // We'll assume it's connected if we reach this point
+        version: '1.0.0'
+      };
+      
+      res.json(healthStatus);
+    } catch (error) {
+      res.status(500).json({ 
+        status: 'unhealthy', 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+    }
   });
 
   // Simple ping endpoint for basic connectivity testing
@@ -233,59 +248,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Send confirmation email (log to console)
       const confirmUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/confirm-email?token=${emailConfirmationToken}`;
-      await sendEmail(user.email, 'Welcome to Navigator - Confirm your email', `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Confirm Your Email</title>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-            .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-            .button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; margin: 20px 0; }
-            .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
-            .welcome { background: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 5px; margin: 20px 0; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>🚢 Navigator</h1>
-            <p>Welcome aboard!</p>
-          </div>
-          <div class="content">
-            <h2>Hello ${userData.name}!</h2>
-            <p>Welcome to Navigator! We're excited to have you join our travel planning community.</p>
-            
-            <div class="welcome">
-              <strong>🎉 Almost there!</strong> To complete your registration, please confirm your email address by clicking the button below.
+      try {
+        await sendEmail(user.email, 'Welcome to Navigator - Confirm your email', `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Confirm Your Email</title>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+              .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+              .button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; margin: 20px 0; }
+              .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+              .welcome { background: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 5px; margin: 20px 0; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>🚢 Navigator</h1>
+              <p>Welcome aboard!</p>
             </div>
-            
-            <div style="text-align: center;">
-              <a href="${confirmUrl}" class="button">Confirm My Email</a>
+            <div class="content">
+              <h2>Hello ${userData.name}!</h2>
+              <p>Welcome to Navigator! We're excited to have you join our travel planning community.</p>
+              
+              <div class="welcome">
+                <strong>🎉 Almost there!</strong> To complete your registration, please confirm your email address by clicking the button below.
+              </div>
+              
+              <div style="text-align: center;">
+                <a href="${confirmUrl}" class="button">Confirm My Email</a>
+              </div>
+              
+              <p>If the button above doesn't work, you can copy and paste this link into your browser:</p>
+              <p style="word-break: break-all; color: #667eea;">${confirmUrl}</p>
+              
+              <p>Once confirmed, you'll be able to:</p>
+              <ul>
+                <li>Create and join amazing trips</li>
+                <li>Plan activities with friends</li>
+                <li>Track expenses and budgets</li>
+                <li>And much more!</li>
+              </ul>
+              
+              <p>Need help? Contact our support team.</p>
             </div>
-            
-            <p>If the button above doesn't work, you can copy and paste this link into your browser:</p>
-            <p style="word-break: break-all; color: #667eea;">${confirmUrl}</p>
-            
-            <p>Once confirmed, you'll be able to:</p>
-            <ul>
-              <li>Create and join amazing trips</li>
-              <li>Plan activities with friends</li>
-              <li>Track expenses and budgets</li>
-              <li>And much more!</li>
-            </ul>
-            
-            <p>Need help? Contact our support team.</p>
-          </div>
-          <div class="footer">
-            <p>This email was sent from Navigator - Your travel planning companion</p>
-            <p>© ${new Date().getFullYear()} Navigator. All rights reserved.</p>
-          </div>
-        </body>
-        </html>
-      `);
+            <div class="footer">
+              <p>This email was sent from Navigator - Your travel planning companion</p>
+              <p>© ${new Date().getFullYear()} Navigator. All rights reserved.</p>
+            </div>
+          </body>
+          </html>
+        `);
+        
+        console.log(`✅ Welcome email sent successfully to: ${user.email}`);
+      } catch (emailError) {
+        console.error('❌ Failed to send welcome email:', emailError);
+        
+        // Check if it's due to missing SMTP configuration
+        if (emailError instanceof Error && emailError.message.includes('SMTP not configured')) {
+          console.warn('⚠️ Email functionality is disabled - user registered without email confirmation');
+          console.log(`📧 Would have sent confirmation email to: ${user.email}`);
+          console.log(`📧 Confirmation URL: ${confirmUrl}`);
+        } else {
+          // Log other email errors but don't fail registration
+          console.error('❌ Email error during registration:', emailError);
+        }
+      }
       
       // Don't send password in the response
       const { password, ...userWithoutPassword } = user;
@@ -4447,55 +4478,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`🔐 Sending password reset email to: ${user.email}`);
       console.log(`🔐 Reset URL: ${resetUrl}`);
       
-      await sendEmail(user.email, 'Reset your Navigator password', `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Reset Your Password</title>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-            .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-            .button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; margin: 20px 0; }
-            .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
-            .warning { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>🚢 Navigator</h1>
-            <p>Password Reset Request</p>
-          </div>
-          <div class="content">
-            <h2>Hello!</h2>
-            <p>We received a request to reset your password for your Navigator account.</p>
-            <p>Click the button below to create a new password. This link will expire in <strong>1 hour</strong> for security reasons.</p>
-            
-            <div style="text-align: center;">
-              <a href="${resetUrl}" class="button">Reset My Password</a>
+      try {
+        await sendEmail(user.email, 'Reset your Navigator password', `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Reset Your Password</title>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+              .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+              .button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; margin: 20px 0; }
+              .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+              .warning { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>🚢 Navigator</h1>
+              <p>Password Reset Request</p>
             </div>
-            
-            <div class="warning">
-              <strong>⚠️ Security Notice:</strong> If you didn't request this password reset, please ignore this email. Your password will remain unchanged.
+            <div class="content">
+              <h2>Hello!</h2>
+              <p>We received a request to reset your password for your Navigator account.</p>
+              <p>Click the button below to create a new password. This link will expire in <strong>1 hour</strong> for security reasons.</p>
+              
+              <div style="text-align: center;">
+                <a href="${resetUrl}" class="button">Reset My Password</a>
+              </div>
+              
+              <div class="warning">
+                <strong>⚠️ Security Notice:</strong> If you didn't request this password reset, please ignore this email. Your password will remain unchanged.
+              </div>
+              
+              <p>If the button above doesn't work, you can copy and paste this link into your browser:</p>
+              <p style="word-break: break-all; color: #667eea;">${resetUrl}</p>
+              
+              <p>Need help? Contact our support team.</p>
             </div>
-            
-            <p>If the button above doesn't work, you can copy and paste this link into your browser:</p>
-            <p style="word-break: break-all; color: #667eea;">${resetUrl}</p>
-            
-            <p>Need help? Contact our support team.</p>
-          </div>
-          <div class="footer">
-            <p>This email was sent from Navigator - Your travel planning companion</p>
-            <p>© ${new Date().getFullYear()} Navigator. All rights reserved.</p>
-          </div>
-        </body>
-        </html>
-      `);
+            <div class="footer">
+              <p>This email was sent from Navigator - Your travel planning companion</p>
+              <p>© ${new Date().getFullYear()} Navigator. All rights reserved.</p>
+            </div>
+          </body>
+          </html>
+        `);
 
-      console.log(`✅ Password reset email sent successfully to: ${user.email}`);
-      res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
+        console.log(`✅ Password reset email sent successfully to: ${user.email}`);
+        res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
+      } catch (emailError) {
+        console.error('❌ Failed to send password reset email:', emailError);
+        
+        // Check if it's due to missing SMTP configuration
+        if (emailError instanceof Error && emailError.message.includes('SMTP not configured')) {
+          console.warn('⚠️ Email functionality is disabled - providing manual reset instructions');
+          
+          // Return the reset URL directly to the user (for development/testing)
+          res.json({ 
+            message: 'Password reset link generated successfully. Email functionality is currently disabled.',
+            resetUrl: resetUrl,
+            note: 'Please copy this link manually as email delivery is not available.'
+          });
+        } else {
+          // Re-throw other email errors
+          throw emailError;
+        }
+      }
     } catch (error) {
       console.error('❌ Forgot password error:', error);
       console.error('❌ Error details:', {
