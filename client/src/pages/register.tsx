@@ -315,7 +315,11 @@ export default function Register() {
                 variant="outline" 
                 className="w-full"
                 onClick={() => {
-                  const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+                  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+                  if (!backendUrl) {
+                    console.error('VITE_BACKEND_URL environment variable is not set');
+                    return;
+                  }
                   window.location.href = `${backendUrl}/api/auth/google`;
                 }}
               >
