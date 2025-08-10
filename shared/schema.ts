@@ -52,6 +52,8 @@ export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
   name: true,
   avatar: true,
+  emailConfirmed: true,
+  emailConfirmationToken: true,
 });
 
 export const updateUserProfileSchema = createInsertSchema(users).pick({

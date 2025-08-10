@@ -243,8 +243,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       userData.emailConfirmed = false;
       userData.emailConfirmationToken = emailConfirmationToken;
       
+      console.log(`🔐 Generated email confirmation token: ${emailConfirmationToken.substring(0, 8)}...`);
+      console.log(`📧 User data before creation:`, {
+        username: userData.username,
+        email: userData.email,
+        emailConfirmed: userData.emailConfirmed,
+        hasToken: !!userData.emailConfirmationToken
+      });
+      
       // Create user
       const user = await storage.createUser(userData);
+      
+      console.log(`✅ User created with ID: ${user.id}`);
+      console.log(`📧 User after creation:`, {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        emailConfirmed: user.emailConfirmed,
+        hasToken: !!user.emailConfirmationToken,
+        tokenLength: user.emailConfirmationToken?.length
+      });
       
       // Send confirmation email (log to console)
       const confirmUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/confirm-email?token=${emailConfirmationToken}`;
@@ -4439,6 +4457,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUserByEmailConfirmationToken(token);
       if (!user) {
         console.log(`❌ Email confirmation failed: Invalid token: ${token.substring(0, 8)}...`);
+        
+        // Let's also check if there are any users with email confirmation tokens at all
+        const allUsers = await storage.getAllUsers();
+        const usersWithTokens = allUsers.filter(u => u.emailConfirmationToken);
+        console.log(`📧 Debug: Found ${usersWithTokens.length} users with email confirmation tokens`);
+        usersWithTokens.forEach(u => {
+          console.log(`📧 User ${u.username} (${u.email}) has token: ${u.emailConfirmationToken?.substring(0, 8)}...`);
+        });
+        
         return res.status(400).json({ message: 'Invalid or expired confirmation token' });
       }
 

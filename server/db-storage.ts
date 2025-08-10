@@ -27,8 +27,29 @@ export class DatabaseStorage {
     return user || undefined;
   }
 
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users);
+  }
+
   async getUserByEmailConfirmationToken(token: string): Promise<User | undefined> {
+    console.log(`🔍 Looking up user by email confirmation token: ${token.substring(0, 8)}...`);
+    
     const [user] = await db.select().from(users).where(eq(users.emailConfirmationToken, token));
+    
+    if (user) {
+      console.log(`✅ Found user with token: ${user.username} (ID: ${user.id})`);
+    } else {
+      console.log(`❌ No user found with token: ${token.substring(0, 8)}...`);
+      
+      // Let's check what tokens exist in the database
+      const allUsers = await db.select().from(users);
+      const usersWithTokens = allUsers.filter(u => u.emailConfirmationToken);
+      console.log(`🔍 Debug: Found ${usersWithTokens.length} users with email confirmation tokens`);
+      usersWithTokens.forEach(u => {
+        console.log(`🔍 User ${u.username} (${u.email}) has token: ${u.emailConfirmationToken?.substring(0, 8)}...`);
+      });
+    }
+    
     return user || undefined;
   }
 
@@ -81,10 +102,28 @@ export class DatabaseStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
+    console.log(`🔐 Creating user in database:`, {
+      username: insertUser.username,
+      email: insertUser.email,
+      emailConfirmed: insertUser.emailConfirmed,
+      hasToken: !!insertUser.emailConfirmationToken,
+      tokenLength: insertUser.emailConfirmationToken?.length
+    });
+    
     const [user] = await db
       .insert(users)
       .values(insertUser)
       .returning();
+      
+    console.log(`✅ User created in database:`, {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      emailConfirmed: user.emailConfirmed,
+      hasToken: !!user.emailConfirmationToken,
+      tokenLength: user.emailConfirmationToken?.length
+    });
+    
     return user;
   }
 
