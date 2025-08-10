@@ -80,15 +80,39 @@ app.use((req, res, next) => {
         console.log('🧹 Cleaning up expired password reset tokens...');
         const cleanedCount = await storage.cleanupExpiredPasswordResetTokens();
         console.log(`✅ Token cleanup completed. Cleaned ${cleanedCount} expired tokens.`);
+        return cleanedCount;
       } catch (error) {
         console.error('❌ Error during token cleanup:', error);
+        return 0;
       }
     };
 
-    // Run cleanup every hour
-    setInterval(cleanupExpiredTokens, 60 * 60 * 1000);
-    // Run initial cleanup
-    cleanupExpiredTokens();
+    const cleanupExpiredEmailConfirmationTokens = async () => {
+      try {
+        const { storage } = await import('./db-storage');
+        console.log('🧹 Cleaning up expired email confirmation tokens...');
+        const cleanedCount = await storage.cleanupExpiredEmailConfirmationTokens();
+        console.log(`✅ Email confirmation token cleanup completed. Cleaned ${cleanedCount} expired tokens.`);
+        return cleanedCount;
+      } catch (error) {
+        console.error('❌ Error during email confirmation token cleanup:', error);
+        return 0;
+      }
+    };
+
+    // Cleanup expired tokens every hour
+    setInterval(async () => {
+      try {
+        await cleanupExpiredTokens();
+        await cleanupExpiredEmailConfirmationTokens();
+      } catch (error) {
+        console.error('❌ Error during token cleanup:', error);
+      }
+    }, 60 * 60 * 1000); // Every hour
+
+    // Run cleanup once on startup
+    cleanupExpiredTokens().catch(console.error);
+    cleanupExpiredEmailConfirmationTokens().catch(console.error);
 
     // 404 handler for unmatched routes
     app.use('*', (req: Request, res: Response) => {

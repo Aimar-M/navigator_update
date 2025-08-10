@@ -46,17 +46,36 @@ export class DatabaseStorage {
           passwordResetToken: null,
           passwordResetExpires: null
         })
-        .where(
-          and(
-            isNotNull(users.passwordResetExpires),
-            lt(users.passwordResetExpires, now)
-          )
-        );
+        .where(and(
+          isNotNull(users.passwordResetExpires),
+          lt(users.passwordResetExpires, now)
+        ));
       
       console.log(`🧹 Cleaned up expired password reset tokens`);
-      return 1; // Return count of affected rows
+      return 1; // Drizzle doesn't return count for updates, so we assume 1
     } catch (error) {
-      console.error('❌ Error cleaning up expired tokens:', error);
+      console.error('❌ Error cleaning up expired password reset tokens:', error);
+      return 0;
+    }
+  }
+
+  async cleanupExpiredEmailConfirmationTokens(): Promise<number> {
+    try {
+      const now = new Date();
+      const result = await db
+        .update(users)
+        .set({
+          emailConfirmationToken: null
+        })
+        .where(and(
+          isNotNull(users.emailConfirmationToken),
+          lt(users.createdAt, new Date(now.getTime() - 24 * 60 * 60 * 1000)) // 24 hours old
+        ));
+      
+      console.log(`🧹 Cleaned up expired email confirmation tokens`);
+      return 1; // Drizzle doesn't return count for updates, so we assume 1
+    } catch (error) {
+      console.error('❌ Error cleaning up expired email confirmation tokens:', error);
       return 0;
     }
   }

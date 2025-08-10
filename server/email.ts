@@ -23,13 +23,13 @@ let transporter: nodemailer.Transporter | null = null;
 
 if (missingVars.length === 0) {
   transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: false, // true for port 465, false for 587
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
+  host: process.env.SMTP_HOST,
+  port: parseInt(process.env.SMTP_PORT || '587'),
+  secure: false, // true for port 465, false for 587
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
     // Add connection timeout and greeting timeout for better reliability
     connectionTimeout: 60000, // 60 seconds
     greetingTimeout: 30000, // 30 seconds

@@ -136,8 +136,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const healthStatus = {
         status: 'healthy',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
         environment: process.env.NODE_ENV || 'development',
         email: {
           configured: !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS),
@@ -4402,21 +4402,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Email confirmation endpoint
   router.get('/auth/confirm-email', async (req: Request, res: Response) => {
-    const { token } = req.query;
-    if (!token || typeof token !== 'string') {
-      return res.status(400).json({ message: 'Invalid or missing token' });
+    try {
+      console.log('📧 Email confirmation request received:', { 
+        query: req.query, 
+        timestamp: new Date().toISOString() 
+      });
+
+      const { token } = req.query;
+      if (!token || typeof token !== 'string') {
+        console.log('❌ Email confirmation failed: Invalid or missing token');
+        return res.status(400).json({ message: 'Invalid or missing token' });
+      }
+
+      console.log(`📧 Looking up user with confirmation token: ${token.substring(0, 8)}...`);
+      
+      // Find user by token
+      const user = await storage.getUserByEmailConfirmationToken(token);
+      if (!user) {
+        console.log(`❌ Email confirmation failed: Invalid token: ${token.substring(0, 8)}...`);
+        return res.status(400).json({ message: 'Invalid or expired confirmation token' });
+      }
+
+      console.log(`📧 User found: ${user.username} (ID: ${user.id})`);
+
+      // Check if email is already confirmed
+      if (user.emailConfirmed) {
+        console.log(`⚠️ Email already confirmed for user ${user.id}`);
+        return res.status(400).json({ message: 'Email is already confirmed' });
+      }
+
+      // Mark email as confirmed and clear the token
+      console.log(`📧 Confirming email for user ${user.id}...`);
+      await storage.updateUser(user.id, {
+        emailConfirmed: true,
+        emailConfirmationToken: null
+      });
+
+      console.log(`✅ Email confirmed successfully for user ${user.id}`);
+      res.json({ 
+        message: 'Email confirmed successfully',
+        username: user.username,
+        email: user.email
+      });
+    } catch (error) {
+      console.error('❌ Email confirmation error:', error);
+      res.status(500).json({ message: 'Server error during email confirmation' });
     }
-    // Find user by token
-    const user = await storage.getUserByEmailConfirmationToken(token);
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid or expired confirmation token' });
-    }
-    // Mark email as confirmed and clear the token
-    await storage.updateUser(user.id, {
-      emailConfirmed: true,
-      emailConfirmationToken: null
-    });
-    res.json({ message: 'Email confirmed successfully' });
   });
 
   // Forgot password endpoint
@@ -4527,7 +4558,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         `);
 
         console.log(`✅ Password reset email sent successfully to: ${user.email}`);
-        res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
+      res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
       } catch (emailError) {
         console.error('❌ Failed to send password reset email:', emailError);
         
@@ -4610,6 +4641,117 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Reset password error:', error);
       res.status(500).json({ message: 'Server error' });
+    }
+  });
+
+  // Resend email confirmation endpoint
+  router.post('/auth/resend-confirmation', async (req: Request, res: Response) => {
+    try {
+      console.log('📧 Resend confirmation request received:', { 
+        body: req.body, 
+        timestamp: new Date().toISOString() 
+      });
+
+      const { email } = req.body;
+      if (!email) {
+        console.log('❌ Resend confirmation failed: No email provided');
+        return res.status(400).json({ message: 'Email is required' });
+      }
+
+      console.log(`📧 Looking up user with email: ${email}`);
+      const user = await storage.getUserByEmail(email);
+      
+      if (!user) {
+        console.log(`📧 No user found with email: ${email} (returning generic message for security)`);
+        // Don't reveal if email exists or not for security
+        return res.json({ message: 'If an account with that email exists, a confirmation email has been sent.' });
+      }
+
+      if (user.emailConfirmed) {
+        console.log(`📧 User ${user.id} already confirmed their email`);
+        return res.json({ message: 'Email is already confirmed' });
+      }
+
+      // Generate new confirmation token
+      const newToken = generateToken();
+      console.log(`📧 Generated new confirmation token: ${newToken.substring(0, 8)}...`);
+
+      // Update user with new token
+      await storage.updateUser(user.id, {
+        emailConfirmationToken: newToken
+      });
+
+      // Send new confirmation email
+      const confirmUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/confirm-email?token=${newToken}`;
+      console.log(`📧 Sending new confirmation email to: ${user.email}`);
+      
+      try {
+        await sendEmail(user.email, 'Confirm your Navigator email - New link', `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Confirm Your Email</title>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+              .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+              .button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; margin: 20px 0; }
+              .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+              .info { background: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; border-radius: 5px; margin: 20px 0; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>🚢 Navigator</h1>
+              <p>Email Confirmation</p>
+            </div>
+            <div class="content">
+              <h2>Hello ${user.name}!</h2>
+              <p>We've sent you a new email confirmation link.</p>
+              
+              <div class="info">
+                <strong>📧 New confirmation link!</strong> Click the button below to confirm your email address.
+              </div>
+              
+              <div style="text-align: center;">
+                <a href="${confirmUrl}" class="button">Confirm My Email</a>
+              </div>
+              
+              <p>If the button above doesn't work, you can copy and paste this link into your browser:</p>
+              <p style="word-break: break-all; color: #667eea;">${confirmUrl}</p>
+              
+              <p>This link will expire in 24 hours for security reasons.</p>
+              
+              <p>Need help? Contact our support team.</p>
+            </div>
+            <div class="footer">
+              <p>This email was sent from Navigator - Your travel planning companion</p>
+              <p>© ${new Date().getFullYear()} Navigator. All rights reserved.</p>
+            </div>
+          </body>
+          </html>
+        `);
+        
+        console.log(`✅ New confirmation email sent successfully to: ${user.email}`);
+        res.json({ message: 'Confirmation email sent successfully' });
+      } catch (emailError) {
+        console.error('❌ Failed to send new confirmation email:', emailError);
+        
+        if (emailError instanceof Error && emailError.message.includes('SMTP not configured')) {
+          console.warn('⚠️ Email functionality is disabled - returning confirmation URL in response');
+          res.json({ 
+            message: 'Email functionality is currently disabled. Here is your confirmation link:',
+            confirmationUrl: confirmUrl
+          });
+        } else {
+          res.status(500).json({ message: 'Failed to send confirmation email' });
+        }
+      }
+    } catch (error) {
+      console.error('❌ Resend confirmation error:', error);
+      res.status(500).json({ message: 'Server error during resend confirmation' });
     }
   });
 

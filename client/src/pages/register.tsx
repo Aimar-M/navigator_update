@@ -103,9 +103,18 @@ export default function Register() {
 
     try {
       const { confirmPassword, ...registerData } = formData;
+      
+      // Store email in localStorage for potential resend confirmation
+      localStorage.setItem('pendingEmailConfirmation', formData.email);
+      
       await register(registerData);
+      
+      // Show success message about email confirmation
+      // The register function should handle the redirect or show confirmation message
     } catch (error) {
       console.error("Registration error:", error);
+      // Remove stored email if registration failed
+      localStorage.removeItem('pendingEmailConfirmation');
     }
   };
 
