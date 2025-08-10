@@ -4846,13 +4846,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   router.get('/auth/google/callback', 
     passport.authenticate('google', { failureRedirect: '/login' }),
     (req: Request, res: Response) => {
-      // Successful authentication, redirect to frontend
-      const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://navigator-update.vercel.app';
-      console.log('🔐 Google OAuth callback - redirecting to:', frontendUrl);
-      console.log('🔍 User authenticated:', req.user);
-      
-      // Redirect to home page instead of dashboard (which might not exist)
-      res.redirect(`${frontendUrl}/`);
+      try {
+        // Successful authentication, redirect to frontend homepage
+        const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://navigator-update.vercel.app';
+        console.log('🔐 Google OAuth callback - redirecting to:', frontendUrl);
+        console.log('🔍 User authenticated:', req.user);
+        
+        // Always redirect to homepage (/) after successful authentication
+        const redirectUrl = `${frontendUrl}/`;
+        console.log('🚀 Final redirect URL:', redirectUrl);
+        
+        res.redirect(redirectUrl);
+      } catch (error) {
+        console.error('❌ Error in Google OAuth callback:', error);
+        // Fallback redirect to homepage
+        const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://navigator-update.vercel.app';
+        res.redirect(`${frontendUrl}/`);
+      }
     }
   );
 
