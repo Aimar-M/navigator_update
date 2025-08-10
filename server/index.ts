@@ -5,7 +5,7 @@ import { config } from "dotenv";
 import cors from "cors";
 import passport from "./google-auth";
 import session from "express-session";
-import connectPgSimple from "connect-pgsimple";
+import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
 
 config();
