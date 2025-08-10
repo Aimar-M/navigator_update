@@ -24,6 +24,8 @@ export default function Register() {
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showConfirmationMessage, setShowConfirmationMessage] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
   const { register, isLoading, user } = useAuth();
   const [, navigate] = useLocation();
 
@@ -31,6 +33,69 @@ export default function Register() {
   if (user) {
     navigate("/");
     return null;
+  }
+
+  // Show email confirmation message
+  if (showConfirmationMessage) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center mb-2">
+              <img 
+                src={navigatorLogo} 
+                alt="Navigator Logo" 
+                className="h-10 w-10 mr-2"
+              />
+              <h1 className="text-2xl font-bold text-gray-900">Navigator</h1>
+            </div>
+            <p className="text-gray-600">Plan amazing trips with friends</p>
+          </div>
+
+          <Card className="shadow-lg">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl font-bold text-green-600">🎉 Account Created Successfully!</CardTitle>
+              <CardDescription className="text-gray-600">
+                Please confirm your email to activate your account
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-700">
+                  We've sent a confirmation email to <strong>{registeredEmail}</strong>
+                </p>
+              </div>
+              
+              <p className="text-sm text-gray-600">
+                Check your inbox (and spam folder) for an email from Navigator. Click the confirmation link to activate your account.
+              </p>
+              
+              <div className="space-y-2">
+                <p className="text-xs text-gray-500">
+                  Didn't receive the email?
+                </p>
+                <Button 
+                  onClick={() => {
+                    // This will trigger the resend functionality
+                    localStorage.setItem('pendingEmailConfirmation', registeredEmail);
+                    navigate('/confirm-email');
+                  }}
+                  variant="outline"
+                  className="w-full"
+                >
+                  Resend Confirmation Email
+                </Button>
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-center">
+              <Button asChild variant="outline">
+                <Link href="/login">Back to Login</Link>
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
+    );
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -107,7 +172,21 @@ export default function Register() {
       // Store email in localStorage for potential resend confirmation
       localStorage.setItem('pendingEmailConfirmation', formData.email);
       
-      await register(registerData);
+      const result = await register(registerData);
+      
+      // Check if registration requires email confirmation
+      if (result && result.requiresEmailConfirmation) {
+        setRegisteredEmail(formData.email);
+        setShowConfirmationMessage(true);
+        // Clear form data
+        setFormData({
+          username: "",
+          email: "",
+          name: "",
+          password: "",
+          confirmPassword: "",
+        });
+      }
       
       // Show success message about email confirmation
       // The register function should handle the redirect or show confirmation message

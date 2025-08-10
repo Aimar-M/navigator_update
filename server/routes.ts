@@ -320,12 +320,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Don't send password in the response
       const { password, ...userWithoutPassword } = user;
-      // Generate token (in this simple implementation, just use the user ID)
-      const token = user.id.toString();
-      // Return user data with token
+      
+      // Don't return a token - user must confirm email first
+      console.log(`✅ User ${user.id} registered successfully. Email confirmation required.`);
+      
+      // Return user data without token, indicating email confirmation is needed
       res.status(201).json({
         ...userWithoutPassword,
-        token
+        message: 'Registration successful! Please check your email to confirm your account.',
+        requiresEmailConfirmation: true
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -459,6 +462,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (!isNaN(userId)) {
             const user = await storage.getUser(userId);
             if (user) {
+              // Check if email is confirmed
+              if (!user.emailConfirmed) {
+                return res.status(403).json({ 
+                  message: 'Please confirm your email before accessing this resource.',
+                  requiresEmailConfirmation: true,
+                  email: user.email
+                });
+              }
               req.user = user;
               return next();
             }
@@ -470,6 +481,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.session && req.session.userId) {
         const user = await storage.getUser(req.session.userId);
         if (user) {
+          // Check if email is confirmed
+          if (!user.emailConfirmed) {
+            return res.status(403).json({ 
+              message: 'Please confirm your email before accessing this resource.',
+              requiresEmailConfirmation: true,
+              email: user.email
+            });
+          }
           req.user = user;
           return next();
         }
@@ -4752,6 +4771,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('❌ Resend confirmation error:', error);
       res.status(500).json({ message: 'Server error during resend confirmation' });
+    }
+  });
+
+  // Check email confirmation status
+  router.get('/auth/email-status', async (req: Request, res: Response) => {
+    try {
+      const { email } = req.query;
+      if (!email || typeof email !== 'string') {
+        return res.status(400).json({ message: 'Email parameter is required' });
+      }
+
+      console.log(`📧 Checking email confirmation status for: ${email}`);
+      
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      res.json({
+        email: user.email,
+        emailConfirmed: user.emailConfirmed,
+        username: user.username,
+        name: user.name
+      });
+    } catch (error) {
+      console.error('❌ Email status check error:', error);
+      res.status(500).json({ message: 'Server error during email status check' });
     }
   });
 

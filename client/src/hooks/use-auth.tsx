@@ -20,7 +20,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (username: string, password: string) => Promise<void>;
-  register: (userData: RegisterData) => Promise<void>;
+  register: (userData: RegisterData) => Promise<any>; // Can return user data for email confirmation
   logout: () => Promise<void>;
 }
 
@@ -128,7 +128,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const newUser = await registerUser(userData);
       
-      // Store the token in localStorage
+      // Check if email confirmation is required
+      if (newUser.requiresEmailConfirmation) {
+        // Don't log in the user - they need to confirm email first
+        setIsLoading(false);
+        return newUser; // Return the user data for the confirmation page
+      }
+      
+      // If email is already confirmed, proceed with normal login flow
       if (newUser.token) {
         setAuthToken(newUser.token);
       }
