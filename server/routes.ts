@@ -17,6 +17,7 @@ import {
 import { z } from "zod";
 import bcrypt from 'bcrypt';
 import { sendEmail } from './email';
+import passport from './google-auth';
 
 // Generate a random token for password reset
 function generateToken(): string {
