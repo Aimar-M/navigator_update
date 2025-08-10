@@ -3,6 +3,14 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { storage } from './db-storage';
 import bcrypt from 'bcrypt';
 
+// Debug: Log environment variables
+console.log('🔍 Google OAuth Configuration:', {
+  clientID: process.env.GOOGLE_CLIENT_ID ? '✅ Set' : '❌ Missing',
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET ? '✅ Set' : '❌ Missing',
+  backendURL: process.env.BACKEND_URL || '❌ Missing',
+  callbackURL: `${process.env.BACKEND_URL}/api/auth/google/callback`
+});
+
 // Configure Google OAuth Strategy
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID!,

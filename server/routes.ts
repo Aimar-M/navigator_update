@@ -4829,6 +4829,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Debug route to check environment variables
+  router.get('/auth/debug', (req: Request, res: Response) => {
+    res.json({
+      message: 'Environment variables check',
+      googleClientId: process.env.GOOGLE_CLIENT_ID ? '✅ Set' : '❌ Missing',
+      googleClientSecret: process.env.GOOGLE_CLIENT_SECRET ? '✅ Set' : '❌ Missing',
+      backendUrl: process.env.BACKEND_URL || '❌ Missing',
+      callbackUrl: `${process.env.BACKEND_URL}/api/auth/google/callback`
+    });
+  });
+
   // Google OAuth Routes
   router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
@@ -4838,7 +4849,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Successful authentication, redirect to frontend
       const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://navigator-update.vercel.app';
       console.log('🔐 Google OAuth callback - redirecting to:', frontendUrl);
-      res.redirect(`${frontendUrl}/dashboard`);
+      console.log('🔍 User authenticated:', req.user);
+      
+      // Redirect to home page instead of dashboard (which might not exist)
+      res.redirect(`${frontendUrl}/`);
     }
   );
 

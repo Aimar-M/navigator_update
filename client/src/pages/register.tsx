@@ -315,11 +315,21 @@ export default function Register() {
                 variant="outline" 
                 className="w-full"
                 onClick={() => {
+                  console.log('🔍 Google OAuth button clicked (register)');
+                  console.log('🔍 Environment variables:', {
+                    VITE_BACKEND_URL: import.meta.env.VITE_BACKEND_URL,
+                    NODE_ENV: import.meta.env.NODE_ENV,
+                    MODE: import.meta.env.MODE
+                  });
+                  
                   const backendUrl = import.meta.env.VITE_BACKEND_URL;
                   if (!backendUrl) {
-                    console.error('VITE_BACKEND_URL environment variable is not set');
+                    console.error('❌ VITE_BACKEND_URL environment variable is not set');
+                    alert('Backend URL not configured. Please check environment variables.');
                     return;
                   }
+                  
+                  console.log('🚀 Redirecting to:', `${backendUrl}/api/auth/google`);
                   window.location.href = `${backendUrl}/api/auth/google`;
                 }}
               >
