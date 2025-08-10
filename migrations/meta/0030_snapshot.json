@@ -1,0 +1,135 @@
+{
+  "id": "0030_add_google_oauth_fields",
+  "prevId": "0029_add_email_confirmation_fields",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "users": {
+      "name": "users",
+      "schema": "",
+      "columns": [
+        {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        {
+          "name": "username",
+          "type": "text",
+          "notNull": true
+        },
+        {
+          "name": "password",
+          "type": "text",
+          "notNull": true
+        },
+        {
+          "name": "email",
+          "type": "text",
+          "notNull": true
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "notNull": true
+        },
+        {
+          "name": "avatar",
+          "type": "text"
+        },
+        {
+          "name": "email_confirmed",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "email_confirmation_token",
+          "type": "text"
+        },
+        {
+          "name": "password_reset_token",
+          "type": "text"
+        },
+        {
+          "name": "password_reset_expires",
+          "type": "timestamp"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "default": "now()"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "default": "now()"
+        },
+        {
+          "name": "last_name",
+          "type": "text"
+        },
+        {
+          "name": "bio",
+          "type": "text"
+        },
+        {
+          "name": "location",
+          "type": "text"
+        },
+        {
+          "name": "venmo_username",
+          "type": "text"
+        },
+        {
+          "name": "paypal_email",
+          "type": "text"
+        },
+        {
+          "name": "legacy_removed",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "google_id",
+          "type": "text"
+        },
+        {
+          "name": "google_email",
+          "type": "text"
+        },
+        {
+          "name": "google_name",
+          "type": "text"
+        },
+        {
+          "name": "google_picture",
+          "type": "text"
+        },
+        {
+          "name": "is_oauth_user",
+          "type": "boolean",
+          "default": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "users_username_unique",
+          "columns": ["username"],
+          "isUnique": true
+        },
+        {
+          "name": "users_email_unique",
+          "columns": ["email"],
+          "isUnique": true
+        },
+        {
+          "name": "users_google_id_unique",
+          "columns": ["google_id"],
+          "isUnique": true
+        }
+      ],
+      "foreignKeys": []
+    }
+  }
+} 

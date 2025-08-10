@@ -15,6 +15,13 @@
       "when": 1747903674452,
       "tag": "0029_add_email_confirmation_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1747903674453,
+      "tag": "0030_add_google_oauth_fields",
+      "breakpoints": true
     }
   ]
 }

@@ -35,6 +35,12 @@ export const users = pgTable("users", {
   emailConfirmationToken: text("email_confirmation_token"),
   passwordResetToken: text("password_reset_token"),
   passwordResetExpires: timestamp("password_reset_expires"),
+  // Google OAuth fields
+  googleId: text("google_id"),
+  googleEmail: text("google_email"),
+  googleName: text("google_name"),
+  googlePicture: text("google_picture"),
+  isOAuthUser: boolean("is_oauth_user").default(false),
 });
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -54,6 +60,11 @@ export const insertUserSchema = createInsertSchema(users).pick({
   avatar: true,
   emailConfirmed: true,
   emailConfirmationToken: true,
+  googleId: true,
+  googleEmail: true,
+  googleName: true,
+  googlePicture: true,
+  isOAuthUser: true,
 });
 
 export const updateUserProfileSchema = createInsertSchema(users).pick({

@@ -53,6 +53,16 @@ export class DatabaseStorage {
     return user || undefined;
   }
 
+  async getUserByGoogleId(googleId: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.googleId, googleId));
+    return user || undefined;
+  }
+
+  async getUserById(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
   async getUserByPasswordResetToken(token: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.passwordResetToken, token));
     return user || undefined;

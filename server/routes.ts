@@ -4828,6 +4828,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Google OAuth Routes
+  router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+  router.get('/auth/google/callback', 
+    passport.authenticate('google', { failureRedirect: '/login' }),
+    (req: Request, res: Response) => {
+      // Successful authentication, redirect to frontend
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      res.redirect(`${frontendUrl}/dashboard`);
+    }
+  );
+
   app.use('/api', router);
   
   return httpServer;

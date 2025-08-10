@@ -3,6 +3,10 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { config } from "dotenv";
 import cors from "cors";
+import passport from "./google-auth";
+import session from "express-session";
+import connectPgSimple from "connect-pgsimple";
+import { pool } from "./db";
 
 config();
 
@@ -32,6 +36,29 @@ app.use(cors({
 }));
 
 app.options('*', cors()); // <-- Add this line
+
+// Configure session middleware with PostgreSQL store
+const PgSession = connectPgSimple(session);
+app.use(session({
+  store: new PgSession({
+    pool: pool,
+    tableName: 'sessions',
+    tableName: 'sessions',
+    createTableIfMissing: false
+  }),
+  secret: process.env.SESSION_SECRET || 'dev-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // Set to true if using HTTPS
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
+// Initialize Passport and restore authentication state, if any, from the session
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.use((req, res, next) => {
   const start = Date.now();
