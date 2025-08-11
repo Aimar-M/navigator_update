@@ -4983,7 +4983,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Google OAuth Routes
-  router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+  router.get('/auth/google', (req: Request, res: Response, next: NextFunction) => {
+    // Set CORS headers specifically for OAuth
+    res.header('Access-Control-Allow-Origin', 'https://navigator-update.vercel.app');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    
+    console.log('🔍 Google OAuth request received');
+    console.log('🔍 Request headers:', req.headers);
+    console.log('🔍 Request origin:', req.headers.origin);
+    console.log('🔍 Request referer:', req.headers.referer);
+    console.log('🔍 Environment check:', {
+      GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? '✅ Set' : '❌ Missing',
+      GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ? '✅ Set' : '❌ Missing',
+      BACKEND_URL: process.env.BACKEND_URL || '❌ Missing',
+      FRONTEND_URL: process.env.FRONTEND_URL || '❌ Missing'
+    });
+    
+    // Check if Google OAuth is properly configured
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+      console.error('❌ Google OAuth not configured properly');
+      return res.status(500).json({ 
+        error: 'Google OAuth not configured',
+        message: 'Missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET environment variables'
+      });
+    }
+    
+    console.log('✅ Google OAuth configured, proceeding with authentication...');
+    next();
+  }, passport.authenticate('google', { scope: ['profile', 'email'] }));
 
   // Test OAuth flow endpoint
   router.get('/auth/oauth/test', (req: Request, res: Response) => {
@@ -4996,6 +5025,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         frontendUrl: process.env.FRONTEND_URL,
         googleClientId: process.env.GOOGLE_CLIENT_ID ? '✅ Set' : '❌ Missing',
         googleClientSecret: process.env.GOOGLE_CLIENT_SECRET ? '✅ Set' : '❌ Missing'
+      },
+      oauthEndpoints: {
+        googleAuth: `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/auth/google`,
+        googleCallback: `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/auth/google/callback`,
+        oauthValidate: `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/auth/oauth/validate`
       }
     });
   });
@@ -5003,6 +5037,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // OAuth token validation endpoint
   router.post('/auth/oauth/validate', async (req: Request, res: Response) => {
     try {
+      // Set CORS headers for OAuth validation
+      res.header('Access-Control-Allow-Origin', 'https://navigator-update.vercel.app');
+      res.header('Access-Control-Allow-Credentials', 'true');
+      res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+      
       const { oauthToken, userId } = req.body;
       
       console.log('🔍 OAuth token validation request received');
@@ -5071,6 +5111,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     passport.authenticate('google', { failureRedirect: '/login' }),
     (req: Request, res: Response) => {
       try {
+        // Set CORS headers for OAuth callback
+        res.header('Access-Control-Allow-Origin', 'https://navigator-update.vercel.app');
+        res.header('Access-Control-Allow-Credentials', 'true');
+        res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+        
         console.log('🎯 Google OAuth callback reached');
         console.log('🔍 Request headers:', req.headers);
         console.log('🔍 Request user:', req.user);

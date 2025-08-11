@@ -219,7 +219,18 @@ export default function Login() {
                     step4: 'Backend redirects to frontend with token'
                   });
                   
-                  window.location.href = oauthUrl;
+                  // Test the OAuth endpoint before redirecting
+                  console.log('🔍 Testing OAuth endpoint before redirect...');
+                  fetch(oauthUrl, { method: 'HEAD' })
+                    .then(response => {
+                      console.log('✅ OAuth endpoint test successful:', response.status);
+                      console.log('🔄 Now redirecting to Google OAuth...');
+                      window.location.href = oauthUrl;
+                    })
+                    .catch(error => {
+                      console.error('❌ OAuth endpoint test failed:', error);
+                      alert('OAuth endpoint not accessible. Please check backend configuration.');
+                    });
                 }}
               >
                 <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
