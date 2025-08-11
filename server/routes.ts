@@ -428,12 +428,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   router.get('/auth/me', async (req: Request, res: Response) => {
     try {
+      console.log('🔍 /api/auth/me called');
+      console.log('🔍 Request headers:', req.headers);
+      console.log('🔍 Authorization header:', req.headers.authorization);
+      
       // Check for token-based authentication first
       const authHeader = req.headers.authorization;
       
       if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.split(' ')[1];
         console.log('🔍 Auth check: Token received:', token);
+        console.log('🔍 Auth check: Token type:', typeof token);
+        console.log('🔍 Auth check: Token length:', token.length);
         
         // Handle OAuth temporary tokens (format: userId_oauth_temp)
         if (token.includes('_oauth_temp')) {
@@ -447,7 +453,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // Don't send password in the response
               const { password, ...userWithoutPassword } = user;
               return res.json(userWithoutPassword);
+            } else {
+              console.log('❌ Auth check: OAuth user not found in database for userId:', userId);
             }
+          } else {
+            console.log('❌ Auth check: Invalid userId from OAuth token:', token.split('_')[0]);
           }
         }
         
@@ -461,25 +471,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Don't send password in the response
             const { password, ...userWithoutPassword } = user;
             return res.json(userWithoutPassword);
+          } else {
+            console.log('❌ Auth check: JWT user not found in database for userId:', userId);
           }
+        } else {
+          console.log('❌ Auth check: Invalid userId from JWT token:', token.split('_')[0]);
         }
+      } else {
+        console.log('❌ Auth check: No valid authorization header found');
       }
       
       // Fallback to session-based auth if token auth fails
+      console.log('🔍 Auth check: Trying session authentication...');
+      console.log('🔍 Session data:', req.session);
+      console.log('🔍 Session userId:', req.session?.userId);
+      
       if (!req.session?.userId) {
+        console.log('❌ Auth check: No session userId found');
         return res.status(401).json({ message: 'Not authenticated' });
       }
       
       const user = await storage.getUser(req.session.userId);
       if (!user) {
+        console.log('❌ Auth check: User not found for session userId:', req.session.userId);
         return res.status(404).json({ message: 'User not found' });
       }
       
+      console.log('🔍 Auth check: Session user found:', user.username);
       // Don't send password in the response
       const { password, ...userWithoutPassword } = user;
       
       res.json(userWithoutPassword);
     } catch (error) {
+      console.error('❌ Auth check error:', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -5010,38 +5034,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         console.log('🔄 Attempting redirect...');
         
-        // Try to redirect, but if it fails, show user data
-        try {
-          console.log('🔄 Attempting HTTP redirect...');
-          res.redirect(302, redirectUrl);
-        } catch (redirectError) {
-          console.error('❌ HTTP redirect failed:', redirectError);
-          // Fallback: Use JavaScript redirect instead
-          console.log('🔄 Falling back to JavaScript redirect...');
-          
-          const htmlRedirect = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <title>Redirecting...</title>
-              <meta http-equiv="refresh" content="0;url=${redirectUrl}">
-            </head>
-            <body>
-              <h1>OAuth Successful!</h1>
-              <p>Redirecting to your app...</p>
-              <p>If you're not redirected automatically, <a href="${redirectUrl}">click here</a></p>
-              <script>
-                console.log('🔐 OAuth redirect script executing...');
-                console.log('🔐 Redirecting to:', '${redirectUrl}');
-                window.location.href = '${redirectUrl}';
-              </script>
-            </body>
-            </html>
-          `;
-          
-          res.setHeader('Content-Type', 'text/html');
-          res.send(htmlRedirect);
-        }
+        // Skip redirect and show token directly
+        console.log('🔄 Skipping redirect - showing token page instead...');
+        
+        const tokenPage = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>OAuth Successful!</title>
+            <style>
+              body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+              .success { color: #22c55e; font-size: 24px; margin-bottom: 20px; }
+              .token { background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0; font-family: monospace; }
+              .button { background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 10px 0; }
+              .instructions { background: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0; }
+            </style>
+          </head>
+          <body>
+            <div class="success">✅ OAuth Authentication Successful!</div>
+            
+            <h2>Welcome, ${req.user?.name || 'User'}!</h2>
+            <p>Your Google account has been successfully linked.</p>
+            
+            <div class="instructions">
+              <h3>Next Steps:</h3>
+              <p>1. Copy the token below</p>
+              <p>2. Go to your app: <a href="${frontendUrl}" target="_blank">${frontendUrl}</a></p>
+              <p>3. The app should automatically detect and use this token</p>
+            </div>
+            
+            <h3>Your Authentication Token:</h3>
+            <div class="token">${tempToken}</div>
+            
+            <h3>Quick Actions:</h3>
+            <a href="${frontendUrl}" class="button" target="_blank">Go to App</a>
+            <a href="${frontendUrl}/?oauth_token=${tempToken}&user_id=${req.user?.id}" class="button" target="_blank">Go to App with Token</a>
+            
+            <script>
+              console.log('🔐 OAuth success page loaded');
+              console.log('🔐 Token:', '${tempToken}');
+              console.log('🔐 User ID:', '${req.user?.id}');
+              console.log('🔐 Frontend URL:', '${frontendUrl}');
+            </script>
+          </body>
+          </html>
+        `;
+        
+        res.setHeader('Content-Type', 'text/html');
+        res.send(tokenPage);
       } catch (error) {
         console.error('❌ Error in Google OAuth callback:', error);
         // Fallback redirect to homepage

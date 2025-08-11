@@ -173,6 +173,36 @@ export default function Login() {
                 Sign in with Google
               </Button>
               
+              {/* Manual OAuth Token Input */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-2 text-gray-500">Or use OAuth token</span>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="oauthToken">OAuth Token (from success page)</Label>
+                <Input
+                  id="oauthToken"
+                  placeholder="e.g., 19_oauth_temp"
+                  onChange={(e) => {
+                    const token = e.target.value.trim();
+                    if (token) {
+                      console.log('🔐 Manual OAuth token entered:', token);
+                      localStorage.setItem('auth_token', token);
+                      // Reload page to trigger auth check
+                      window.location.reload();
+                    }
+                  }}
+                />
+                <p className="text-xs text-gray-500">
+                  If Google OAuth redirects you to a success page, copy the token and paste it here
+                </p>
+              </div>
+              
               <div className="text-center text-sm text-gray-600 space-y-2">
                 <p>
                   Don't have an account?{" "}
