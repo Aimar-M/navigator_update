@@ -5040,14 +5040,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Instead of showing a page, redirect to frontend with token
         console.log('🔄 Redirecting to frontend with token...');
         
-        // Set proper redirect headers
-        res.setHeader('Location', redirectUrl);
-        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-        res.setHeader('Pragma', 'no-cache');
-        res.setHeader('Expires', '0');
-        
-        // Send 302 redirect
-        res.status(302).send();
+        // Use proper redirect method
+        res.redirect(redirectUrl);
       } catch (error) {
         console.error('❌ Error in Google OAuth callback:', error);
         // Fallback redirect to homepage
