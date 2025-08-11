@@ -4840,6 +4840,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Test redirect route
+  router.get('/auth/test-redirect', (req: Request, res: Response) => {
+    const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://navigator-update.vercel.app';
+    console.log('🧪 Test redirect to:', `${frontendUrl}/`);
+    res.redirect(302, `${frontendUrl}/`);
+  });
+
+  // Debug route to check users in database
+  router.get('/auth/check-users', async (req: Request, res: Response) => {
+    try {
+      const allUsers = await storage.getAllUsers();
+      const googleUsers = allUsers.filter(user => user.googleId);
+      
+      res.json({
+        message: 'Database users check',
+        totalUsers: allUsers.length,
+        googleOAuthUsers: googleUsers.length,
+        googleUsers: googleUsers.map(user => ({
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          googleId: user.googleId,
+          isOAuthUser: user.isOAuthUser
+        }))
+      });
+    } catch (error) {
+      console.error('❌ Error checking users:', error);
+      res.status(500).json({ error: 'Failed to check users' });
+    }
+  });
+
   // Google OAuth Routes
   router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
@@ -4847,21 +4878,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     passport.authenticate('google', { failureRedirect: '/login' }),
     (req: Request, res: Response) => {
       try {
+        console.log('🎯 Google OAuth callback reached');
+        console.log('🔍 Request headers:', req.headers);
+        console.log('🔍 Request user:', req.user);
+        console.log('🔍 Session ID:', req.sessionID);
+        console.log('🔍 Session data:', req.session);
+        
         // Successful authentication, redirect to frontend homepage
         const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://navigator-update.vercel.app';
-        console.log('🔐 Google OAuth callback - redirecting to:', frontendUrl);
-        console.log('🔍 User authenticated:', req.user);
+        console.log('🔐 Frontend URL from env:', frontendUrl);
         
         // Always redirect to homepage (/) after successful authentication
         const redirectUrl = `${frontendUrl}/`;
         console.log('🚀 Final redirect URL:', redirectUrl);
+        console.log('🚀 About to redirect with status 302');
         
-        res.redirect(redirectUrl);
+        // Set some headers to ensure redirect works
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        
+        res.redirect(302, redirectUrl);
       } catch (error) {
         console.error('❌ Error in Google OAuth callback:', error);
         // Fallback redirect to homepage
         const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://navigator-update.vercel.app';
-        res.redirect(`${frontendUrl}/`);
+        console.log('🔄 Fallback redirect to:', `${frontendUrl}/`);
+        res.redirect(302, `${frontendUrl}/`);
       }
     }
   );

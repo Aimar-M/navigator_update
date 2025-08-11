@@ -26,39 +26,58 @@ passport.use(new GoogleStrategy({
     });
 
     // Check if user already exists with this Google ID
+    console.log('🔍 Checking if user exists with Google ID:', profile.id);
     let user = await storage.getUserByGoogleId(profile.id);
     
     if (user) {
       console.log('✅ Existing Google user found:', user.username);
+      console.log('🔍 User details:', { id: user.id, email: user.email, googleId: user.googleId });
       return done(null, user);
     }
 
     // Check if user exists with this email (for linking accounts)
     if (profile.emails?.[0]?.value) {
+      console.log('🔍 Checking if user exists with email:', profile.emails[0].value);
       user = await storage.getUserByEmail(profile.emails[0].value);
       
       if (user) {
         // Link existing account with Google
         console.log('🔗 Linking existing account with Google:', user.username);
-        await storage.updateUser(user.id, {
-          googleId: profile.id,
-          googleEmail: profile.emails[0].value,
-          googleName: profile.displayName,
-          googlePicture: profile.photos?.[0]?.value,
-          isOAuthUser: true,
-          emailConfirmed: true // Google emails are pre-verified
-        });
+        console.log('🔍 Updating user with Google OAuth data...');
         
-        const updatedUser = await storage.getUserById(user.id);
-        return done(null, updatedUser);
+        try {
+          const updateResult = await storage.updateUser(user.id, {
+            googleId: profile.id,
+            googleEmail: profile.emails[0].value,
+            googleName: profile.displayName,
+            googlePicture: profile.photos?.[0]?.value,
+            isOAuthUser: true,
+            emailConfirmed: true // Google emails are pre-verified
+          });
+          
+          if (updateResult) {
+            console.log('✅ User successfully linked with Google OAuth:', updateResult.username);
+            return done(null, updateResult);
+          } else {
+            console.error('❌ Failed to update user with Google OAuth data');
+            return done(new Error('Failed to update user with Google OAuth data'));
+          }
+        } catch (updateError) {
+          console.error('❌ Error updating user with Google OAuth data:', updateError);
+          return done(updateError as Error);
+        }
       }
     }
 
     // Create new user with Google OAuth
+    console.log('🔍 Creating new user with Google OAuth...');
     const username = await generateUniqueUsername(profile.displayName || 'user');
-    const randomPassword = await bcrypt.hash(Math.random().toString(36), 10);
+    console.log('🔍 Generated username:', username);
     
-    const newUser = await storage.createUser({
+    const randomPassword = await bcrypt.hash(Math.random().toString(36), 10);
+    console.log('🔍 Generated random password for OAuth user');
+    
+    const userData = {
       username,
       password: randomPassword, // Random password for OAuth users
       email: profile.emails?.[0]?.value || `${profile.id}@google.oauth`,
@@ -71,10 +90,29 @@ passport.use(new GoogleStrategy({
       googleName: profile.displayName,
       googlePicture: profile.photos?.[0]?.value,
       isOAuthUser: true
+    };
+    
+    console.log('🔍 User data to create:', {
+      username: userData.username,
+      email: userData.email,
+      name: userData.name,
+      googleId: userData.googleId,
+      isOAuthUser: userData.isOAuthUser
     });
-
-    console.log('✅ New Google OAuth user created:', newUser.username);
-    return done(null, newUser);
+    
+    try {
+      const newUser = await storage.createUser(userData);
+      console.log('✅ New Google OAuth user created successfully:', {
+        id: newUser.id,
+        username: newUser.username,
+        email: newUser.email,
+        googleId: newUser.googleId
+      });
+      return done(null, newUser);
+    } catch (createError) {
+      console.error('❌ Error creating new Google OAuth user:', createError);
+      return done(createError as Error);
+    }
   } catch (error) {
     console.error('❌ Google OAuth error:', error);
     return done(error as Error);

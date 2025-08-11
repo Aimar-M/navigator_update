@@ -25,6 +25,7 @@ app.use(cors({
     "https://navigator-update.vercel.app",
     "https://navigator-update-git-main-aimar-ms-projects.vercel.app",
     "https://navigator-update-1zbs9iahz-aimar-ms-projects.vercel.app",
+    "https://navigatorupdate-production.up.railway.app",
     // Allow all origins in production
     ...(process.env.NODE_ENV === 'production' ? [] : [])
   ],
@@ -50,7 +51,8 @@ app.use(session({
   cookie: {
     secure: process.env.NODE_ENV === 'production', // Set to true if using HTTPS
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'lax' // Allow cross-site redirects
   }
 }));
 
