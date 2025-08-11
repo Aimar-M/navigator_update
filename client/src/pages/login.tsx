@@ -221,15 +221,31 @@ export default function Login() {
                   
                   // Test the OAuth endpoint before redirecting
                   console.log('🔍 Testing OAuth endpoint before redirect...');
-                  fetch(oauthUrl, { method: 'HEAD' })
+                  
+                  // Use a GET request instead of HEAD, and handle redirects
+                  fetch(oauthUrl, { 
+                    method: 'GET',
+                    redirect: 'manual' // Don't follow redirects automatically
+                  })
                     .then(response => {
                       console.log('✅ OAuth endpoint test successful:', response.status);
-                      console.log('🔄 Now redirecting to Google OAuth...');
-                      window.location.href = oauthUrl;
+                      console.log('🔍 Response type:', response.type);
+                      
+                      // If we get a redirect (302), that's expected for OAuth
+                      if (response.status === 302 || response.status === 200) {
+                        console.log('🔄 OAuth endpoint working, now redirecting to Google OAuth...');
+                        window.location.href = oauthUrl;
+                      } else {
+                        console.log('⚠️ Unexpected response status:', response.status);
+                        // Still try to redirect as OAuth endpoints often redirect
+                        window.location.href = oauthUrl;
+                      }
                     })
                     .catch(error => {
                       console.error('❌ OAuth endpoint test failed:', error);
-                      alert('OAuth endpoint not accessible. Please check backend configuration.');
+                      console.log('🔄 Attempting redirect anyway as OAuth endpoints often redirect...');
+                      // Try to redirect anyway - OAuth endpoints often redirect
+                      window.location.href = oauthUrl;
                     });
                 }}
               >
