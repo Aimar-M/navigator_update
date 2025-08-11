@@ -25,13 +25,15 @@ app.use(cors({
     "https://navigator-update.vercel.app",
     "https://navigator-update-git-main-aimar-ms-projects.vercel.app",
     "https://navigator-update-1zbs9iahz-aimar-ms-projects.vercel.app",
-    "https://navigatorupdate-production.up.railway.app"
+    "https://navigatorupdate-production.up.railway.app",
+    // Allow all origins in production
+    ...(process.env.NODE_ENV === 'production' ? [] : [])
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['*'], // Allow all headers
-  exposedHeaders: ['*'], // Expose all headers
-  optionsSuccessStatus: 204
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cookie'],
+  exposedHeaders: ['Set-Cookie'],
+  optionsSuccessStatus: 204,
 }));
 
 app.options('*', cors()); // <-- Add this line
@@ -52,8 +54,7 @@ app.use(session({
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     sameSite: 'none', // Allow cross-site cookies for OAuth
-    domain: undefined, // Don't restrict to specific domain
-    path: '/'
+    domain: process.env.NODE_ENV === 'production' ? '.railway.app' : undefined // Allow subdomain sharing
   }
 }));
 
