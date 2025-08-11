@@ -433,13 +433,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.split(' ')[1];
+        console.log('🔍 Auth check: Token received:', token);
         
-        // In this simple implementation, token is the user ID + '_token'
+        // Handle OAuth temporary tokens (format: userId_oauth_temp)
+        if (token.includes('_oauth_temp')) {
+          const userId = parseInt(token.split('_')[0]);
+          console.log('🔍 Auth check: OAuth token detected, userId:', userId);
+          
+          if (!isNaN(userId)) {
+            const user = await storage.getUser(userId);
+            if (user) {
+              console.log('🔍 Auth check: OAuth user found:', user.username);
+              // Don't send password in the response
+              const { password, ...userWithoutPassword } = user;
+              return res.json(userWithoutPassword);
+            }
+          }
+        }
+        
+        // Handle regular JWT tokens (format: userId_token)
         const userId = parseInt(token.split('_')[0]);
         
         if (!isNaN(userId)) {
           const user = await storage.getUser(userId);
           if (user) {
+            console.log('🔍 Auth check: JWT user found:', user.username);
             // Don't send password in the response
             const { password, ...userWithoutPassword } = user;
             return res.json(userWithoutPassword);
@@ -474,13 +492,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.split(' ')[1];
+        console.log('🔍 Middleware: Token received:', token);
         
         if (token) {
-          // In this simple implementation, token is the user ID + '_token' or just the user ID
+          // Handle OAuth temporary tokens (format: userId_oauth_temp)
+          if (token.includes('_oauth_temp')) {
+            const userId = parseInt(token.split('_')[0]);
+            console.log('🔍 Middleware: OAuth token detected, userId:', userId);
+            
+            if (!isNaN(userId)) {
+              const user = await storage.getUser(userId);
+              if (user) {
+                console.log('🔍 Middleware: OAuth user found:', user.username);
+                // Check if email is confirmed
+                if (!user.emailConfirmed) {
+                  return res.status(403).json({ 
+                    message: 'Please confirm your email before accessing this resource.',
+                    requiresEmailConfirmation: true,
+                    email: user.email
+                  });
+                }
+                req.user = user;
+                return next();
+              }
+            }
+          }
+          
+          // Handle regular JWT tokens (format: userId_token)
           const userId = parseInt(token.split('_')[0]);
           if (!isNaN(userId)) {
             const user = await storage.getUser(userId);
             if (user) {
+              console.log('🔍 Middleware: JWT user found:', user.username);
               // Check if email is confirmed
               if (!user.emailConfirmed) {
                 return res.status(403).json({ 
@@ -4831,12 +4874,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Debug route to check environment variables
   router.get('/auth/debug', (req: Request, res: Response) => {
+    // Get all environment variables that start with FRONTEND or CLIENT
+    const allEnvVars = Object.keys(process.env);
+    const frontendVars = allEnvVars.filter(key => 
+      key.toUpperCase().includes('FRONTEND') || 
+      key.toUpperCase().includes('CLIENT')
+    );
+    
     res.json({
       message: 'Environment variables check',
       googleClientId: process.env.GOOGLE_CLIENT_ID ? '✅ Set' : '❌ Missing',
       googleClientSecret: process.env.GOOGLE_CLIENT_SECRET ? '✅ Set' : '❌ Missing',
       backendUrl: process.env.BACKEND_URL || '❌ Missing',
-      callbackUrl: `${process.env.BACKEND_URL}/api/auth/google/callback`
+      frontendUrl: process.env.FRONTEND_URL || '❌ Missing',
+      clientUrl: process.env.CLIENT_URL || '❌ Missing',
+      callbackUrl: `${process.env.BACKEND_URL}/api/auth/google/callback`,
+      nodeEnv: process.env.NODE_ENV || '❌ Missing',
+      // Debug: Show all environment variables that might be related
+      allFrontendClientVars: frontendVars,
+      // Debug: Show raw values
+      rawFrontendUrl: process.env.FRONTEND_URL,
+      rawClientUrl: process.env.CLIENT_URL,
+      // Debug: Show all env vars (be careful with sensitive data)
+      allEnvVars: allEnvVars.filter(key => !key.toLowerCase().includes('secret') && !key.toLowerCase().includes('password'))
     });
   });
 
@@ -4899,23 +4959,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('🔍 Session data:', req.session);
         
         // Successful authentication, redirect to frontend homepage with user ID
-        const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://navigator-update.vercel.app';
-        console.log('🔐 Frontend URL from env:', frontendUrl);
+        // TEMPORARY: Hardcode frontend URL since env vars aren't working
+        const frontendUrl = 'https://navigator-update.vercel.app';
+        console.log('🔐 Frontend URL (hardcoded):', frontendUrl);
+        console.log('⚠️ WARNING: Using hardcoded frontend URL because environment variables are not working');
         
         // Create a temporary token for OAuth users
         const tempToken = `${req.user?.id}_oauth_temp`;
+        console.log('🔑 Generated temporary token:', tempToken);
         
         // Redirect to frontend with temporary token
         const redirectUrl = `${frontendUrl}/?oauth_token=${tempToken}&user_id=${req.user?.id}`;
         console.log('🚀 Final redirect URL:', redirectUrl);
         console.log('🚀 About to redirect with status 302');
+        console.log('🔍 Redirect URL breakdown:', {
+          frontendUrl,
+          oauthToken: tempToken,
+          userId: req.user?.id,
+          fullUrl: redirectUrl
+        });
         
         // Set some headers to ensure redirect works
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         res.setHeader('Pragma', 'no-cache');
         res.setHeader('Expires', '0');
         
-        res.redirect(302, redirectUrl);
+        console.log('🔄 Attempting redirect...');
+        
+        // Try to redirect, but if it fails, show user data
+        try {
+          res.redirect(302, redirectUrl);
+        } catch (redirectError) {
+          console.error('❌ Redirect failed:', redirectError);
+          // Fallback: show user data instead of redirecting
+          res.json({
+            message: 'OAuth successful but redirect failed',
+            user: req.user,
+            redirectUrl,
+            instructions: 'Please manually navigate to the frontend and use this token'
+          });
+        }
       } catch (error) {
         console.error('❌ Error in Google OAuth callback:', error);
         // Fallback redirect to homepage
