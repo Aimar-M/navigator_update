@@ -33,12 +33,15 @@ export default function Login() {
   useEffect(() => {
     console.log('🔍 Login page: Checking for OAuth parameters...');
     console.log('🔍 Login page: Current URL:', window.location.href);
+    console.log('🔍 Login page: window.location.search:', window.location.search);
+    console.log('🔍 Login page: window.location.hash:', window.location.hash);
     
     const urlParams = new URLSearchParams(window.location.search);
     const oauthToken = urlParams.get('oauth_token');
     const userId = urlParams.get('user_id');
     
     console.log('🔍 Login page: URL parameters:', { oauthToken, userId });
+    console.log('🔍 Login page: All URL params:', Object.fromEntries(urlParams.entries()));
     
     if (oauthToken && userId) {
       console.log('🔐 Login page: OAuth redirect detected:', { oauthToken, userId });
@@ -56,6 +59,28 @@ export default function Login() {
       navigate('/');
     } else {
       console.log('🔍 Login page: No OAuth parameters found');
+      console.log('🔍 Login page: Checking if we should test OAuth flow...');
+      
+      // Test if we can reach the backend OAuth test endpoint
+      const testOAuth = async () => {
+        try {
+          const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL;
+          if (backendUrl) {
+            console.log('🔍 Testing OAuth backend connection to:', backendUrl);
+            const response = await fetch(`${backendUrl}/api/auth/oauth/test`);
+            if (response.ok) {
+              const data = await response.json();
+              console.log('✅ OAuth backend test successful:', data);
+            } else {
+              console.log('❌ OAuth backend test failed:', response.status);
+            }
+          }
+        } catch (error) {
+          console.log('❌ OAuth backend test error:', error);
+        }
+      };
+      
+      testOAuth();
     }
   }, [navigate]);
 
@@ -171,15 +196,30 @@ export default function Login() {
                     MODE: import.meta.env.MODE
                   });
                   
-                  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+                  const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL;
+                  console.log('🔍 Available environment variables:', {
+                    VITE_BACKEND_URL: import.meta.env.VITE_BACKEND_URL,
+                    VITE_API_URL: import.meta.env.VITE_API_URL,
+                    NODE_ENV: import.meta.env.NODE_ENV,
+                    MODE: import.meta.env.MODE
+                  });
+                  
                   if (!backendUrl) {
-                    console.error('❌ VITE_BACKEND_URL environment variable is not set');
+                    console.error('❌ No backend URL environment variable is set');
                     alert('Backend URL not configured. Please check environment variables.');
                     return;
                   }
                   
-                  console.log('🚀 Redirecting to:', `${backendUrl}/api/auth/google`);
-                  window.location.href = `${backendUrl}/api/auth/google`;
+                  const oauthUrl = `${backendUrl}/api/auth/google`;
+                  console.log('🚀 Redirecting to Google OAuth:', oauthUrl);
+                  console.log('🔍 Full OAuth flow will be:', {
+                    step1: 'Redirect to Google',
+                    step2: 'Google authenticates user',
+                    step3: 'Google redirects to backend callback',
+                    step4: 'Backend redirects to frontend with token'
+                  });
+                  
+                  window.location.href = oauthUrl;
                 }}
               >
                 <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">

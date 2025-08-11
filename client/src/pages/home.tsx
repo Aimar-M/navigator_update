@@ -42,12 +42,15 @@ export default function Home() {
     console.log('🔍 Homepage: Checking for OAuth parameters...');
     console.log('🔍 Homepage: Current URL:', window.location.href);
     console.log('🔍 Homepage: Current user state:', user);
+    console.log('🔍 Homepage: window.location.search:', window.location.search);
+    console.log('🔍 Homepage: window.location.hash:', window.location.hash);
     
     const urlParams = new URLSearchParams(window.location.search);
     const oauthToken = urlParams.get('oauth_token');
     const userId = urlParams.get('user_id');
     
     console.log('🔍 Homepage: URL parameters:', { oauthToken, userId });
+    console.log('🔍 Homepage: All URL params:', Object.fromEntries(urlParams.entries()));
     
     if (oauthToken && userId && !user) {
       console.log('🔐 OAuth redirect detected:', { oauthToken, userId });
@@ -65,6 +68,28 @@ export default function Home() {
       window.location.reload();
     } else {
       console.log('🔍 Homepage: No OAuth parameters or user already exists');
+      console.log('🔍 Homepage: Checking if we should test OAuth flow...');
+      
+      // Test if we can reach the backend OAuth test endpoint
+      const testOAuth = async () => {
+        try {
+          const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL;
+          if (backendUrl) {
+            console.log('🔍 Testing OAuth backend connection to:', backendUrl);
+            const response = await fetch(`${backendUrl}/api/auth/oauth/test`);
+            if (response.ok) {
+              const data = await response.json();
+              console.log('✅ OAuth backend test successful:', data);
+            } else {
+              console.log('❌ OAuth backend test failed:', response.status);
+            }
+          }
+        } catch (error) {
+          console.log('❌ OAuth backend test error:', error);
+        }
+      };
+      
+      testOAuth();
     }
   }, [user]);
 

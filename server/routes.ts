@@ -4985,12 +4985,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Google OAuth Routes
   router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
+  // Test OAuth flow endpoint
+  router.get('/auth/oauth/test', (req: Request, res: Response) => {
+    res.json({
+      message: 'OAuth test endpoint working',
+      timestamp: new Date().toISOString(),
+      environment: {
+        nodeEnv: process.env.NODE_ENV,
+        backendUrl: process.env.BACKEND_URL,
+        frontendUrl: process.env.FRONTEND_URL,
+        googleClientId: process.env.GOOGLE_CLIENT_ID ? '✅ Set' : '❌ Missing',
+        googleClientSecret: process.env.GOOGLE_CLIENT_SECRET ? '✅ Set' : '❌ Missing'
+      }
+    });
+  });
+
   // OAuth token validation endpoint
   router.post('/auth/oauth/validate', async (req: Request, res: Response) => {
     try {
       const { oauthToken, userId } = req.body;
       
+      console.log('🔍 OAuth token validation request received');
+      console.log('🔍 Request body:', req.body);
+      console.log('🔍 oauthToken:', oauthToken);
+      console.log('🔍 userId:', userId);
+      
       if (!oauthToken || !userId) {
+        console.log('❌ Missing oauthToken or userId');
         return res.status(400).json({ error: 'Missing oauthToken or userId' });
       }
 
@@ -4998,27 +5019,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check if the token format matches our OAuth pattern
       if (!oauthToken.includes('_oauth_temp')) {
+        console.log('❌ Invalid OAuth token format:', oauthToken);
         return res.status(400).json({ error: 'Invalid OAuth token format' });
       }
 
       // Extract user ID from token
       const tokenUserId = oauthToken.split('_')[0];
+      console.log('🔍 Extracted userId from token:', tokenUserId);
       
       if (tokenUserId !== userId.toString()) {
+        console.log('❌ Token and user ID mismatch:', { tokenUserId, userId });
         return res.status(400).json({ error: 'Token and user ID mismatch' });
       }
 
       // Get user from database
+      console.log('🔍 Looking up user in database with ID:', userId);
       const user = await storage.getUser(parseInt(userId));
       
       if (!user) {
+        console.log('❌ User not found in database for ID:', userId);
         return res.status(404).json({ error: 'User not found' });
       }
+
+      console.log('✅ User found in database:', user.username);
 
       // Generate a token using the same format as the login endpoint
       const token = `${user.id}`;
       
       console.log('✅ OAuth token validation successful for user:', user.username);
+      console.log('✅ Generated new token:', token);
       
       res.json({
         success: true,
@@ -5052,6 +5081,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Use environment variable or fallback to hardcoded URL
         const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://navigator-update.vercel.app';
         console.log('🔐 Frontend URL:', frontendUrl);
+        console.log('🔍 Environment variables check:', {
+          FRONTEND_URL: process.env.FRONTEND_URL,
+          CLIENT_URL: process.env.CLIENT_URL,
+          fallback: 'https://navigator-update.vercel.app'
+        });
         
         // Create a temporary token for OAuth users
         const tempToken = `${req.user?.id}_oauth_temp`;
@@ -5078,7 +5112,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.setHeader('Expires', '0');
         
         console.log('🔄 Redirecting to frontend with OAuth token...');
-        res.redirect(302, redirectUrl);
+        console.log('🔄 Redirect status: 302');
+        console.log('🔄 Redirect target:', redirectUrl);
+        
+        // Try to redirect and log any errors
+        try {
+          res.redirect(302, redirectUrl);
+        } catch (redirectError) {
+          console.error('❌ Redirect error:', redirectError);
+          // Fallback: send JSON response with redirect info
+          res.json({
+            success: true,
+            message: 'OAuth successful, please redirect manually',
+            redirectUrl: redirectUrl,
+            oauthToken: tempToken,
+            userId: req.user?.id
+          });
+        }
       } catch (error) {
         console.error('❌ Error in Google OAuth callback:', error);
         // Fallback redirect to homepage

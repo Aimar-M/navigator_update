@@ -55,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           try {
             // Extract user ID from the OAuth token
             const userId = token.split('_')[0];
+            console.log("🔍 Extracted userId from OAuth token:", userId);
             
             // Validate the OAuth token with the backend
             const response = await fetch(`${API_BASE}/api/auth/oauth/validate`, {
@@ -64,6 +65,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               },
               body: JSON.stringify({ oauthToken: token, userId }),
             });
+            
+            console.log("🔍 OAuth validation response status:", response.status);
             
             if (response.ok) {
               const data = await response.json();
@@ -82,7 +85,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               setIsLoading(false);
               return;
             } else {
-              console.log("❌ OAuth token validation failed, removing invalid token");
+              const errorData = await response.text();
+              console.log("❌ OAuth token validation failed:", errorData);
               localStorage.removeItem('auth_token');
             }
           } catch (oauthError) {
