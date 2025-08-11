@@ -5034,54 +5034,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         console.log('🔄 Attempting redirect...');
         
-        // Skip redirect and show token directly
+        // Skip redirect and show token page instead
         console.log('🔄 Skipping redirect - showing token page instead...');
         
-        const tokenPage = `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>OAuth Successful!</title>
-            <style>
-              body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
-              .success { color: #22c55e; font-size: 24px; margin-bottom: 20px; }
-              .token { background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0; font-family: monospace; }
-              .button { background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 10px 0; }
-              .instructions { background: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0; }
-            </style>
-          </head>
-          <body>
-            <div class="success">✅ OAuth Authentication Successful!</div>
-            
-            <h2>Welcome, ${req.user?.name || 'User'}!</h2>
-            <p>Your Google account has been successfully linked.</p>
-            
-            <div class="instructions">
-              <h3>Next Steps:</h3>
-              <p>1. Copy the token below</p>
-              <p>2. Go to your app: <a href="${frontendUrl}" target="_blank">${frontendUrl}</a></p>
-              <p>3. The app should automatically detect and use this token</p>
-            </div>
-            
-            <h3>Your Authentication Token:</h3>
-            <div class="token">${tempToken}</div>
-            
-            <h3>Quick Actions:</h3>
-            <a href="${frontendUrl}" class="button" target="_blank">Go to App</a>
-            <a href="${frontendUrl}/?oauth_token=${tempToken}&user_id=${req.user?.id}" class="button" target="_blank">Go to App with Token</a>
-            
-            <script>
-              console.log('🔐 OAuth success page loaded');
-              console.log('🔐 Token:', '${tempToken}');
-              console.log('🔐 User ID:', '${req.user?.id}');
-              console.log('🔐 Frontend URL:', '${frontendUrl}');
-            </script>
-          </body>
-          </html>
-        `;
+        // Instead of showing a page, redirect to frontend with token
+        console.log('🔄 Redirecting to frontend with token...');
         
-        res.setHeader('Content-Type', 'text/html');
-        res.send(tokenPage);
+        // Set proper redirect headers
+        res.setHeader('Location', redirectUrl);
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        
+        // Send 302 redirect
+        res.status(302).send();
       } catch (error) {
         console.error('❌ Error in Google OAuth callback:', error);
         // Fallback redirect to homepage
