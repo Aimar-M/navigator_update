@@ -48,6 +48,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const token = localStorage.getItem('auth_token');
         console.log("auth check: token from localStorage:", token);
         
+        // Check if this is an OAuth temporary token
+        if (token && token.includes('_oauth_temp')) {
+          console.log("🔍 OAuth temporary token detected, validating...");
+          
+          try {
+            // Extract user ID from the OAuth token
+            const userId = token.split('_')[0];
+            
+            // Validate the OAuth token with the backend
+            const response = await fetch(`${API_BASE}/api/auth/oauth/validate`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ oauthToken: token, userId }),
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              console.log("✅ OAuth token validation successful:", data);
+              
+              // Store the new JWT token
+              localStorage.setItem('auth_token', data.token);
+              
+              // Set the user
+              setUser(data.user);
+              
+              if (data.user) {
+                wsClient.connect(data.user.id, []);
+              }
+              
+              setIsLoading(false);
+              return;
+            } else {
+              console.log("❌ OAuth token validation failed, removing invalid token");
+              localStorage.removeItem('auth_token');
+            }
+          } catch (oauthError) {
+            console.error("❌ OAuth token validation error:", oauthError);
+            localStorage.removeItem('auth_token');
+          }
+        }
+        
         // First try JWT token authentication
         if (token) {
           const headers = {

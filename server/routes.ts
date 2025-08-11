@@ -4985,6 +4985,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Google OAuth Routes
   router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
+  // OAuth token validation endpoint
+  router.post('/auth/oauth/validate', async (req: Request, res: Response) => {
+    try {
+      const { oauthToken, userId } = req.body;
+      
+      if (!oauthToken || !userId) {
+        return res.status(400).json({ error: 'Missing oauthToken or userId' });
+      }
+
+      console.log('🔍 OAuth token validation request:', { oauthToken, userId });
+
+      // Check if the token format matches our OAuth pattern
+      if (!oauthToken.includes('_oauth_temp')) {
+        return res.status(400).json({ error: 'Invalid OAuth token format' });
+      }
+
+      // Extract user ID from token
+      const tokenUserId = oauthToken.split('_')[0];
+      
+      if (tokenUserId !== userId.toString()) {
+        return res.status(400).json({ error: 'Token and user ID mismatch' });
+      }
+
+      // Get user from database
+      const user = await storage.getUser(parseInt(userId));
+      
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Generate a token using the same format as the login endpoint
+      const token = `${user.id}`;
+      
+      console.log('✅ OAuth token validation successful for user:', user.username);
+      
+      res.json({
+        success: true,
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          name: user.name,
+          avatar: user.avatar
+        },
+        token: token
+      });
+      
+    } catch (error) {
+      console.error('❌ Error in OAuth token validation:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
   router.get('/auth/google/callback', 
     passport.authenticate('google', { failureRedirect: '/login' }),
     (req: Request, res: Response) => {
@@ -4996,10 +5049,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('🔍 Session data:', req.session);
         
         // Successful authentication, redirect to frontend homepage with user ID
-        // TEMPORARY: Hardcode frontend URL since env vars aren't working
-        const frontendUrl = 'https://navigator-update.vercel.app';
-        console.log('🔐 Frontend URL (hardcoded):', frontendUrl);
-        console.log('⚠️ WARNING: Using hardcoded frontend URL because environment variables are not working');
+        // Use environment variable or fallback to hardcoded URL
+        const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://navigator-update.vercel.app';
+        console.log('🔐 Frontend URL:', frontendUrl);
         
         // Create a temporary token for OAuth users
         const tempToken = `${req.user?.id}_oauth_temp`;
@@ -5013,13 +5065,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Redirect to frontend with temporary token
         const redirectUrl = `${frontendUrl}/?oauth_token=${tempToken}&user_id=${req.user?.id}`;
         console.log('🚀 Final redirect URL:', redirectUrl);
-        console.log('🚀 About to redirect with status 302');
-        console.log('🔍 Redirect URL breakdown:', {
-          frontendUrl,
-          oauthToken: tempToken,
-          userId: req.user?.id,
-          fullUrl: redirectUrl
-        });
         console.log('🔍 OAuth flow summary:', {
           step: 'callback_complete',
           userAuthenticated: !!req.user,
@@ -5027,21 +5072,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           redirectingTo: redirectUrl
         });
         
-        // Set some headers to ensure redirect works
+        // Set headers to ensure redirect works
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         res.setHeader('Pragma', 'no-cache');
         res.setHeader('Expires', '0');
         
-        console.log('🔄 Attempting redirect...');
-        
-        // Skip redirect and show token page instead
-        console.log('🔄 Skipping redirect - showing token page instead...');
-        
-        // Instead of showing a page, redirect to frontend with token
-        console.log('🔄 Redirecting to frontend with token...');
-        
-        // Use proper redirect method
-        res.redirect(redirectUrl);
+        console.log('🔄 Redirecting to frontend with OAuth token...');
+        res.redirect(302, redirectUrl);
       } catch (error) {
         console.error('❌ Error in Google OAuth callback:', error);
         // Fallback redirect to homepage
