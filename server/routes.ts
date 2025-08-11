@@ -4967,6 +4967,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Create a temporary token for OAuth users
         const tempToken = `${req.user?.id}_oauth_temp`;
         console.log('🔑 Generated temporary token:', tempToken);
+        console.log('🔍 User object for OAuth:', {
+          id: req.user?.id,
+          username: req.user?.username,
+          email: req.user?.email
+        });
         
         // Redirect to frontend with temporary token
         const redirectUrl = `${frontendUrl}/?oauth_token=${tempToken}&user_id=${req.user?.id}`;
@@ -4977,6 +4982,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           oauthToken: tempToken,
           userId: req.user?.id,
           fullUrl: redirectUrl
+        });
+        console.log('🔍 OAuth flow summary:', {
+          step: 'callback_complete',
+          userAuthenticated: !!req.user,
+          sessionId: req.sessionID,
+          redirectingTo: redirectUrl
         });
         
         // Set some headers to ensure redirect works

@@ -39,21 +39,32 @@ export default function Home() {
 
   // Handle OAuth redirect with temporary token
   useEffect(() => {
+    console.log('🔍 Homepage: Checking for OAuth parameters...');
+    console.log('🔍 Homepage: Current URL:', window.location.href);
+    console.log('🔍 Homepage: Current user state:', user);
+    
     const urlParams = new URLSearchParams(window.location.search);
     const oauthToken = urlParams.get('oauth_token');
     const userId = urlParams.get('user_id');
     
+    console.log('🔍 Homepage: URL parameters:', { oauthToken, userId });
+    
     if (oauthToken && userId && !user) {
       console.log('🔐 OAuth redirect detected:', { oauthToken, userId });
+      console.log('🔍 Homepage: Storing OAuth token in localStorage...');
       
       // Store the temporary OAuth token
       localStorage.setItem('auth_token', oauthToken);
+      console.log('🔍 Homepage: Token stored, clearing URL parameters...');
       
       // Clear the URL parameters
       window.history.replaceState({}, document.title, '/');
+      console.log('🔍 Homepage: URL cleared, reloading page...');
       
       // Force a page reload to trigger auth check
       window.location.reload();
+    } else {
+      console.log('🔍 Homepage: No OAuth parameters or user already exists');
     }
   }, [user]);
 
