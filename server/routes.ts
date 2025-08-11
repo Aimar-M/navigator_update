@@ -4902,9 +4902,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Test redirect route
   router.get('/auth/test-redirect', (req: Request, res: Response) => {
-    const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://navigator-update.vercel.app';
+    const frontendUrl = 'https://navigator-update.vercel.app';
     console.log('🧪 Test redirect to:', `${frontendUrl}/`);
-    res.redirect(302, `${frontendUrl}/`);
+    console.log('🧪 Test redirect URL:', `${frontendUrl}/`);
+    
+    // Try different redirect approaches
+    try {
+      console.log('🔄 Attempting test redirect...');
+      res.redirect(302, `${frontendUrl}/`);
+    } catch (redirectError) {
+      console.error('❌ Test redirect failed:', redirectError);
+      res.json({
+        message: 'Test redirect failed',
+        redirectUrl: `${frontendUrl}/`,
+        error: redirectError.message
+      });
+    }
   });
 
   // Debug route to check users in database
@@ -4999,16 +5012,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Try to redirect, but if it fails, show user data
         try {
+          console.log('🔄 Attempting HTTP redirect...');
           res.redirect(302, redirectUrl);
         } catch (redirectError) {
-          console.error('❌ Redirect failed:', redirectError);
-          // Fallback: show user data instead of redirecting
-          res.json({
-            message: 'OAuth successful but redirect failed',
-            user: req.user,
-            redirectUrl,
-            instructions: 'Please manually navigate to the frontend and use this token'
-          });
+          console.error('❌ HTTP redirect failed:', redirectError);
+          // Fallback: Use JavaScript redirect instead
+          console.log('🔄 Falling back to JavaScript redirect...');
+          
+          const htmlRedirect = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>Redirecting...</title>
+              <meta http-equiv="refresh" content="0;url=${redirectUrl}">
+            </head>
+            <body>
+              <h1>OAuth Successful!</h1>
+              <p>Redirecting to your app...</p>
+              <p>If you're not redirected automatically, <a href="${redirectUrl}">click here</a></p>
+              <script>
+                console.log('🔐 OAuth redirect script executing...');
+                console.log('🔐 Redirecting to:', '${redirectUrl}');
+                window.location.href = '${redirectUrl}';
+              </script>
+            </body>
+            </html>
+          `;
+          
+          res.setHeader('Content-Type', 'text/html');
+          res.send(htmlRedirect);
         }
       } catch (error) {
         console.error('❌ Error in Google OAuth callback:', error);
