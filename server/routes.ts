@@ -4871,6 +4871,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Debug route to check session state
+  router.get('/auth/check-session', (req: Request, res: Response) => {
+    res.json({
+      message: 'Session check',
+      sessionID: req.sessionID,
+      sessionData: req.session,
+      userId: req.session?.userId,
+      user: req.user,
+      cookies: req.headers.cookie,
+      origin: req.headers.origin,
+      referer: req.headers.referer
+    });
+  });
+
   // Google OAuth Routes
   router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
@@ -4884,12 +4898,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('🔍 Session ID:', req.sessionID);
         console.log('🔍 Session data:', req.session);
         
-        // Successful authentication, redirect to frontend homepage
+        // Successful authentication, redirect to frontend homepage with user ID
         const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://navigator-update.vercel.app';
         console.log('🔐 Frontend URL from env:', frontendUrl);
         
-        // Always redirect to homepage (/) after successful authentication
-        const redirectUrl = `${frontendUrl}/`;
+        // Create a temporary token for OAuth users
+        const tempToken = `${req.user?.id}_oauth_temp`;
+        
+        // Redirect to frontend with temporary token
+        const redirectUrl = `${frontendUrl}/?oauth_token=${tempToken}&user_id=${req.user?.id}`;
         console.log('🚀 Final redirect URL:', redirectUrl);
         console.log('🚀 About to redirect with status 302');
         

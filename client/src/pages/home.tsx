@@ -37,6 +37,26 @@ export default function Home() {
 
   const token = user ? localStorage.getItem('auth_token') : null;
 
+  // Handle OAuth redirect with temporary token
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const oauthToken = urlParams.get('oauth_token');
+    const userId = urlParams.get('user_id');
+    
+    if (oauthToken && userId && !user) {
+      console.log('🔐 OAuth redirect detected:', { oauthToken, userId });
+      
+      // Store the temporary OAuth token
+      localStorage.setItem('auth_token', oauthToken);
+      
+      // Clear the URL parameters
+      window.history.replaceState({}, document.title, '/');
+      
+      // Force a page reload to trigger auth check
+      window.location.reload();
+    }
+  }, [user]);
+
   console.log("user:", user, "token:", token);
   
   // Handle pending invitation by ensuring it gets processed through proper RSVP workflow

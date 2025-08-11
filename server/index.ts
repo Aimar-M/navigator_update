@@ -31,8 +31,9 @@ app.use(cors({
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  optionsSuccessStatus: 204, // <-- Add this line
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cookie'],
+  exposedHeaders: ['Set-Cookie'],
+  optionsSuccessStatus: 204,
 }));
 
 app.options('*', cors()); // <-- Add this line
@@ -52,7 +53,8 @@ app.use(session({
     secure: process.env.NODE_ENV === 'production', // Set to true if using HTTPS
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax' // Allow cross-site redirects
+    sameSite: 'none', // Allow cross-site cookies for OAuth
+    domain: process.env.NODE_ENV === 'production' ? '.railway.app' : undefined // Allow subdomain sharing
   }
 }));
 
