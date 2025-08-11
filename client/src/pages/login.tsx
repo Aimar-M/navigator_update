@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,36 @@ export default function Login() {
   const [errors, setErrors] = useState<{ username?: string; password?: string }>({});
   const { login, isLoading, user } = useAuth();
   const [, navigate] = useLocation();
+
+  // Handle OAuth redirect with temporary token
+  useEffect(() => {
+    console.log('🔍 Login page: Checking for OAuth parameters...');
+    console.log('🔍 Login page: Current URL:', window.location.href);
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const oauthToken = urlParams.get('oauth_token');
+    const userId = urlParams.get('user_id');
+    
+    console.log('🔍 Login page: URL parameters:', { oauthToken, userId });
+    
+    if (oauthToken && userId) {
+      console.log('🔐 Login page: OAuth redirect detected:', { oauthToken, userId });
+      console.log('🔍 Login page: Storing OAuth token in localStorage...');
+      
+      // Store the temporary OAuth token
+      localStorage.setItem('auth_token', oauthToken);
+      console.log('🔍 Login page: Token stored, clearing URL parameters...');
+      
+      // Clear the URL parameters
+      window.history.replaceState({}, document.title, '/');
+      console.log('🔍 Login page: URL cleared, redirecting to homepage...');
+      
+      // Redirect to homepage instead of reloading
+      navigate('/');
+    } else {
+      console.log('🔍 Login page: No OAuth parameters found');
+    }
+  }, [navigate]);
 
   // Redirect if already logged in
   if (user) {
