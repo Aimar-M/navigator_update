@@ -5074,6 +5074,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate a token using the same format as the login endpoint
       const token = `${user.id}`;
       
+      // Set up the user session for future requests
+      if (req.session) {
+        req.session.userId = user.id;
+        console.log('✅ User session set up in OAuth validation:', req.session.userId);
+      }
+      
       console.log('✅ OAuth token validation successful for user:', user.username);
       console.log('✅ Generated new token:', token);
       
@@ -5105,8 +5111,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('🔍 Session ID:', req.sessionID);
         console.log('🔍 Session data:', req.session);
         
+        // Check if user is properly authenticated
+        if (!req.user) {
+          console.error('❌ No user object in OAuth callback');
+          return res.redirect(302, `${process.env.FRONTEND_URL || 'https://navigator-update.vercel.app'}/login?error=oauth_failed`);
+        }
+        
+        // Set up the user session properly
+        if (req.session) {
+          req.session.userId = req.user.id;
+          console.log('✅ User session set up:', req.session.userId);
+        }
+        
         // Successful authentication, redirect to frontend homepage with user ID
-        // Use environment variable or fallback to hardcoded URL
         const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://navigator-update.vercel.app';
         console.log('🔐 Frontend URL:', frontendUrl);
         console.log('🔍 Environment variables check:', {
@@ -5116,16 +5133,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         
         // Create a temporary token for OAuth users
-        const tempToken = `${req.user?.id}_oauth_temp`;
+        const tempToken = `${req.user.id}_oauth_temp`;
         console.log('🔑 Generated temporary token:', tempToken);
         console.log('🔍 User object for OAuth:', {
-          id: req.user?.id,
-          username: req.user?.username,
-          email: req.user?.email
+          id: req.user.id,
+          username: req.user.username,
+          email: req.user.email
         });
         
         // Redirect to frontend with temporary token
-        const redirectUrl = `${frontendUrl}/?oauth_token=${tempToken}&user_id=${req.user?.id}`;
+        const redirectUrl = `${frontendUrl}/?oauth_token=${tempToken}&user_id=${req.user.id}`;
         console.log('🚀 Final redirect URL:', redirectUrl);
         console.log('🔍 OAuth flow summary:', {
           step: 'callback_complete',
@@ -5154,7 +5171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             message: 'OAuth successful, please redirect manually',
             redirectUrl: redirectUrl,
             oauthToken: tempToken,
-            userId: req.user?.id
+            userId: req.user.id
           });
         }
       } catch (error) {
@@ -5162,7 +5179,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Fallback redirect to homepage
         const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://navigator-update.vercel.app';
         console.log('🔄 Fallback redirect to:', `${frontendUrl}/`);
-        res.redirect(302, `${frontendUrl}/`);
+        res.redirect(302, `${frontendUrl}/?error=oauth_error`);
       }
     }
   );
