@@ -62,10 +62,43 @@ export default function Home() {
       
       // Clear the URL parameters
       window.history.replaceState({}, document.title, '/');
-      console.log('🔍 Homepage: URL cleared, reloading page...');
+      console.log('🔍 Homepage: URL cleared, now validating OAuth token...');
       
-      // Force a page reload to trigger auth check
-      window.location.reload();
+      // Instead of reloading, validate the OAuth token immediately
+      const validateOAuthToken = async () => {
+        try {
+          const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL;
+          console.log('🔍 Validating OAuth token with backend:', backendUrl);
+          
+          const response = await fetch(`${backendUrl}/api/auth/oauth/validate`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ oauthToken, userId }),
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log('✅ OAuth token validation successful:', data);
+            
+            // Store the permanent token
+            localStorage.setItem('auth_token', data.token);
+            console.log('✅ Permanent token stored:', data.token);
+            
+            // Force a re-render to trigger auth check
+            window.location.reload();
+          } else {
+            console.error('❌ OAuth token validation failed:', response.status);
+            localStorage.removeItem('auth_token');
+          }
+        } catch (error) {
+          console.error('❌ OAuth token validation error:', error);
+          localStorage.removeItem('auth_token');
+        }
+      };
+      
+      validateOAuthToken();
     } else {
       console.log('🔍 Homepage: No OAuth parameters or user already exists');
       console.log('🔍 Homepage: Checking if we should test OAuth flow...');

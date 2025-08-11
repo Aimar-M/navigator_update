@@ -53,10 +53,45 @@ export default function Login() {
       
       // Clear the URL parameters
       window.history.replaceState({}, document.title, '/');
-      console.log('🔍 Login page: URL cleared, redirecting to homepage...');
+      console.log('🔍 Login page: URL cleared, now validating OAuth token...');
       
-      // Redirect to homepage instead of reloading
-      navigate('/');
+      // Validate the OAuth token immediately
+      const validateOAuthToken = async () => {
+        try {
+          const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL;
+          console.log('🔍 Validating OAuth token with backend:', backendUrl);
+          
+          const response = await fetch(`${backendUrl}/api/auth/oauth/validate`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ oauthToken, userId }),
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log('✅ OAuth token validation successful:', data);
+            
+            // Store the permanent token
+            localStorage.setItem('auth_token', data.token);
+            console.log('✅ Permanent token stored, redirecting to homepage...');
+            
+            // Redirect to homepage with permanent token
+            navigate('/');
+          } else {
+            console.error('❌ OAuth token validation failed:', response.status);
+            localStorage.removeItem('auth_token');
+            // Stay on login page if validation fails
+          }
+        } catch (error) {
+          console.error('❌ OAuth token validation error:', error);
+          localStorage.removeItem('auth_token');
+          // Stay on login page if validation fails
+        }
+      };
+      
+      validateOAuthToken();
     } else {
       console.log('🔍 Login page: No OAuth parameters found');
       console.log('🔍 Login page: Checking if we should test OAuth flow...');
