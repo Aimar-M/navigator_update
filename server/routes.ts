@@ -4984,12 +4984,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Google OAuth Routes
   router.get('/auth/google', (req: Request, res: Response, next: NextFunction) => {
-    // Set CORS headers specifically for OAuth
-    res.header('Access-Control-Allow-Origin', 'https://navigator-update.vercel.app');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-    
     console.log('🔍 Google OAuth request received');
     console.log('🔍 Request headers:', req.headers);
     console.log('🔍 Request origin:', req.headers.origin);
@@ -5037,12 +5031,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // OAuth token validation endpoint
   router.post('/auth/oauth/validate', async (req: Request, res: Response) => {
     try {
-      // Set CORS headers for OAuth validation
-      res.header('Access-Control-Allow-Origin', 'https://navigator-update.vercel.app');
-      res.header('Access-Control-Allow-Credentials', 'true');
-      res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-      res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-      
       const { oauthToken, userId } = req.body;
       
       console.log('🔍 OAuth token validation request received');
@@ -5111,12 +5099,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     passport.authenticate('google', { failureRedirect: '/login' }),
     (req: Request, res: Response) => {
       try {
-        // Set CORS headers for OAuth callback
-        res.header('Access-Control-Allow-Origin', 'https://navigator-update.vercel.app');
-        res.header('Access-Control-Allow-Credentials', 'true');
-        res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-        
         console.log('🎯 Google OAuth callback reached');
         console.log('🔍 Request headers:', req.headers);
         console.log('🔍 Request user:', req.user);

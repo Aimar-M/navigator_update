@@ -25,42 +25,16 @@ app.use(cors({
     "https://navigator-update.vercel.app",
     "https://navigator-update-git-main-aimar-ms-projects.vercel.app",
     "https://navigator-update-1zbs9iahz-aimar-ms-projects.vercel.app",
-    "https://navigatorupdate-production.up.railway.app",
-    // Allow all origins in production
-    ...(process.env.NODE_ENV === 'production' ? [] : [])
+    "https://navigatorupdate-production.up.railway.app"
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: [
-    'Content-Type', 
-    'Authorization', 
-    'X-Requested-With', 
-    'Cookie',
-    'Origin',
-    'Accept',
-    'Cache-Control',
-    'Pragma'
-  ],
-  exposedHeaders: [
-    'Set-Cookie',
-    'Authorization',
-    'Content-Type'
-  ],
-  optionsSuccessStatus: 204,
-  preflightContinue: false,
+  allowedHeaders: ['*'], // Allow all headers
+  exposedHeaders: ['*'], // Expose all headers
+  optionsSuccessStatus: 204
 }));
 
 app.options('*', cors()); // <-- Add this line
-
-// Add specific OPTIONS handling for OAuth routes
-app.options('/api/auth/*', (req, res) => {
-  res.header('Access-Control-Allow-Origin', 'https://navigator-update.vercel.app');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cookie');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Max-Age', '86400'); // 24 hours
-  res.status(204).end();
-});
 
 // Configure session middleware with PostgreSQL store
 const PgSession = connectPgSimple(session);
