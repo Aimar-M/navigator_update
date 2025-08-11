@@ -44,12 +44,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Check if the user is logged in when the app loads
     const checkAuthStatus = async () => {
       try {
-        // Check if we have a token
+        // Check if we have a token OR if we're authenticated via session
         const token = localStorage.getItem('auth_token');
         console.log("auth check: token from localStorage:", token);
         
+        // First try JWT token authentication
         if (token) {
-          // Add token to authorization header
           const headers = {
             'Authorization': `Bearer ${token}`
           };
@@ -62,16 +62,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.log("Auth check: userData from /api/auth/me:", userData);
             setUser(userData);
             
-            // Connect WebSocket if user is logged in
             if (userData) {
-              // TODO: Fetch user's trips first
               wsClient.connect(userData.id, []);
             }
+            setIsLoading(false);
+            return;
           } else {
             // If token is invalid, remove it
             console.log("Auth check: token is invalid, removing it from localStorage");
             localStorage.removeItem('auth_token');
           }
+        }
+        
+        // If no JWT token or token is invalid, try session authentication
+        console.log("Auth check: trying session authentication...");
+        try {
+          const sessionResponse = await fetch(`${API_BASE}/api/auth/me`, { 
+            credentials: 'include' // Include cookies for session auth
+          });
+          console.log("Auth check: session /api/auth/me response status:", sessionResponse.status);
+          
+          if (sessionResponse.ok) {
+            const userData = await sessionResponse.json();
+            console.log("Auth check: userData from session /api/auth/me:", userData);
+            setUser(userData);
+            
+            if (userData) {
+              wsClient.connect(userData.id, []);
+            }
+          }
+        } catch (sessionError) {
+          console.log("Auth check: session authentication failed:", sessionError);
         }
       } catch (error) {
         console.error("Auth check failed:", error);
