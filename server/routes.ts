@@ -359,18 +359,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   router.post('/auth/login', async (req: Request, res: Response) => {
     try {
-      const { username, password } = req.body;
-      if (!username || !password) {
-        return res.status(400).json({ message: 'Username and password are required' });
+      const { username, email, password } = req.body;
+      if (!password) {
+        return res.status(400).json({ message: 'Password is required' });
       }
-      // Debug log to help diagnose issues
-      console.log(`Attempting login for user: ${username}`);
-      const user = await storage.getUserByUsername(username);
+      if (!username && !email) {
+        return res.status(400).json({ message: 'Username or email is required' });
+      }
+      
+      // Try to find user by username or email
+      let user;
+      if (username) {
+        user = await storage.getUserByUsername(username);
+        console.log(`Attempting login for username: ${username}`);
+      } else if (email) {
+        user = await storage.getUserByEmail(email);
+        console.log(`Attempting login for email: ${email}`);
+      }
+      
       // Debug log to check if user was found
       console.log('User found in database:', !!user);
       if (!user) {
-        console.log('Login failed: Invalid username or password');
-        return res.status(401).json({ message: 'Invalid username or password' });
+        console.log('Login failed: Invalid username/email or password');
+        return res.status(401).json({ message: 'Invalid username/email or password' });
       }
       // Check if password is hashed (bcrypt hashes start with $2)
       let isMatch = false;
@@ -386,8 +397,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       if (!isMatch) {
-        console.log('Login failed: Invalid username or password');
-        return res.status(401).json({ message: 'Invalid username or password' });
+        console.log('Login failed: Invalid username/email or password');
+        return res.status(401).json({ message: 'Invalid username/email or password' });
       }
       // Block login if email is not confirmed
       if (!user.emailConfirmed) {
@@ -401,7 +412,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       // Generate token (in this simple implementation, just use the user ID)
       const token = `${user.id}`;
-      console.log('Login successful for:', username);
+      const loginIdentifier = username || email;
+      console.log('Login successful for:', loginIdentifier);
       // Return user data with token
       res.json({
         ...userWithoutPassword,

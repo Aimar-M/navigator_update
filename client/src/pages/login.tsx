@@ -24,8 +24,10 @@ export default function Login() {
     MODE: import.meta.env.MODE
   });
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState<{ username?: string; password?: string }>({});
+  const [useEmail, setUseEmail] = useState(false);
+  const [errors, setErrors] = useState<{ username?: string; email?: string; password?: string }>({});
   const { login, isLoading, user } = useAuth();
   const [, navigate] = useLocation();
 
@@ -142,8 +144,20 @@ export default function Login() {
   }
 
   const validate = () => {
-    const newErrors: { username?: string; password?: string } = {};
-    if (!username.trim()) newErrors.username = "Username is required";
+    const newErrors: { username?: string; email?: string; password?: string } = {};
+    
+    if (useEmail) {
+      if (!email.trim()) {
+        newErrors.email = "Email is required";
+      } else if (!/\S+@\S+\.\S+/.test(email)) {
+        newErrors.email = "Please enter a valid email address";
+      }
+    } else {
+      if (!username.trim()) {
+        newErrors.username = "Username is required";
+      }
+    }
+    
     if (!password) newErrors.password = "Password is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -154,15 +168,16 @@ export default function Login() {
     if (!validate()) return;
 
     try {
-      console.log("Attempting to log in with:", username);
-      await login(username, password);
+      const loginData = useEmail ? { email, password } : { username, password };
+      console.log("Attempting to log in with:", useEmail ? email : username);
+      await login(loginData);
       console.log("Login successful");
     } catch (error) {
       console.error("Login error:", error);
       // Display login error directly on the page for easier debugging
       setErrors({
         ...errors,
-        username: "Login failed. Please check your credentials."
+        [useEmail ? 'email' : 'username']: "Login failed. Please check your credentials."
       });
     }
   };
@@ -193,18 +208,68 @@ export default function Login() {
           </CardHeader>
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
-                <Input
-                  id="username"
-                  placeholder="Enter your username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                />
-                {errors.username && (
-                  <p className="text-sm text-red-500">{errors.username}</p>
-                )}
+              {/* Toggle between username and email */}
+              <div className="flex items-center justify-center space-x-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUseEmail(false);
+                    setEmail("");
+                    setErrors({});
+                  }}
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    !useEmail
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  Username
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUseEmail(true);
+                    setUsername("");
+                    setErrors({});
+                  }}
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    useEmail
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  Email
+                </button>
               </div>
+
+              {!useEmail ? (
+                <div className="space-y-2">
+                  <Label htmlFor="username">Username</Label>
+                  <Input
+                    id="username"
+                    placeholder="Enter your username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                  />
+                  {errors.username && (
+                    <p className="text-sm text-red-500">{errors.username}</p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                  {errors.email && (
+                    <p className="text-sm text-red-500">{errors.email}</p>
+                  )}
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>

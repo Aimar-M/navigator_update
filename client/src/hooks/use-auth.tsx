@@ -19,7 +19,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (username: string, password: string) => Promise<void>;
+  login: (credentials: { username?: string; email?: string; password: string }) => Promise<void>;
   register: (userData: RegisterData) => Promise<any>; // Can return user data for email confirmation
   logout: () => Promise<void>;
 }
@@ -156,10 +156,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const login = async (username: string, password: string) => {
+  const login = async (credentials: { username?: string; email?: string; password: string }) => {
     setIsLoading(true);
     try {
-      const userData = await loginUser(username, password);
+      const userData = await loginUser(credentials);
       
       // Store the token
       if (userData.token) {
@@ -181,7 +181,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       toast({
         title: "Login failed",
-        description: error instanceof Error ? error.message : "Invalid username or password",
+        description: error instanceof Error ? error.message : "Invalid username/email or password",
         variant: "destructive",
       });
       console.error("Login error:", error);
