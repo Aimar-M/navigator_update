@@ -5117,11 +5117,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.redirect(302, `${process.env.FRONTEND_URL || 'https://navigator-update.vercel.app'}/login?error=oauth_failed`);
         }
         
-        // Set up the user session properly
+        // Set up the user session properly and wait for it to be established
         if (req.session) {
           req.session.userId = req.user.id;
           console.log('✅ User session set up:', req.session.userId);
+          
+          // Save the session to ensure it's persisted
+          req.session.save((err) => {
+            if (err) {
+              console.error('❌ Error saving session:', err);
+            } else {
+              console.log('✅ Session saved successfully');
+            }
+          });
         }
+        
+        // Add a small delay to ensure session is fully established
+        console.log('⏳ Waiting for session to be fully established...');
         
         // Successful authentication, redirect to frontend homepage with user ID
         const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://navigator-update.vercel.app';

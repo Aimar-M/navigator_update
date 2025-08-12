@@ -64,11 +64,11 @@ export default function Home() {
       window.history.replaceState({}, document.title, '/');
       console.log('🔍 Homepage: URL cleared, now validating OAuth token...');
       
-      // Instead of reloading, validate the OAuth token immediately
-      const validateOAuthToken = async () => {
+      // Instead of reloading, validate the OAuth token with retry logic
+      const validateOAuthToken = async (retryCount = 0) => {
         try {
           const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL;
-          console.log('🔍 Validating OAuth token with backend:', backendUrl);
+          console.log(`🔍 Validating OAuth token with backend (attempt ${retryCount + 1}):`, backendUrl);
           
           const response = await fetch(`${backendUrl}/api/auth/oauth/validate`, {
             method: 'POST',
@@ -89,11 +89,27 @@ export default function Home() {
             // Force a re-render to trigger auth check
             window.location.reload();
           } else {
-            console.error('❌ OAuth token validation failed:', response.status);
+            console.error(`❌ OAuth token validation failed (attempt ${retryCount + 1}):`, response.status);
+            
+            // Retry logic for race conditions
+            if (retryCount < 2 && response.status === 404) {
+              console.log('🔄 User not found, retrying in 1 second... (session might not be ready)');
+              setTimeout(() => validateOAuthToken(retryCount + 1), 1000);
+              return;
+            }
+            
             localStorage.removeItem('auth_token');
           }
         } catch (error) {
-          console.error('❌ OAuth token validation error:', error);
+          console.error(`❌ OAuth token validation error (attempt ${retryCount + 1}):`, error);
+          
+          // Retry logic for network errors
+          if (retryCount < 1) {
+            console.log('🔄 Network error, retrying in 1 second...');
+            setTimeout(() => validateOAuthToken(retryCount + 1), 1000);
+            return;
+          }
+          
           localStorage.removeItem('auth_token');
         }
       };

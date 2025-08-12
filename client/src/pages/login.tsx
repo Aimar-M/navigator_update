@@ -55,11 +55,11 @@ export default function Login() {
       window.history.replaceState({}, document.title, '/');
       console.log('🔍 Login page: URL cleared, now validating OAuth token...');
       
-      // Validate the OAuth token immediately
-      const validateOAuthToken = async () => {
+      // Validate the OAuth token with retry logic to handle race conditions
+      const validateOAuthToken = async (retryCount = 0) => {
         try {
           const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL;
-          console.log('🔍 Validating OAuth token with backend:', backendUrl);
+          console.log(`🔍 Validating OAuth token with backend (attempt ${retryCount + 1}):`, backendUrl);
           
           const response = await fetch(`${backendUrl}/api/auth/oauth/validate`, {
             method: 'POST',
@@ -80,14 +80,30 @@ export default function Login() {
             // Redirect to homepage with permanent token
             navigate('/');
           } else {
-            console.error('❌ OAuth token validation failed:', response.status);
+            console.error(`❌ OAuth token validation failed (attempt ${retryCount + 1}):`, response.status);
+            
+            // Retry logic for race conditions
+            if (retryCount < 2 && response.status === 404) {
+              console.log('🔄 User not found, retrying in 1 second... (session might not be ready)');
+              setTimeout(() => validateOAuthToken(retryCount + 1), 1000);
+              return;
+            }
+            
             localStorage.removeItem('auth_token');
-            // Stay on login page if validation fails
+            // Stay on login page if validation fails after retries
           }
         } catch (error) {
-          console.error('❌ OAuth token validation error:', error);
+          console.error(`❌ OAuth token validation error (attempt ${retryCount + 1}):`, error);
+          
+          // Retry logic for network errors
+          if (retryCount < 2) {
+            console.log('🔄 Network error, retrying in 1 second...');
+            setTimeout(() => validateOAuthToken(retryCount + 1), 1000);
+            return;
+          }
+          
           localStorage.removeItem('auth_token');
-          // Stay on login page if validation fails
+          // Stay on login page if validation fails after retries
         }
       };
       
