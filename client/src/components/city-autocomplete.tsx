@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import Fuse from "fuse.js";
-import citiesData from "@/data/cities.json";
+import citiesData from "@/data/cities.json" assert { type: "json" };
 import { X } from "lucide-react";
 
 interface City {
@@ -50,6 +50,9 @@ const CityAutocomplete: React.FC<CityAutocompleteProps> = ({
     })
   );
 
+  // Type assertion for citiesData
+  const cities = citiesData as City[];
+
   // Parse existing value into selected cities
   useEffect(() => {
     if (value && value.trim()) {
@@ -57,7 +60,7 @@ const CityAutocomplete: React.FC<CityAutocompleteProps> = ({
       const cities: City[] = [];
       
       cityNames.forEach(cityName => {
-        const found = citiesData.find(city => 
+        const found = cities.find(city => 
           city.name.toLowerCase() === cityName.toLowerCase()
         );
         if (found) {
@@ -197,7 +200,7 @@ const CityAutocomplete: React.FC<CityAutocompleteProps> = ({
 
    // Add manually entered city ONLY if it exists in the dataset
   const addManualCity = (cityName: string) => {
-    const found = citiesData.find(city => city.name.toLowerCase() === cityName.toLowerCase());
+    const found = cities.find(city => city.name.toLowerCase() === cityName.toLowerCase());
     if (
       found &&
       selectedCities.length < 5 &&

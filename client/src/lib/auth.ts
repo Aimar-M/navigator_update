@@ -2,18 +2,21 @@
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
-export async function loginUser(credentials: { username?: string; email?: string; password: string }) {
+export async function loginUser(credentials: { identifier: string; password: string }) {
   try {
-    const { username, email, password } = credentials;
-    const loginIdentifier = username || email;
-    console.log('Sending login request for:', loginIdentifier);
+    const { identifier, password } = credentials;
+    console.log('Sending login request for:', identifier);
+    
+    // Determine if identifier is email or username
+    const isEmail = /\S+@\S+\.\S+/.test(identifier);
+    const loginData = isEmail ? { email: identifier, password } : { username: identifier, password };
     
     const response = await fetch(`${API_BASE}/api/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ username, email, password }),
+      body: JSON.stringify(loginData),
     });
 
     console.log('Login response status:', response.status);

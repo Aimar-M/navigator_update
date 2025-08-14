@@ -19,7 +19,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (credentials: { username?: string; email?: string; password: string }) => Promise<void>;
+  login: (credentials: { identifier: string; password: string }) => Promise<void>;
   register: (userData: RegisterData) => Promise<any>; // Can return user data for email confirmation
   logout: () => Promise<void>;
 }
@@ -156,7 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const login = async (credentials: { username?: string; email?: string; password: string }) => {
+  const login = async (credentials: { identifier: string; password: string }) => {
     setIsLoading(true);
     try {
       const userData = await loginUser(credentials);
