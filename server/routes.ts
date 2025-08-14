@@ -311,7 +311,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               </div>
         
               <p>If the button above doesn't work, copy and paste this link into your browser:</p>
-              <p style="word-break: break-all; color: #044674;">${confirmUrl}</p>
+              <p style="word-break: break-all; color:rgb(255, 255, 255);">${confirmUrl}</p>
         
               <p>With Navigator, you can:</p>
               <ul>
@@ -4694,7 +4694,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             </div>
       
             <p>If the button above doesn't work, copy and paste this link into your browser:</p>
-            <p style="word-break: break-all; color:rgb(245, 247, 248);">${resetUrl}</p>
+            <p style="word-break: break-all; color:rgb(255, 255, 255);">${resetUrl}</p>
       
             <p>Tip: Use a strong, unique password to help keep your account secure.</p>
           </div>
@@ -4881,7 +4881,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               </div>
         
               <p>If the button above doesn't work, copy and paste this link into your browser:</p>
-              <p style="word-break: break-all; color:rgb(252, 252, 252);">${confirmUrl}</p>
+              <p style="word-break: break-all; color:rgb(255, 255, 255);">${confirmUrl}</p>
         
               <p>This link will expire in <strong>24 hours</strong> for security reasons.</p>
               <p>If you need help, please contact our support team.</p>
