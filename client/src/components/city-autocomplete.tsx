@@ -7,7 +7,7 @@ import { X } from "lucide-react";
 interface City {
   name: string;
   country: string;
-  region: string;
+  region?: string; // Make region optional
   lat: number;
   lng: number;
 }
@@ -41,9 +41,8 @@ const CityAutocomplete: React.FC<CityAutocompleteProps> = ({
   const fuse = useRef(
     new Fuse(citiesData as City[], {
       keys: [
-        { name: "name", weight: 0.7 },
+        { name: "name", weight: 0.8 },
         { name: "country", weight: 0.2 },
-        { name: "region", weight: 0.1 },
       ],
       threshold: 0.3,
       includeScore: true,
@@ -68,7 +67,6 @@ const CityAutocomplete: React.FC<CityAutocompleteProps> = ({
           cities.push({
             name: cityName,
             country: "Unknown",
-            region: "Unknown",
             lat: 0,
             lng: 0,
           });
@@ -308,7 +306,7 @@ const CityAutocomplete: React.FC<CityAutocompleteProps> = ({
           >
             {suggestions.map((city, index) => (
               <button
-                key={`${city.name}-${city.country}-${city.region}`}
+                key={`${city.name}-${city.country}`}
                 type="button"
                 className={`w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none border-b border-gray-100 last:border-b-0 ${
                   index === activeSuggestion ? "bg-gray-50" : ""
@@ -317,7 +315,7 @@ const CityAutocomplete: React.FC<CityAutocompleteProps> = ({
               >
                 <div className="font-medium text-gray-900">{city.name}</div>
                 <div className="text-sm text-gray-500">
-                  {city.region}, {city.country}
+                  {city.region || city.country}
                 </div>
               </button>
             ))}
