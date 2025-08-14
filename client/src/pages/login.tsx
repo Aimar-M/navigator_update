@@ -210,7 +210,7 @@ export default function Login() {
                    <p className="text-sm text-red-500">{errors.identifier}</p>
                  )}
                  <p className="text-xs text-gray-500">
-                   Enter your username or email address - we'll automatically detect which one you're using.
+                   Enter your username or email address 
                  </p>
                </div>
 
