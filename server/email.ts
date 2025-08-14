@@ -87,7 +87,7 @@ export async function sendEmail(to: string, subject: string, html: string) {
     console.log(`📧 Subject: ${subject}`);
 
     const mailOptions = {
-      from: `"Navigator01" <${process.env.SMTP_USER}>`,
+      from: `"Navigator" <${process.env.SMTP_USER}>`,
       to,
       subject,
       html,

@@ -268,7 +268,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send confirmation email (log to console)
       const confirmUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/confirm-email?token=${emailConfirmationToken}`;
       try {
-        await sendEmail(user.email, 'Welcome to Navigator - Confirm your email', `
+        await sendEmail(
+          user.email,
+          'Welcome to Navigator – Confirm Your Email',
+          `
           <!DOCTYPE html>
           <html>
           <head>
@@ -281,46 +284,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
               .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
               .button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; margin: 20px 0; }
               .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
-              .welcome { background: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 5px; margin: 20px 0; }
+              .highlight { background: #eef6ff; border: 1px solid #cde0ff; padding: 15px; border-radius: 5px; margin: 20px 0; }
             </style>
           </head>
           <body>
             <div class="header">
-              <h1>🚢 Navigator</h1>
-              <p>Welcome aboard!</p>
-            </div>
-            <div class="content">
-              <h2>Hello ${userData.name}!</h2>
-              <p>Welcome to Navigator! We're excited to have you join our travel planning community.</p>
-              
-              <div class="welcome">
-                <strong>🎉 Almost there!</strong> To complete your registration, please confirm your email address by clicking the button below.
+              <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+                <img src="assets/navigator-logo.jpeg" alt="Navigator Logo" style="width: 50px; height: auto;">
+                <div>
+                  <h1 style="margin: 0;">Navigator</h1>
+                  <p style="margin: 0;">The world is waiting</p>
+                </div>
               </div>
-              
+            </div>
+        
+            <div class="content">
+              <h2>Hello ${userData.name},</h2>
+              <p>Thank you for signing up for Navigator. We’re excited to have you join our community of travelers and planners.</p>
+        
+              <div class="highlight">
+                To get started, please confirm your email address so we can activate your account.
+              </div>
+        
               <div style="text-align: center;">
                 <a href="${confirmUrl}" class="button">Confirm My Email</a>
               </div>
-              
-              <p>If the button above doesn't work, you can copy and paste this link into your browser:</p>
+        
+              <p>If the button above doesn’t work, copy and paste this link into your browser:</p>
               <p style="word-break: break-all; color: #667eea;">${confirmUrl}</p>
-              
-              <p>Once confirmed, you'll be able to:</p>
+        
+              <p>With Navigator, you can:</p>
               <ul>
-                <li>Create and join amazing trips</li>
-                <li>Plan activities with friends</li>
-                <li>Track expenses and budgets</li>
-                <li>And much more!</li>
+                <li>Create and join trips with friends and family</li>
+                <li>Plan daily itineraries with ease</li>
+                <li>Track expenses and manage budgets</li>
+                <li>Discover and share new destinations</li>
+                <li>Access your plans from any device</li>
               </ul>
-              
-              <p>Need help? Contact our support team.</p>
+        
+              <p>We look forward to helping you make your next trip unforgettable.</p>
             </div>
+        
             <div class="footer">
-              <p>This email was sent from Navigator - Your travel planning companion</p>
+              <p>Navigator – Your travel planning companion</p>
               <p>© ${new Date().getFullYear()} Navigator. All rights reserved.</p>
             </div>
           </body>
           </html>
-        `);
+          `
+        );
+        
         
         console.log(`✅ Welcome email sent successfully to: ${user.email}`);
       } catch (emailError) {
@@ -4636,7 +4649,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`🔐 Reset URL: ${resetUrl}`);
       
       try {
-        await sendEmail(user.email, 'Reset your Navigator password', `
+        await sendEmail(
+          user.email,
+          'Reset Your Navigator Password',
+          `
           <!DOCTYPE html>
           <html>
           <head>
@@ -4649,39 +4665,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
               .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
               .button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; margin: 20px 0; }
               .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
-              .warning { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0; }
+              .notice { background: #fff8e1; border: 1px solid #ffe082; padding: 15px; border-radius: 5px; margin: 20px 0; }
             </style>
           </head>
           <body>
             <div class="header">
-              <h1>🚢 Navigator</h1>
-              <p>Password Reset Request</p>
+              <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+                <img src="assets/navigator-logo.jpeg" alt="Navigator Logo" style="width: 50px; height: auto;">
+                <div>
+                  <h1 style="margin: 0;">Navigator</h1>
+                  <p style="margin: 0;">Password Reset Request</p>
+                </div>
+              </div>
             </div>
+        
             <div class="content">
-              <h2>Hello!</h2>
+              <h2>Hello ${user.name || ''},</h2>
               <p>We received a request to reset your password for your Navigator account.</p>
               <p>Click the button below to create a new password. This link will expire in <strong>1 hour</strong> for security reasons.</p>
-              
+        
               <div style="text-align: center;">
                 <a href="${resetUrl}" class="button">Reset My Password</a>
               </div>
-              
-              <div class="warning">
-                <strong>⚠️ Security Notice:</strong> If you didn't request this password reset, please ignore this email. Your password will remain unchanged.
+        
+              <div class="notice">
+                <strong>Security Notice:</strong> If you didn’t request a password reset, you can safely ignore this email. Your password will remain the same.
               </div>
-              
-              <p>If the button above doesn't work, you can copy and paste this link into your browser:</p>
+        
+              <p>If the button above doesn’t work, copy and paste this link into your browser:</p>
               <p style="word-break: break-all; color: #667eea;">${resetUrl}</p>
-              
-              <p>Need help? Contact our support team.</p>
+        
+              <p>Tip: Use a strong, unique password to help keep your account secure.</p>
             </div>
+        
             <div class="footer">
-              <p>This email was sent from Navigator - Your travel planning companion</p>
+              <p>Navigator – Your travel planning companion</p>
               <p>© ${new Date().getFullYear()} Navigator. All rights reserved.</p>
             </div>
           </body>
           </html>
-        `);
+          `
+        );
+        
 
         console.log(`✅ Password reset email sent successfully to: ${user.email}`);
       res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
@@ -4812,7 +4837,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`📧 Sending new confirmation email to: ${user.email}`);
       
       try {
-        await sendEmail(user.email, 'Confirm your Navigator email - New link', `
+        await sendEmail(
+          user.email,
+          'Confirm Your Navigator Email – New Link',
+          `
           <!DOCTYPE html>
           <html>
           <head>
@@ -4825,40 +4853,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
               .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
               .button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; margin: 20px 0; }
               .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
-              .info { background: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; border-radius: 5px; margin: 20px 0; }
+              .info { background: #eef6ff; border: 1px solid #cde0ff; padding: 15px; border-radius: 5px; margin: 20px 0; }
             </style>
           </head>
           <body>
             <div class="header">
-              <h1>🚢 Navigator</h1>
-              <p>Email Confirmation</p>
-            </div>
-            <div class="content">
-              <h2>Hello ${user.name}!</h2>
-              <p>We've sent you a new email confirmation link.</p>
-              
-              <div class="info">
-                <strong>📧 New confirmation link!</strong> Click the button below to confirm your email address.
+             <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+                <img src="assets/navigator-logo.jpeg" alt="Navigator Logo" style="width: 50px; height: auto;">
+                <div>
+                  <h1 style="margin: 0;">Navigator</h1>
+                  <p style="margin: 0;">Password Reset Request</p>
+                </div>
               </div>
-              
+            </div>
+        
+            <div class="content">
+              <h2>Hello ${user.name || ''},</h2>
+              <p>We’ve sent you a new confirmation link for your Navigator account.</p>
+        
+              <div class="info">
+                Please confirm your email address by clicking the button below.
+              </div>
+        
               <div style="text-align: center;">
                 <a href="${confirmUrl}" class="button">Confirm My Email</a>
               </div>
-              
-              <p>If the button above doesn't work, you can copy and paste this link into your browser:</p>
+        
+              <p>If the button above doesn’t work, copy and paste this link into your browser:</p>
               <p style="word-break: break-all; color: #667eea;">${confirmUrl}</p>
-              
-              <p>This link will expire in 24 hours for security reasons.</p>
-              
-              <p>Need help? Contact our support team.</p>
+        
+              <p>This link will expire in <strong>24 hours</strong> for security reasons.</p>
+              <p>If you need help, please contact our support team.</p>
             </div>
+        
             <div class="footer">
-              <p>This email was sent from Navigator - Your travel planning companion</p>
+              <p>Navigator – Your travel planning companion</p>
               <p>© ${new Date().getFullYear()} Navigator. All rights reserved.</p>
             </div>
           </body>
           </html>
-        `);
+          `
+        );
+        
         
         console.log(`✅ New confirmation email sent successfully to: ${user.email}`);
         res.json({ message: 'Confirmation email sent successfully' });

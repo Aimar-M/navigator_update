@@ -54,7 +54,7 @@ async function testEmailSending() {
     console.log('\n📧 Testing email sending...');
     
     const testEmail = {
-      from: `"Navigator01" <${process.env.SMTP_USER}>`,
+      from: `"Navigator" <${process.env.SMTP_USER}>`,
       to: process.env.SMTP_USER, // Send to self for testing
       subject: '🧪 Navigator Email Test',
       html: `
