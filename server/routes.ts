@@ -268,6 +268,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send confirmation email (log to console)
       const confirmUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/confirm-email?token=${emailConfirmationToken}`;
       try {
+        // ... existing code ...
         await sendEmail(
           user.email,
           'Welcome to Navigator – Confirm Your Email',
@@ -279,10 +280,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Confirm Your Email</title>
             <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #000000; max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: #004372; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
               .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-              .button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; margin: 20px 0; }
+              .button { display: inline-block; background: #004372; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; margin: 20px 0; }
               .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
               .highlight { background: #eef6ff; border: 1px solid #cde0ff; padding: 15px; border-radius: 5px; margin: 20px 0; }
             </style>
@@ -290,7 +291,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           <body>
             <div class="header">
               <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
-                <img src="assets/navigator-logo.jpeg" alt="Navigator Logo" style="width: 50px; height: auto;">
                 <div>
                   <h1 style="margin: 0;">Navigator</h1>
                   <p style="margin: 0;">The world is waiting</p>
@@ -300,7 +300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
             <div class="content">
               <h2>Hello ${userData.name},</h2>
-              <p>Thank you for signing up for Navigator. We’re excited to have you join our community of travelers and planners.</p>
+              <p>Thank you for signing up for Navigator. We're excited to have you join our community of travelers and planners.</p>
         
               <div class="highlight">
                 To get started, please confirm your email address so we can activate your account.
@@ -310,8 +310,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 <a href="${confirmUrl}" class="button">Confirm My Email</a>
               </div>
         
-              <p>If the button above doesn’t work, copy and paste this link into your browser:</p>
-              <p style="word-break: break-all; color: #667eea;">${confirmUrl}</p>
+              <p>If the button above doesn't work, copy and paste this link into your browser:</p>
+              <p style="word-break: break-all; color: #004372;">${confirmUrl}</p>
         
               <p>With Navigator, you can:</p>
               <ul>
@@ -333,6 +333,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           </html>
           `
         );
+// ... existing code ...
         
         
         console.log(`✅ Welcome email sent successfully to: ${user.email}`);
@@ -4649,63 +4650,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`🔐 Reset URL: ${resetUrl}`);
       
       try {
-        await sendEmail(
-          user.email,
-          'Reset Your Navigator Password',
-          `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Reset Your Password</title>
-            <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-              .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-              .button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; margin: 20px 0; }
-              .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
-              .notice { background: #fff8e1; border: 1px solid #ffe082; padding: 15px; border-radius: 5px; margin: 20px 0; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
-                <img src="assets/navigator-logo.jpeg" alt="Navigator Logo" style="width: 50px; height: auto;">
-                <div>
-                  <h1 style="margin: 0;">Navigator</h1>
-                  <p style="margin: 0;">Password Reset Request</p>
-                </div>
+       // ... existing code ...
+       await sendEmail(
+        user.email,
+        'Reset your Navigator password',
+        `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Reset Your Password</title>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #000000; max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #004372; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+            .button { display: inline-block; background: #004372; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; margin: 20px 0; }
+            .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+            .notice { background: #fff8e1; border: 1px solid #ffe082; padding: 15px; border-radius: 5px; margin: 20px 0; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+              <div>
+                <h1 style="margin: 0;">Navigator</h1>
+                <p style="margin: 0;">Password Reset Request</p>
               </div>
             </div>
-        
-            <div class="content">
-              <h2>Hello ${user.name || ''},</h2>
-              <p>We received a request to reset your password for your Navigator account.</p>
-              <p>Click the button below to create a new password. This link will expire in <strong>1 hour</strong> for security reasons.</p>
-        
-              <div style="text-align: center;">
-                <a href="${resetUrl}" class="button">Reset My Password</a>
-              </div>
-        
-              <div class="notice">
-                <strong>Security Notice:</strong> If you didn’t request a password reset, you can safely ignore this email. Your password will remain the same.
-              </div>
-        
-              <p>If the button above doesn’t work, copy and paste this link into your browser:</p>
-              <p style="word-break: break-all; color: #667eea;">${resetUrl}</p>
-        
-              <p>Tip: Use a strong, unique password to help keep your account secure.</p>
+          </div>
+      
+          <div class="content">
+            <h2>Hello ${user.name || ''},</h2>
+            <p>We received a request to reset your password for your Navigator account.</p>
+            <p>Click the button below to create a new password. This link will expire in <strong>1 hour</strong> for security reasons.</p>
+      
+            <div style="text-align: center;">
+              <a href="${resetUrl}" class="button">Reset My Password</a>
             </div>
-        
-            <div class="footer">
-              <p>Navigator – Your travel planning companion</p>
-              <p>© ${new Date().getFullYear()} Navigator. All rights reserved.</p>
+      
+            <div class="notice">
+              <strong>Security Notice:</strong> If you didn't request a password reset, you can safely ignore this email. Your password will remain the same.
             </div>
-          </body>
-          </html>
-          `
-        );
+      
+            <p>If the button above doesn't work, copy and paste this link into your browser:</p>
+            <p style="word-break: break-all; color: #004372;">${resetUrl}</p>
+      
+            <p>Tip: Use a strong, unique password to help keep your account secure.</p>
+          </div>
+      
+          <div class="footer">
+            <p>Navigator – Your travel planning companion</p>
+            <p>© ${new Date().getFullYear()} Navigator. All rights reserved.</p>
+          </div>
+        </body>
+        </html>
+        `
+      );
+// ... existing code ...
         
 
         console.log(`✅ Password reset email sent successfully to: ${user.email}`);
@@ -4839,7 +4841,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         await sendEmail(
           user.email,
-          'Confirm Your Navigator Email – New Link',
+          'Confirm your Navigator email - New link',
           `
           <!DOCTYPE html>
           <html>
@@ -4848,10 +4850,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Confirm Your Email</title>
             <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #000000; max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: #004372; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
               .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-              .button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; margin: 20px 0; }
+              .button { display: inline-block; background: #004372; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; margin: 20px 0; }
               .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
               .info { background: #eef6ff; border: 1px solid #cde0ff; padding: 15px; border-radius: 5px; margin: 20px 0; }
             </style>
@@ -4859,17 +4861,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           <body>
             <div class="header">
              <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
-                <img src="assets/navigator-logo.jpeg" alt="Navigator Logo" style="width: 50px; height: auto;">
                 <div>
                   <h1 style="margin: 0;">Navigator</h1>
-                  <p style="margin: 0;">Password Reset Request</p>
+                  <p style="margin: 0;">Email Confirmation</p>
                 </div>
               </div>
             </div>
         
             <div class="content">
               <h2>Hello ${user.name || ''},</h2>
-              <p>We’ve sent you a new confirmation link for your Navigator account.</p>
+              <p>We've sent you a new confirmation link for your Navigator account.</p>
         
               <div class="info">
                 Please confirm your email address by clicking the button below.
@@ -4879,8 +4880,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 <a href="${confirmUrl}" class="button">Confirm My Email</a>
               </div>
         
-              <p>If the button above doesn’t work, copy and paste this link into your browser:</p>
-              <p style="word-break: break-all; color: #667eea;">${confirmUrl}</p>
+              <p>If the button above doesn't work, copy and paste this link into your browser:</p>
+              <p style="word-break: break-all; color: #004372;">${confirmUrl}</p>
         
               <p>This link will expire in <strong>24 hours</strong> for security reasons.</p>
               <p>If you need help, please contact our support team.</p>
@@ -4894,6 +4895,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           </html>
           `
         );
+// ... existing code ...
         
         
         console.log(`✅ New confirmation email sent successfully to: ${user.email}`);
