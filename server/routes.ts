@@ -281,9 +281,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             <title>Confirm Your Email</title>
             <style>
               body { font-family: Arial, sans-serif; line-height: 1.6; color: #000000; max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: #004372; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+              .header { background: #044674; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
               .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-              .button { display: inline-block; background: #004372; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; margin: 20px 0; }
+              .button { display: inline-block; background: #044674; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; margin: 20px 0; }
               .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
               .highlight { background: #eef6ff; border: 1px solid #cde0ff; padding: 15px; border-radius: 5px; margin: 20px 0; }
             </style>
@@ -311,7 +311,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               </div>
         
               <p>If the button above doesn't work, copy and paste this link into your browser:</p>
-              <p style="word-break: break-all; color: #004372;">${confirmUrl}</p>
+              <p style="word-break: break-all; color: #044674;">${confirmUrl}</p>
         
               <p>With Navigator, you can:</p>
               <ul>
@@ -4663,9 +4663,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           <title>Reset Your Password</title>
           <style>
             body { font-family: Arial, sans-serif; line-height: 1.6; color: #000000; max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #004372; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .header { background: #044674; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
             .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-            .button { display: inline-block; background: #004372; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; margin: 20px 0; }
+            .button { display: inline-block; background: #044674; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; margin: 20px 0; }
             .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
             .notice { background: #fff8e1; border: 1px solid #ffe082; padding: 15px; border-radius: 5px; margin: 20px 0; }
           </style>
@@ -4694,7 +4694,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             </div>
       
             <p>If the button above doesn't work, copy and paste this link into your browser:</p>
-            <p style="word-break: break-all; color: #004372;">${resetUrl}</p>
+            <p style="word-break: break-all; color:rgb(245, 247, 248);">${resetUrl}</p>
       
             <p>Tip: Use a strong, unique password to help keep your account secure.</p>
           </div>
@@ -4851,9 +4851,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             <title>Confirm Your Email</title>
             <style>
               body { font-family: Arial, sans-serif; line-height: 1.6; color: #000000; max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: #004372; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+              .header { background: #044674; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
               .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-              .button { display: inline-block; background: #004372; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; margin: 20px 0; }
+              .button { display: inline-block; background: #044674; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; margin: 20px 0; }
               .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
               .info { background: #eef6ff; border: 1px solid #cde0ff; padding: 15px; border-radius: 5px; margin: 20px 0; }
             </style>
@@ -4881,7 +4881,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               </div>
         
               <p>If the button above doesn't work, copy and paste this link into your browser:</p>
-              <p style="word-break: break-all; color: #004372;">${confirmUrl}</p>
+              <p style="word-break: break-all; color:rgb(252, 252, 252);">${confirmUrl}</p>
         
               <p>This link will expire in <strong>24 hours</strong> for security reasons.</p>
               <p>If you need help, please contact our support team.</p>
