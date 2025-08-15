@@ -282,6 +282,7 @@ export const messages = pgTable("messages", {
   userId: integer("user_id").notNull().references(() => users.id),
   content: text("content").notNull(),
   timestamp: timestamp("timestamp").notNull().defaultNow(),
+  image: text("image"),
 });
 
 export const messagesRelations = relations(messages, ({ one }) => ({
@@ -299,6 +300,7 @@ export const insertMessageSchema = createInsertSchema(messages).pick({
   tripId: true,
   userId: true,
   content: true,
+  image: true,
 });
 
 // Survey questions schema

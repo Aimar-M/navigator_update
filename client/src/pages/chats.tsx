@@ -89,7 +89,7 @@ const ChatItem = ({ trip, lastMessages, currentUser }: { trip: any, lastMessages
                   </span>
                 )}
                 <p className="text-xs text-gray-600 truncate">
-                  {lastMessage.content}
+                  {lastMessage.image ? 'Photo' : lastMessage.content}
                 </p>
               </div>
               <div className="mt-1">

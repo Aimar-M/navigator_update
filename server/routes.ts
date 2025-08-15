@@ -2223,6 +2223,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return {
             id: message.id,
             content: message.content,
+            image: message.image,
             timestamp: message.timestamp.toISOString(),
             tripId: message.tripId,
             userId: message.userId,
@@ -2259,15 +2260,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Not a member of this trip' });
       }
       
-      const { content } = req.body;
-      if (!content) {
-        return res.status(400).json({ message: 'Message content is required' });
+      const { content, imageBase64 } = req.body as { content?: string; imageBase64?: string };
+
+      if ((!content || !content.trim()) && !imageBase64) {
+        return res.status(400).json({ message: 'Message content or image is required' });
       }
-      
+
+      let imageDataUrl: string | undefined;
+      if (imageBase64) {
+        const isDataUrl = typeof imageBase64 === 'string' && imageBase64.startsWith('data:');
+        imageDataUrl = isDataUrl ? imageBase64 : `data:image/png;base64,${imageBase64}`;
+      }
+
       const message = await storage.createMessage({
         tripId,
         userId: authUser.id,
-        content
+        content: content?.trim() ?? "",
+        image: imageDataUrl,
       });
       
       // Get user details for the response
@@ -2277,6 +2286,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const messageWithUser = {
         id: message.id,
         content: message.content,
+        image: message.image,
         timestamp: message.timestamp.toISOString(),
         tripId: message.tripId,
         userId: message.userId,
@@ -2446,6 +2456,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const user = await storage.getUser(message.userId);
           return {
             ...message,
+            image: message.image,
             type: 'message',
             tripId,
             tripName: trip?.name || 'Unknown Trip',

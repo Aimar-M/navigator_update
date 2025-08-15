@@ -26,8 +26,10 @@ export default function Chat() {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isFromChatsPage, setIsFromChatsPage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   
   // Check if we navigated from the chats page and update last visit timestamp
@@ -131,6 +133,7 @@ export default function Chat() {
         id: `msg-${msg.id}`,
         type: 'message',
         content: msg.content,
+        image: msg.image,
         timestamp: msg.timestamp,
         user: {
           id: msg.user ? msg.user.id : msg.userId,
@@ -369,7 +372,12 @@ export default function Chat() {
                                 : "bg-gray-100 text-gray-800 rounded-tl-sm"
                             }`}
                           >
-                            <p className="text-sm whitespace-pre-wrap break-words">{item.content}</p>
+                            {item.image ? (
+                              <img src={item.image as string} alt="shared" className="max-w-full md:max-w-sm rounded mb-1" loading="lazy" />
+                            ) : null}
+                            {item.content && (
+                              <p className="text-sm whitespace-pre-wrap break-words">{item.content}</p>
+                            )}
                           </div>
                           <span
                             className={`text-[10px] md:text-xs mt-0.5 block ${
@@ -487,6 +495,15 @@ export default function Chat() {
                   </PopoverTrigger>
                   <PopoverContent side="top" align="start" className="w-48 p-2">
                     <div className="space-y-1">
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="sm" 
+                        className="w-full justify-start"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        📷 Send Photo
+                      </Button>
                       <CreatePollDialog tripId={tripId} variant="compact">
                         <Button variant="ghost" size="sm" className="w-full justify-start">
                           <PieChart className="h-4 w-4 mr-2" />
@@ -514,6 +531,43 @@ export default function Chat() {
               >
                 <Send className="h-4 w-4" />
               </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  if (file.size > 10 * 1024 * 1024) {
+                    console.error('Image too large');
+                    e.target.value = '';
+                    return;
+                  }
+                  try {
+                    const dataUrl = await new Promise<string>((resolve, reject) => {
+                      const reader = new FileReader();
+                      reader.onload = () => resolve(reader.result as string);
+                      reader.onerror = reject;
+                      reader.readAsDataURL(file);
+                    });
+                    const token = localStorage.getItem('auth_token');
+                    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+                    if (token) headers['Authorization'] = `Bearer ${token}`;
+                    const response = await fetch(`${API_BASE}/api/trips/${tripId}/messages`, {
+                      method: 'POST',
+                      headers,
+                      body: JSON.stringify({ imageBase64: dataUrl })
+                    });
+                    if (!response.ok) throw new Error('Failed to send image');
+                    queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/messages`] });
+                  } catch (err) {
+                    console.error('Error uploading image', err);
+                  } finally {
+                    e.target.value = '';
+                  }
+                }}
+              />
             </form>
           )}
         </div>
