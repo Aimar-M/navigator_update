@@ -212,7 +212,12 @@ export default function Profile() {
                 <div className="flex items-center space-x-4">
                   <div className="relative">
                     <Avatar className="h-20 w-20">
-                      <AvatarImage src={profileData?.avatar || profileData?.profileImageUrl} alt={getDisplayName()} />
+                      <AvatarImage 
+                        src={profileData?.avatar 
+                          ? (profileData.avatar.startsWith('http') ? profileData.avatar : `${API_BASE}${profileData.avatar}`)
+                          : undefined}
+                        alt={getDisplayName()} 
+                      />
                       <AvatarFallback className="text-lg font-medium">
                         {getInitials()}
                       </AvatarFallback>

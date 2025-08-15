@@ -3929,9 +3929,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const filePath = path.join(uploadsDir, fileName);
       await fs.promises.writeFile(filePath, Buffer.from(base64Data, 'base64'));
 
-      // Public URL served by express static in server/index.ts
-      const publicUrlBase = process.env.VITE_API_URL || process.env.API_URL || '';
-      const avatarUrl = `${publicUrlBase}/uploads/avatars/${fileName}`;
+      // Store a relative path; client will prefix with API base
+      const avatarUrl = `/uploads/avatars/${fileName}`;
 
       const updatedUser = await storage.updateUser(user.id, { avatar: avatarUrl });
       return res.json(updatedUser);

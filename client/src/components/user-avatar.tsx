@@ -35,10 +35,17 @@ export default function UserAvatar({
     lg: "h-12 w-12 text-base"
   };
 
+  const getAvatarSrc = () => {
+    if (!user?.avatar) return undefined;
+    if (user.avatar.startsWith("http")) return user.avatar;
+    const API_BASE = import.meta.env.VITE_API_URL || "";
+    return `${API_BASE}${user.avatar}`;
+  };
+
   return (
     <Avatar className={cn(sizeClasses[size], className)}>
       {user?.avatar ? (
-        <AvatarImage src={user.avatar} alt={displayName} />
+        <AvatarImage src={getAvatarSrc()} alt={displayName} />
       ) : null}
       <AvatarFallback className={cn(fallbackClassName)}>
         {initials}
