@@ -124,7 +124,7 @@ const SimpleBudgetView: React.FC<SimpleBudgetViewProps> = ({ tripId, destination
               <CardContent>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
                         name="airline"
@@ -154,7 +154,7 @@ const SimpleBudgetView: React.FC<SimpleBudgetViewProps> = ({ tripId, destination
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
                         name="departureCity"
@@ -277,7 +277,7 @@ const SimpleBudgetView: React.FC<SimpleBudgetViewProps> = ({ tripId, destination
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 mb-6">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <FormLabel>From</FormLabel>
                     <Input placeholder="Departure City" />
@@ -287,7 +287,7 @@ const SimpleBudgetView: React.FC<SimpleBudgetViewProps> = ({ tripId, destination
                     <Input placeholder={destination} defaultValue={destination} />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <FormLabel>Departure Date</FormLabel>
                     <div className="flex">

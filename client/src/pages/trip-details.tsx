@@ -497,7 +497,7 @@ export default function TripDetails() {
                 <div className="flex-1">
                   <h3 className="font-medium">Dates</h3>
                   {isEditing ? (
-                    <div className="grid grid-cols-2 gap-2 mt-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
                       <div>
                         <label className="text-xs text-gray-500">Start Date</label>
                         <Input

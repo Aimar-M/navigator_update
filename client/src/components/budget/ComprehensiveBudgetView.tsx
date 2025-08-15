@@ -362,7 +362,7 @@ const ComprehensiveBudgetView: React.FC<ComprehensiveBudgetViewProps> = ({ tripI
                       )}
                     />
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={expenseForm.control}
                         name="category"
@@ -404,7 +404,7 @@ const ComprehensiveBudgetView: React.FC<ComprehensiveBudgetViewProps> = ({ tripI
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={expenseForm.control}
                         name="amount"
@@ -575,7 +575,7 @@ const ComprehensiveBudgetView: React.FC<ComprehensiveBudgetViewProps> = ({ tripI
               <CardContent>
                 <Form {...flightForm}>
                   <form onSubmit={flightForm.handleSubmit(onSubmitFlight)} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={flightForm.control}
                         name="airline"
@@ -605,7 +605,7 @@ const ComprehensiveBudgetView: React.FC<ComprehensiveBudgetViewProps> = ({ tripI
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={flightForm.control}
                         name="departureCity"
@@ -649,7 +649,7 @@ const ComprehensiveBudgetView: React.FC<ComprehensiveBudgetViewProps> = ({ tripI
                       )}
                     />
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={flightForm.control}
                         name="price"
@@ -715,7 +715,7 @@ const ComprehensiveBudgetView: React.FC<ComprehensiveBudgetViewProps> = ({ tripI
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 mb-6">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <FormLabel>From</FormLabel>
                     <Input placeholder="Departure City" />
@@ -725,7 +725,7 @@ const ComprehensiveBudgetView: React.FC<ComprehensiveBudgetViewProps> = ({ tripI
                     <Input placeholder={destination} defaultValue={destination} />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <FormLabel>Departure Date</FormLabel>
                     <div className="flex">

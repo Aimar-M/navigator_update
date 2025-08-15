@@ -349,7 +349,7 @@ export default function ExpenseDetails() {
             <Separator className="my-6" />
             
             {/* Summary */}
-            <div className="grid grid-cols-2 gap-6 text-center">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-center">
               <div>
                 <p className="text-2xl font-bold text-gray-900">{formatCurrency(displayExpense.amount)}</p>
                 <p className="text-sm text-gray-500">Total Amount</p>

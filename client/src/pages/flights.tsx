@@ -347,7 +347,7 @@ export default function Flights() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                       <div>
                         <span className="font-medium text-gray-700">Airline:</span>
                         <p className="text-gray-900">{userFlight.airline || "TBD"}</p>
@@ -443,7 +443,7 @@ export default function Flights() {
                             </div>
                           </CardHeader>
                           <CardContent className="space-y-2">
-                            <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                               <div>
                                 <span className="font-medium">Airline:</span>
                                 <p>{flight.airline || "TBD"}</p>

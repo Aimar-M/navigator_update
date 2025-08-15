@@ -285,7 +285,7 @@ export default function BudgetDashboard() {
                     </div>
                     
                     {/* Custom Legend for Mobile */}
-                    <div className="grid grid-cols-2 lg:grid-cols-1 gap-2 lg:w-48">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2 lg:w-48">
                       {pieChartData.map((entry, index) => {
                         const total = pieChartData.reduce((sum, item) => sum + item.value, 0);
                         const percent = total > 0 ? ((entry.value / total) * 100).toFixed(0) : '0';

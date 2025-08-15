@@ -213,7 +213,7 @@ export function OptimizedSettlementWorkflow({
 
         <div className="space-y-6">
           {/* Summary Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-blue-50 p-3 rounded-lg text-center">
               <TrendingUp className="h-6 w-6 text-blue-600 mx-auto mb-1" />
               <div className="text-lg font-semibold text-blue-900">{stats.totalTransactions}</div>

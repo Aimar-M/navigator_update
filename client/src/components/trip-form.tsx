@@ -161,7 +161,7 @@ export default function TripForm({ onComplete }: TripFormProps) {
               />
             </div>
 
-            <div className="mb-4 grid grid-cols-2 gap-4">
+            <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
                   Start Date
