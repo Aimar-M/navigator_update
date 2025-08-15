@@ -24,6 +24,7 @@ export default function Chat() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const [message, setMessage] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [messages, setMessages] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -258,6 +259,47 @@ export default function Chat() {
     }
   };
 
+  const handleImagePick = async (file: File) => {
+    try {
+      setUploadingImage(true);
+      const toBase64 = (f: File) => new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(f);
+      });
+      const imageBase64 = await toBase64(file);
+      const token = localStorage.getItem('auth_token');
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const uploadRes = await fetch(`${API_BASE}/api/uploads/chat`, {
+        method: 'POST',
+        headers,
+        credentials: 'include',
+        body: JSON.stringify({ imageBase64, tripId }),
+      });
+      if (!uploadRes.ok) throw new Error('Image upload failed');
+      const { url } = await uploadRes.json();
+
+      // Send message referencing the image URL
+      const msgRes = await fetch(`${API_BASE}/api/trips/${tripId}/messages`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ content: url }),
+      });
+      if (!msgRes.ok) throw new Error('Failed to send image message');
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/messages`] });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   if (!user) {
     navigate("/login");
     return null;
@@ -369,7 +411,15 @@ export default function Chat() {
                                 : "bg-gray-100 text-gray-800 rounded-tl-sm"
                             }`}
                           >
-                            <p className="text-sm whitespace-pre-wrap break-words">{item.content}</p>
+                            {typeof item.content === 'string' && item.content.startsWith('/uploads/') ? (
+                              <img
+                                src={`${API_BASE}${item.content}`}
+                                alt="shared"
+                                className="max-w-full rounded"
+                              />
+                            ) : (
+                              <p className="text-sm whitespace-pre-wrap break-words">{item.content}</p>
+                            )}
                           </div>
                           <span
                             className={`text-[10px] md:text-xs mt-0.5 block ${
@@ -493,6 +543,21 @@ export default function Chat() {
                           Create Poll
                         </Button>
                       </CreatePollDialog>
+                      <label className="w-full">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) handleImagePick(f);
+                          }}
+                        />
+                        <Button variant="ghost" size="sm" className="w-full justify-start">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Send Image
+                        </Button>
+                      </label>
                     </div>
                   </PopoverContent>
                 </Popover>

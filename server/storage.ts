@@ -56,6 +56,7 @@ export interface IStorage {
   // Message methods
   createMessage(message: InsertMessage): Promise<Message>;
   getMessagesByTrip(tripId: number): Promise<Message[]>;
+  // For richer messages (image detection), no schema change needed
   
   // Survey methods
   createSurveyQuestion(question: InsertSurveyQuestion): Promise<SurveyQuestion>;

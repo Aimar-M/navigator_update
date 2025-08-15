@@ -14,9 +14,10 @@ interface MessageProps {
   content: string;
   timestamp: string;
   user: User;
+  imageUrl?: string | null;
 }
 
-export default function ChatMessage({ id, content, timestamp, user }: MessageProps) {
+export default function ChatMessage({ id, content, timestamp, user, imageUrl }: MessageProps) {
   const { user: currentUser } = useAuth();
   // Ensure we're properly comparing user IDs
   const isCurrentUser = currentUser?.id === user?.id;
@@ -46,7 +47,15 @@ export default function ChatMessage({ id, content, timestamp, user }: MessagePro
               : "bg-gray-100 text-gray-800 rounded-tl-sm"
           }`}
         >
-          <p className="text-sm whitespace-pre-wrap">{content}</p>
+          {imageUrl ? (
+            <img
+              src={imageUrl.startsWith('http') ? imageUrl : `${import.meta.env.VITE_API_URL || ''}${imageUrl}`}
+              alt="shared"
+              className="max-w-full rounded"
+            />
+          ) : (
+            <p className="text-sm whitespace-pre-wrap">{content}</p>
+          )}
         </div>
         <span
           className={`text-xs mt-1 block ${
