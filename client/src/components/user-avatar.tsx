@@ -37,6 +37,8 @@ export default function UserAvatar({
 
   const getAvatarSrc = () => {
     if (!user?.avatar) return undefined;
+    // Support data URLs, absolute URLs, or relative URLs
+    if (user.avatar.startsWith("data:")) return user.avatar;
     if (user.avatar.startsWith("http")) return user.avatar;
     const API_BASE = import.meta.env.VITE_API_URL || "";
     return `${API_BASE}${user.avatar}`;

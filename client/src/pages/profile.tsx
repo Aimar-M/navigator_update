@@ -214,7 +214,9 @@ export default function Profile() {
                     <Avatar className="h-20 w-20">
                       <AvatarImage 
                         src={profileData?.avatar 
-                          ? (profileData.avatar.startsWith('http') ? profileData.avatar : `${API_BASE}${profileData.avatar}`)
+                          ? (profileData.avatar.startsWith('data:')
+                              ? profileData.avatar
+                              : (profileData.avatar.startsWith('http') ? profileData.avatar : `${API_BASE}${profileData.avatar}`))
                           : undefined}
                         alt={getDisplayName()} 
                       />

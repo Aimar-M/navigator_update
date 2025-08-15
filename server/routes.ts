@@ -3917,25 +3917,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'imageBase64 is required' });
       }
 
-      // Decode base64 (supports data URL or raw base64)
-      const matches = imageBase64.match(/^data:(.+);base64,(.*)$/);
-      const base64Data = matches ? matches[2] : imageBase64;
-      const mime = matches ? matches[1] : 'image/png';
-      const ext = mime.includes('jpeg') || mime.includes('jpg') ? 'jpg' : mime.includes('png') ? 'png' : 'png';
+      // If client sent a full data URL, store as-is; otherwise wrap as PNG data URL
+      const isDataUrl = imageBase64.startsWith('data:');
+      const dataUrl = isDataUrl ? imageBase64 : `data:image/png;base64,${imageBase64}`;
 
-      const fs = await import('fs');
-      const path = await import('path');
-      const uploadsDir = path.resolve(process.cwd(), 'uploads', 'avatars');
-      await fs.promises.mkdir(uploadsDir, { recursive: true });
-
-      const fileName = `user_${user.id}_${Date.now()}.${ext}`;
-      const filePath = path.join(uploadsDir, fileName);
-      await fs.promises.writeFile(filePath, Buffer.from(base64Data, 'base64'));
-
-      // Store a relative path; client will prefix with API base
-      const avatarUrl = `/uploads/avatars/${fileName}`;
-
-      const updatedUser = await storage.updateUser(user.id, { avatar: avatarUrl });
+      // Store directly in DB so it persists across deploys
+      const updatedUser = await storage.updateUser(user.id, { avatar: dataUrl });
       return res.json(updatedUser);
     } catch (error) {
       console.error('Error uploading avatar:', error);
