@@ -212,19 +212,63 @@ export default function Profile() {
                 <div className="flex items-center space-x-4">
                   <div className="relative">
                     <Avatar className="h-20 w-20">
-                      <AvatarImage src={profileData?.profileImageUrl} alt={getDisplayName()} />
+                      <AvatarImage src={profileData?.avatar || profileData?.profileImageUrl} alt={getDisplayName()} />
                       <AvatarFallback className="text-lg font-medium">
                         {getInitials()}
                       </AvatarFallback>
                     </Avatar>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0"
-                      onClick={() => toast({ title: "Coming soon", description: "Profile photo upload will be available soon!" })}
-                    >
-                      <Camera className="h-4 w-4" />
-                    </Button>
+                    <label className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          try {
+                            // Read as base64
+                            const toBase64 = (f: File) => new Promise<string>((resolve, reject) => {
+                              const reader = new FileReader();
+                              reader.onload = () => resolve(reader.result as string);
+                              reader.onerror = reject;
+                              reader.readAsDataURL(f);
+                            });
+                            const imageBase64 = await toBase64(file);
+                            const API_BASE = import.meta.env.VITE_API_URL || '';
+                            const token = localStorage.getItem('auth_token');
+                            const res = await fetch(`${API_BASE}/api/users/avatar`, {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                              },
+                              credentials: 'include',
+                              body: JSON.stringify({ imageBase64 }),
+                            });
+                            if (!res.ok) {
+                              const msg = await res.text();
+                              throw new Error(msg || 'Failed to upload avatar');
+                            }
+                            toast({ title: 'Profile photo updated' });
+                            // Refresh profile data
+                            await queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/auth/me`] });
+                          } catch (err) {
+                            console.error(err);
+                            toast({ title: 'Upload failed', description: err instanceof Error ? err.message : 'Please try again', variant: 'destructive' });
+                          } finally {
+                            // clear input value so same file can be re-selected
+                            e.currentTarget.value = '';
+                          }
+                        }}
+                      />
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="h-8 w-8 rounded-full p-0 pointer-events-none"
+                      >
+                        <Camera className="h-4 w-4" />
+                      </Button>
+                    </label>
                   </div>
                   <div>
                     <h1 className="text-2xl font-bold text-gray-900">{getDisplayName()}</h1>

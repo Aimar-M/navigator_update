@@ -7,6 +7,7 @@ import passport from "./google-auth";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
+import path from "path";
 
 config();
 
@@ -37,6 +38,9 @@ app.use(cors({
 }));
 
 app.options('*', cors()); // <-- Add this line
+
+// Serve uploaded files (avatars, etc.)
+app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
 
 // Configure session middleware with PostgreSQL store
 const PgSession = connectPgSimple(session);

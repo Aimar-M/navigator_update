@@ -3903,6 +3903,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Upload/update user avatar (expects { imageBase64: string })
+  router.post('/users/avatar', isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = ensureUser(req, res);
+      if (!user) return;
+
+      const { imageBase64 } = req.body as { imageBase64?: string };
+      if (!imageBase64 || typeof imageBase64 !== 'string') {
+        return res.status(400).json({ message: 'imageBase64 is required' });
+      }
+
+      // Decode base64 (supports data URL or raw base64)
+      const matches = imageBase64.match(/^data:(.+);base64,(.*)$/);
+      const base64Data = matches ? matches[2] : imageBase64;
+      const mime = matches ? matches[1] : 'image/png';
+      const ext = mime.includes('jpeg') || mime.includes('jpg') ? 'jpg' : mime.includes('png') ? 'png' : 'png';
+
+      const fs = await import('fs');
+      const path = await import('path');
+      const uploadsDir = path.resolve(process.cwd(), 'uploads', 'avatars');
+      await fs.promises.mkdir(uploadsDir, { recursive: true });
+
+      const fileName = `user_${user.id}_${Date.now()}.${ext}`;
+      const filePath = path.join(uploadsDir, fileName);
+      await fs.promises.writeFile(filePath, Buffer.from(base64Data, 'base64'));
+
+      // Public URL served by express static in server/index.ts
+      const publicUrlBase = process.env.VITE_API_URL || process.env.API_URL || '';
+      const avatarUrl = `${publicUrlBase}/uploads/avatars/${fileName}`;
+
+      const updatedUser = await storage.updateUser(user.id, { avatar: avatarUrl });
+      return res.json(updatedUser);
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      return res.status(500).json({ message: 'Server error' });
+    }
+  });
+
   // Get user statistics
   router.get('/users/stats', isAuthenticated, async (req: Request, res: Response) => {
     try {
