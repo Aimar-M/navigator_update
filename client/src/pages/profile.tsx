@@ -19,7 +19,7 @@ const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export default function Profile() {
   const [, navigate] = useLocation();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -255,7 +255,8 @@ export default function Profile() {
                               throw new Error(msg || 'Failed to upload avatar');
                             }
                             toast({ title: 'Profile photo updated' });
-                            // Refresh profile data
+                            // Refresh profile and header avatar
+                            await refreshUser();
                             await queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/auth/me`] });
                           } catch (err) {
                             console.error(err);

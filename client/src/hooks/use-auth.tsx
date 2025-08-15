@@ -22,6 +22,7 @@ interface AuthContextType {
   login: (credentials: { identifier: string; password: string }) => Promise<void>;
   register: (userData: RegisterData) => Promise<any>; // Can return user data for email confirmation
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 interface RegisterData {
@@ -246,8 +247,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const refreshUser = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch(`${API_BASE}/api/auth/me`, {
+        headers,
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const userData = await res.json();
+        setUser(userData);
+      }
+    } catch (e) {
+      // ignore
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
