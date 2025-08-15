@@ -133,11 +133,27 @@ app.use((req, res, next) => {
       }
     };
 
-    // Cleanup expired tokens every hour
+    // Auto-archive trips task (per-user settings) once they end
+    const autoArchivePastTrips = async () => {
+      try {
+        const { storage } = await import('./db-storage');
+        const users = await storage.getAllUsers();
+        for (const u of users) {
+          try {
+            await storage.autoArchivePastTripsForUser(u.id);
+          } catch {}
+        }
+      } catch (error) {
+        console.error('❌ Error during auto-archive task:', error);
+      }
+    };
+
+    // Cleanup expired tokens every hour; Auto-archive every 6 hours
     setInterval(async () => {
       try {
         await cleanupExpiredTokens();
         await cleanupExpiredEmailConfirmationTokens();
+        await autoArchivePastTrips();
       } catch (error) {
         console.error('❌ Error during token cleanup:', error);
       }
@@ -146,6 +162,7 @@ app.use((req, res, next) => {
     // Run cleanup once on startup
     cleanupExpiredTokens().catch(console.error);
     cleanupExpiredEmailConfirmationTokens().catch(console.error);
+    autoArchivePastTrips().catch(console.error);
 
     // 404 handler for unmatched routes
     app.use('*', (req: Request, res: Response) => {
