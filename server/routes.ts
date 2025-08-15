@@ -4675,7 +4675,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
               <div>
                 <h1 style="margin: 0;">Navigator</h1>
-                <p style="margin: 0;">Password Reset Request</p>
+                <p style="margin: 0;">The world is Waiting</p>
               </div>
             </div>
           </div>
@@ -4863,7 +4863,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
              <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
                 <div>
                   <h1 style="margin: 0;">Navigator</h1>
-                  <p style="margin: 0;">Email Confirmation</p>
+                  <p style="margin: 0;">The world is waiting</p>
                 </div>
               </div>
             </div>
