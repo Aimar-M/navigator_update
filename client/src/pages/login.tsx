@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import navigatorLogo from "@assets/ab_Navigator2-11_1749673314519.png";
 import navigatorText from "@assets/ab_Navigator2-09_1749673915685.png";
 import companyLogo from "@assets/ab_Navigator2-09_1749674413735.png";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function Login() {
   // Debug: Log environment variables
@@ -25,6 +26,7 @@ export default function Login() {
   });
   const [identifier, setIdentifier] = useState(""); // Single field for email or username
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ identifier?: string; password?: string }>({});
   const { login, isLoading, user } = useAuth();
   const [, navigate] = useLocation();
@@ -216,13 +218,23 @@ export default function Login() {
 
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-2 flex items-center text-gray-500 hover:text-gray-700"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
                 {errors.password && (
                   <p className="text-sm text-red-500">{errors.password}</p>
                 )}
