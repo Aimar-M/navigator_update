@@ -738,13 +738,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Get the membership status for this trip
         const membership = tripMemberships.find(m => m.tripId === trip.id);
         
+        const now = new Date();
+        const ended = trip.endDate ? new Date(trip.endDate) < now : false;
         return {
           ...trip,
           memberCount: confirmedMembers.length,
           totalMembers: members.length,
           confirmedMembers: confirmedMembers.map(m => m.userId),
           isPinned: settings?.isPinned || false,
-          isArchived: settings?.isArchived || false,
+          // Consider trips whose endDate has passed as archived for display
+          isArchived: Boolean(settings?.isArchived) || ended,
           memberStatus: membership?.status || 'none'
         };
       }));
