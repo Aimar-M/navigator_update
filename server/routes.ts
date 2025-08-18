@@ -2191,6 +2191,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Message Routes
+  // Upload chat image (JSON data URL) and return a persistent URL served from /uploads
+  router.post('/trips/:id/upload-image', isAuthenticated, requireConfirmedRSVP, async (req: Request, res: Response) => {
+    try {
+      const authUser = ensureUser(req, res);
+      if (!authUser) return;
+
+      const tripId = parseInt(req.params.id);
+      if (isNaN(tripId)) {
+        return res.status(400).json({ message: 'Invalid trip ID' });
+      }
+
+      // Ensure user is a member of the trip
+      const members = await storage.getTripMembers(tripId);
+      const memberInfo = members.find(member => member.userId === authUser.id);
+      if (!memberInfo) {
+        return res.status(403).json({ message: 'Not a member of this trip' });
+      }
+
+      const { dataUrl } = req.body as { dataUrl?: string };
+      if (!dataUrl || typeof dataUrl !== 'string') {
+        return res.status(400).json({ message: 'dataUrl is required' });
+      }
+
+      const match = dataUrl.match(/^data:([^;]+);base64,(.*)$/);
+      if (!match) {
+        return res.status(400).json({ message: 'Malformed image data URL' });
+      }
+      const mimeType = match[1];
+      const base64Payload = match[2];
+      const allowedMimeTypes = new Set(['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif']);
+      if (!allowedMimeTypes.has(mimeType)) {
+        return res.status(400).json({ message: 'Unsupported image type' });
+      }
+
+      // Validate base64 and size (5MB)
+      const base64Regex = /^[A-Za-z0-9+/=]+$/;
+      if (!base64Regex.test(base64Payload)) {
+        return res.status(400).json({ message: 'Invalid base64 image data' });
+      }
+      const padding = (base64Payload.endsWith('==') ? 2 : (base64Payload.endsWith('=') ? 1 : 0));
+      const decodedBytes = Math.floor(base64Payload.length * 3 / 4) - padding;
+      const maxBytes = 5 * 1024 * 1024;
+      if (decodedBytes > maxBytes) {
+        return res.status(413).json({ message: 'Image too large (max 5MB)' });
+      }
+
+      // Persist file to uploads/chat
+      const fs = await import('fs/promises');
+      const pathMod = await import('path');
+      const buffer = Buffer.from(base64Payload, 'base64');
+      const ext = mimeType === 'image/png' ? '.png' :
+                  mimeType === 'image/webp' ? '.webp' :
+                  mimeType === 'image/gif' ? '.gif' : '.jpg';
+      const uploadsDir = pathMod.resolve(process.cwd(), 'uploads', 'chat');
+      await fs.mkdir(uploadsDir, { recursive: true });
+      const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
+      const filePath = pathMod.join(uploadsDir, filename);
+      await fs.writeFile(filePath, buffer);
+
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      const publicUrl = `${baseUrl}/uploads/chat/${filename}`;
+      return res.status(201).json({ url: publicUrl });
+    } catch (error) {
+      console.error('Error uploading chat image:', error);
+      return res.status(500).json({ message: 'Server error' });
+    }
+  });
   router.get('/trips/:id/messages', isAuthenticated, requireConfirmedRSVP, async (req: Request, res: Response) => {
     try {
       const user = ensureUser(req, res);
@@ -2260,16 +2327,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Not a member of this trip' });
       }
       
-      const { content, imageBase64 } = req.body as { content?: string; imageBase64?: string };
+      const { content, imageBase64, imageUrl } = req.body as { content?: string; imageBase64?: string; imageUrl?: string };
 
-      if ((!content || !content.trim()) && !imageBase64) {
+      if ((!content || !content.trim()) && !imageBase64 && !imageUrl) {
         return res.status(400).json({ message: 'Message content or image is required' });
       }
 
+      // Validate image if provided
       let imageDataUrl: string | undefined;
       if (imageBase64) {
-        const isDataUrl = typeof imageBase64 === 'string' && imageBase64.startsWith('data:');
-        imageDataUrl = isDataUrl ? imageBase64 : `data:image/png;base64,${imageBase64}`;
+        if (typeof imageBase64 !== 'string') {
+          return res.status(400).json({ message: 'Invalid image payload' });
+        }
+        const allowedMimeTypes = new Set([
+          'image/png',
+          'image/jpeg',
+          'image/jpg',
+          'image/webp',
+          'image/gif'
+        ]);
+
+        let base64Payload = imageBase64;
+        let mimeType = 'image/png';
+        const isDataUrl = imageBase64.startsWith('data:');
+        if (isDataUrl) {
+          const match = imageBase64.match(/^data:([^;]+);base64,(.*)$/);
+          if (!match) {
+            return res.status(400).json({ message: 'Malformed image data URL' });
+          }
+          mimeType = match[1];
+          base64Payload = match[2];
+          if (!allowedMimeTypes.has(mimeType)) {
+            return res.status(400).json({ message: 'Unsupported image type' });
+          }
+        }
+
+        // Basic base64 validation
+        const base64Regex = /^[A-Za-z0-9+/=]+$/;
+        if (!base64Regex.test(base64Payload)) {
+          return res.status(400).json({ message: 'Invalid base64 image data' });
+        }
+
+        // Enforce decoded size limit (5 MB)
+        // Decoded size ≈ (base64Length * 3/4) - padding
+        const padding = (base64Payload.endsWith('==') ? 2 : (base64Payload.endsWith('=') ? 1 : 0));
+        const decodedBytes = Math.floor(base64Payload.length * 3 / 4) - padding;
+        const maxBytes = 5 * 1024 * 1024;
+        if (decodedBytes > maxBytes) {
+          return res.status(413).json({ message: 'Image too large (max 5MB)' });
+        }
+
+        imageDataUrl = isDataUrl ? imageBase64 : `data:${mimeType};base64,${base64Payload}`;
+      } else if (imageUrl) {
+        if (typeof imageUrl !== 'string') {
+          return res.status(400).json({ message: 'Invalid image URL' });
+        }
+        // Only allow serving from our uploads or absolute http(s) URLs
+        const isAllowed = imageUrl.startsWith('/uploads/') || imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
+        if (!isAllowed) {
+          return res.status(400).json({ message: 'Unsupported image URL' });
+        }
+        imageDataUrl = imageUrl;
       }
 
       const message = await storage.createMessage({

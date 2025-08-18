@@ -480,15 +480,15 @@ export default function Chat() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="flex items-center space-x-2 flex-shrink-0">
-              {/* Add option button - Only show when coming from chats page */}
-              {isFromChatsPage && (
-                <Popover>
+              {/* Always allow attachment */}
+              <Popover>
                   <PopoverTrigger asChild>
                     <Button 
                       type="button"
                       variant="ghost" 
                       size="icon" 
                       className="h-10 w-10 text-gray-500 hover:text-primary-500"
+                      disabled={isSubmitting || isUploadingImage}
                     >
                       <Plus className="h-5 w-5" />
                     </Button>
@@ -501,6 +501,7 @@ export default function Chat() {
                         size="sm" 
                         className="w-full justify-start"
                         onClick={() => fileInputRef.current?.click()}
+                        disabled={isSubmitting || isUploadingImage}
                       >
                         📷 Send Photo
                       </Button>
@@ -512,8 +513,7 @@ export default function Chat() {
                       </CreatePollDialog>
                     </div>
                   </PopoverContent>
-                </Popover>
-              )}
+              </Popover>
               
               <Input
                 type="text"
@@ -522,14 +522,22 @@ export default function Chat() {
                 placeholder="Type a message..."
                 className="flex-1 h-10 text-sm"
                 autoComplete="off"
+                disabled={isSubmitting || isUploadingImage}
               />
               <Button 
                 type="submit" 
                 size="sm"
                 className="h-10 w-10 p-0 min-w-0 flex-shrink-0"
-                disabled={isSubmitting || !message.trim()}
+                disabled={isSubmitting || isUploadingImage || !message.trim()}
               >
-                <Send className="h-4 w-4" />
+                {isSubmitting ? (
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                  </svg>
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
               </Button>
               <input
                 ref={fileInputRef}
@@ -539,12 +547,13 @@ export default function Chat() {
                 onChange={async (e) => {
                   const file = e.target.files?.[0];
                   if (!file) return;
-                  if (file.size > 10 * 1024 * 1024) {
+                  if (file.size > 5 * 1024 * 1024) {
                     console.error('Image too large');
                     e.target.value = '';
                     return;
                   }
                   try {
+                    setIsUploadingImage(true);
                     const dataUrl = await new Promise<string>((resolve, reject) => {
                       const reader = new FileReader();
                       reader.onload = () => resolve(reader.result as string);
@@ -554,20 +563,33 @@ export default function Chat() {
                     const token = localStorage.getItem('auth_token');
                     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
                     if (token) headers['Authorization'] = `Bearer ${token}`;
-                    const response = await fetch(`${API_BASE}/api/trips/${tripId}/messages`, {
+                    // Upload image to get a URL
+                    const uploadRes = await fetch(`${API_BASE}/api/trips/${tripId}/upload-image`, {
                       method: 'POST',
                       headers,
-                      body: JSON.stringify({ imageBase64: dataUrl })
+                      body: JSON.stringify({ dataUrl })
                     });
-                    if (!response.ok) throw new Error('Failed to send image');
+                    if (!uploadRes.ok) throw new Error('Failed to upload image');
+                    const { url } = await uploadRes.json();
+                    // Post message with the image URL
+                    const msgRes = await fetch(`${API_BASE}/api/trips/${tripId}/messages`, {
+                      method: 'POST',
+                      headers,
+                      body: JSON.stringify({ imageUrl: url })
+                    });
+                    if (!msgRes.ok) throw new Error('Failed to send image message');
                     queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/messages`] });
                   } catch (err) {
                     console.error('Error uploading image', err);
                   } finally {
+                    setIsUploadingImage(false);
                     e.target.value = '';
                   }
                 }}
               />
+              {isUploadingImage && (
+                <div className="ml-2 text-xs text-gray-500">Uploading...</div>
+              )}
             </form>
           )}
         </div>
