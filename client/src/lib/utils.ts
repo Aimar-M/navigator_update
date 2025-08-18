@@ -129,3 +129,34 @@ export const weatherIcons: Record<string, string> = {
   'Thunderstorm': 'ri-thunderstorms-line',
   'Snowy': 'ri-snowy-line'
 };
+
+// Attempt to open Venmo app with a fallback to the web link
+export function openVenmoLinkWithFallback(webUrl: string, timeoutMs: number = 1200): void {
+	try {
+		const url = new URL(webUrl);
+		// Expecting format: https://venmo.com/<handle>?txn=pay&amount=...&note=...
+		const handle = decodeURIComponent(url.pathname.replace(/^\//, ''));
+		const params = url.searchParams;
+		const txn = params.get('txn') || 'pay';
+		const amount = params.get('amount') || '';
+		const note = params.get('note') || '';
+
+		// Build app deep link
+		const appLink = `venmo://paycharge?txn=${encodeURIComponent(txn)}&recipients=${encodeURIComponent(handle)}&amount=${encodeURIComponent(amount)}&note=${encodeURIComponent(note)}`;
+
+		const start = Date.now();
+		// Try to open Venmo app
+		window.location.href = appLink;
+
+		// Fallback to web if app does not open
+		setTimeout(() => {
+			if (Date.now() - start < timeoutMs + 200) {
+				// Still on page, go to web URL
+				window.location.href = webUrl;
+			}
+		}, timeoutMs);
+	} catch {
+		// If parsing fails, just open the web URL
+		window.open(webUrl, '_blank', 'noopener,noreferrer');
+	}
+}
