@@ -131,7 +131,7 @@ export const weatherIcons: Record<string, string> = {
 };
 
 // Attempt to open Venmo app with a fallback to the web link
-export function openVenmoLinkWithFallback(webUrl: string, timeoutMs: number = 1200): void {
+export function openVenmoLinkWithFallback(webUrl: string, timeoutMs: number = 1600): void {
 	try {
 		const url = new URL(webUrl);
 		// Expecting format: https://venmo.com/<handle>?txn=pay&amount=...&note=...
@@ -144,15 +144,30 @@ export function openVenmoLinkWithFallback(webUrl: string, timeoutMs: number = 12
 		// Build app deep link
 		const appLink = `venmo://paycharge?txn=${encodeURIComponent(txn)}&recipients=${encodeURIComponent(handle)}&amount=${encodeURIComponent(amount)}&note=${encodeURIComponent(note)}`;
 
-		const start = Date.now();
-		// Try to open Venmo app
-		window.location.href = appLink;
+		const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+		const isAndroid = /Android/.test(navigator.userAgent);
+		const appStoreUrl = 'https://apps.apple.com/app/id351727428';
+		const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.venmo';
 
-		// Fallback to web if app does not open
+		let didHide = false;
+		const onVisibilityChange = () => { if (document.hidden) didHide = true; };
+		document.addEventListener('visibilitychange', onVisibilityChange);
+
+		// Attempt to open the Venmo app
+		(window as any).location.href = appLink;
+
+		// If the app doesn't open, fall back appropriately
 		setTimeout(() => {
-			if (Date.now() - start < timeoutMs + 200) {
-				// Still on page, go to web URL
-				window.location.href = webUrl;
+			document.removeEventListener('visibilitychange', onVisibilityChange);
+			if (!didHide) {
+				if (isIOS) {
+					(window as any).location.href = appStoreUrl;
+				} else if (isAndroid) {
+					// Prefer Play Store; some Android browsers may still prefer web link
+					(window as any).location.href = playStoreUrl;
+				} else {
+					(window as any).location.href = webUrl;
+				}
 			}
 		}, timeoutMs);
 	} catch {
