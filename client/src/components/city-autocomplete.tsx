@@ -198,22 +198,26 @@ const CityAutocomplete: React.FC<CityAutocompleteProps> = ({
     }
   };
 
-   // Add manually entered city ONLY if it exists in the dataset
+  // Allow manually entered city (fallback when not in dataset)
   const addManualCity = (cityName: string) => {
     const found = cities.find(city => city.name.toLowerCase() === cityName.toLowerCase());
+    const newCity: City = found || {
+      name: cityName,
+      country: "Unknown",
+      lat: 0,
+      lng: 0,
+    };
     if (
-      found &&
       selectedCities.length < 5 &&
       !selectedCities.some(selected => selected.name.toLowerCase() === cityName.toLowerCase())
     ) {
-      setSelectedCities(prev => [...prev, found]);
+      setSelectedCities(prev => [...prev, newCity]);
       setInputValue("");
       setSuggestions([]);
       setShowSuggestions(false);
       setActiveSuggestion(-1);
       inputRef.current?.focus();
     }
-    // If not found, do nothing (or optionally show an error)
   };
 
   // Handle input blur

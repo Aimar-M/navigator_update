@@ -543,44 +543,51 @@ export default function Chat() {
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
+                multiple
                 className="hidden"
                 onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  if (file.size > 5 * 1024 * 1024) {
-                    console.error('Image too large');
-                    e.target.value = '';
-                    return;
-                  }
+                  const fileList = e.target.files ? Array.from(e.target.files) : [];
+                  if (fileList.length === 0) return;
                   try {
                     setIsUploadingImage(true);
-                    const dataUrl = await new Promise<string>((resolve, reject) => {
-                      const reader = new FileReader();
-                      reader.onload = () => resolve(reader.result as string);
-                      reader.onerror = reject;
-                      reader.readAsDataURL(file);
-                    });
                     const token = localStorage.getItem('auth_token');
                     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
                     if (token) headers['Authorization'] = `Bearer ${token}`;
-                    // Upload image to get a URL
-                    const uploadRes = await fetch(`${API_BASE}/api/trips/${tripId}/upload-image`, {
-                      method: 'POST',
-                      headers,
-                      body: JSON.stringify({ dataUrl })
-                    });
-                    if (!uploadRes.ok) throw new Error('Failed to upload image');
-                    const { url } = await uploadRes.json();
-                    // Post message with the image URL
-                    const msgRes = await fetch(`${API_BASE}/api/trips/${tripId}/messages`, {
-                      method: 'POST',
-                      headers,
-                      body: JSON.stringify({ imageUrl: url })
-                    });
-                    if (!msgRes.ok) throw new Error('Failed to send image message');
+
+                    for (const file of fileList) {
+                      if (!file.type.startsWith('image/')) continue;
+                      if (file.size > 5 * 1024 * 1024) {
+                        console.error('Image too large, skipping:', file.name);
+                        continue;
+                      }
+
+                      const dataUrl = await new Promise<string>((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result as string);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(file);
+                      });
+
+                      const uploadRes = await fetch(`${API_BASE}/api/trips/${tripId}/upload-image`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({ dataUrl })
+                      });
+                      if (!uploadRes.ok) throw new Error('Failed to upload image');
+                      const { url } = await uploadRes.json();
+
+                      const msgRes = await fetch(`${API_BASE}/api/trips/${tripId}/messages`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({ imageUrl: url })
+                      });
+                      if (!msgRes.ok) throw new Error('Failed to send image message');
+                    }
+
+                    // Invalidate once after all uploads
                     queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/messages`] });
                   } catch (err) {
-                    console.error('Error uploading image', err);
+                    console.error('Error uploading image(s)', err);
                   } finally {
                     setIsUploadingImage(false);
                     e.target.value = '';
