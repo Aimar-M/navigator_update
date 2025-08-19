@@ -16,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CreatePollDialog } from "@/components/polls/create-poll-dialog";
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
+const IMAGE_STORAGE_MODE = (import.meta.env.VITE_CHAT_IMAGE_STORAGE || 'object').toLowerCase();
 
 
 export default function Chat() {
@@ -481,7 +482,7 @@ export default function Chat() {
           ) : (
             <form onSubmit={handleSubmit} className="flex items-center space-x-2 flex-shrink-0">
               {/* Always allow attachment */}
-              <Popover>
+                <Popover>
                   <PopoverTrigger asChild>
                     <Button 
                       type="button"
@@ -513,7 +514,7 @@ export default function Chat() {
                       </CreatePollDialog>
                     </div>
                   </PopoverContent>
-              </Popover>
+                </Popover>
               
               <Input
                 type="text"
@@ -536,7 +537,7 @@ export default function Chat() {
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
                   </svg>
                 ) : (
-                  <Send className="h-4 w-4" />
+                <Send className="h-4 w-4" />
                 )}
               </Button>
               <input
@@ -561,27 +562,38 @@ export default function Chat() {
                         continue;
                       }
 
-                      const dataUrl = await new Promise<string>((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onload = () => resolve(reader.result as string);
-                        reader.onerror = reject;
-                        reader.readAsDataURL(file);
-                      });
+                    const dataUrl = await new Promise<string>((resolve, reject) => {
+                      const reader = new FileReader();
+                      reader.onload = () => resolve(reader.result as string);
+                      reader.onerror = reject;
+                      reader.readAsDataURL(file);
+                    });
 
-                      const uploadRes = await fetch(`${API_BASE}/api/trips/${tripId}/upload-image`, {
-                        method: 'POST',
-                        headers,
-                        body: JSON.stringify({ dataUrl })
-                      });
-                      if (!uploadRes.ok) throw new Error('Failed to upload image');
-                      const { url } = await uploadRes.json();
+                      if (IMAGE_STORAGE_MODE === 'database') {
+                        // Store base64 directly in DB via message endpoint
+                        const msgRes = await fetch(`${API_BASE}/api/trips/${tripId}/messages`, {
+                      method: 'POST',
+                      headers,
+                      body: JSON.stringify({ imageBase64: dataUrl })
+                    });
+                        if (!msgRes.ok) throw new Error('Failed to send image message');
+                      } else {
+                        // Default: upload to storage and send URL
+                        const uploadRes = await fetch(`${API_BASE}/api/trips/${tripId}/upload-image`, {
+                          method: 'POST',
+                          headers,
+                          body: JSON.stringify({ dataUrl })
+                        });
+                        if (!uploadRes.ok) throw new Error('Failed to upload image');
+                        const { url } = await uploadRes.json();
 
-                      const msgRes = await fetch(`${API_BASE}/api/trips/${tripId}/messages`, {
-                        method: 'POST',
-                        headers,
-                        body: JSON.stringify({ imageUrl: url })
-                      });
-                      if (!msgRes.ok) throw new Error('Failed to send image message');
+                        const msgRes = await fetch(`${API_BASE}/api/trips/${tripId}/messages`, {
+                          method: 'POST',
+                          headers,
+                          body: JSON.stringify({ imageUrl: url })
+                        });
+                        if (!msgRes.ok) throw new Error('Failed to send image message');
+                      }
                     }
 
                     // Invalidate once after all uploads

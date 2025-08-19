@@ -4842,7 +4842,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             <p>Click the button below to create a new password. This link will expire in <strong>1 hour</strong> for security reasons.</p>
       
             <div style="text-align: center;">
-              <a href="${resetUrl}" class="button">Reset My Password</a>
+              <a href="${resetUrl}" class="button" style="display:inline-block;background:#044674;color:#ffffff !important;padding:15px 30px;text-decoration:none;border-radius:25px;font-weight:bold;margin:20px 0;">Reset My Password</a>
             </div>
       
             <div class="notice">
