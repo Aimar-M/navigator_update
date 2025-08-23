@@ -16,7 +16,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CreatePollDialog } from "@/components/polls/create-poll-dialog";
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
-const IMAGE_STORAGE_MODE = (import.meta.env.VITE_CHAT_IMAGE_STORAGE || 'object').toLowerCase();
+// Force database storage mode to ensure images persist across redeploys
+const IMAGE_STORAGE_MODE = 'database';
 
 
 export default function Chat() {
@@ -569,31 +570,14 @@ export default function Chat() {
                       reader.readAsDataURL(file);
                     });
 
-                      if (IMAGE_STORAGE_MODE === 'database') {
-                        // Store base64 directly in DB via message endpoint
-                        const msgRes = await fetch(`${API_BASE}/api/trips/${tripId}/messages`, {
-                      method: 'POST',
-                      headers,
-                      body: JSON.stringify({ imageBase64: dataUrl })
-                    });
-                        if (!msgRes.ok) throw new Error('Failed to send image message');
-                      } else {
-                        // Default: upload to storage and send URL
-                        const uploadRes = await fetch(`${API_BASE}/api/trips/${tripId}/upload-image`, {
-                          method: 'POST',
-                          headers,
-                          body: JSON.stringify({ dataUrl })
-                        });
-                        if (!uploadRes.ok) throw new Error('Failed to upload image');
-                        const { url } = await uploadRes.json();
-
-                        const msgRes = await fetch(`${API_BASE}/api/trips/${tripId}/messages`, {
-                          method: 'POST',
-                          headers,
-                          body: JSON.stringify({ imageUrl: url })
-                        });
-                        if (!msgRes.ok) throw new Error('Failed to send image message');
-                      }
+                      // Store base64 directly in DB via message endpoint
+                      // This ensures images persist across redeploys
+                      const msgRes = await fetch(`${API_BASE}/api/trips/${tripId}/messages`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({ imageBase64: dataUrl })
+                      });
+                      if (!msgRes.ok) throw new Error('Failed to send image message');
                     }
 
                     // Invalidate once after all uploads

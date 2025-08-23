@@ -39,8 +39,8 @@ app.use(cors({
 
 app.options('*', cors()); // <-- Add this line
 
-// Serve uploaded files (avatars, etc.)
-app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
+// Note: Images are now stored as base64 in database for persistence across redeploys
+// Removed static file serving to avoid file system dependencies
 
 // Configure session middleware with PostgreSQL store
 const PgSession = connectPgSimple(session);

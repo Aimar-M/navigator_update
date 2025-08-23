@@ -61,6 +61,19 @@ function recordForgotPasswordAttempt(email: string): void {
 const saltRounds = 10;
 const passwordRules = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
 
+// Helper function to get MIME type from file path
+function getMimeTypeFromPath(filePath: string): string {
+  const ext = filePath.split('.').pop()?.toLowerCase();
+  switch (ext) {
+    case 'png': return 'image/png';
+    case 'jpg':
+    case 'jpeg': return 'image/jpeg';
+    case 'gif': return 'image/gif';
+    case 'webp': return 'image/webp';
+    default: return 'image/png';
+  }
+}
+
 
 interface WebSocketClient extends WebSocket {
   userId?: number;
@@ -2191,7 +2204,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Message Routes
-  // Upload chat image (JSON data URL) and return a persistent URL served from /uploads
+  // Migration endpoint to convert file-based images to base64 (run once to preserve existing images)
+  router.post('/admin/migrate-images', isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = ensureUser(req, res);
+      if (!user) return;
+
+      // Only allow admin users to run migration
+      if (user.username !== 'admin' && user.username !== 'aimar') {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      console.log('🔄 Starting image migration...');
+      const fs = await import('fs/promises');
+      const pathMod = await import('path');
+      
+      // Get all messages with file-based image URLs
+      const messages = await storage.getAllMessages();
+      let migratedCount = 0;
+      let errorCount = 0;
+
+      for (const message of messages) {
+        if (message.image && message.image.startsWith('/uploads/')) {
+          try {
+            const filePath = pathMod.resolve(process.cwd(), message.image.substring(1));
+            
+            if (await fs.access(filePath).then(() => true).catch(() => false)) {
+              const buffer = await fs.readFile(filePath);
+              const mimeType = getMimeTypeFromPath(filePath);
+              const base64Data = `data:${mimeType};base64,${buffer.toString('base64')}`;
+              
+              // Update the message with base64 data
+              await storage.updateMessage(message.id, { image: base64Data });
+              migratedCount++;
+              console.log(`✅ Migrated image: ${message.image}`);
+            } else {
+              console.log(`⚠️ File not found: ${message.image}`);
+              errorCount++;
+            }
+          } catch (error) {
+            console.error(`❌ Error migrating image ${message.image}:`, error);
+            errorCount++;
+          }
+        }
+      }
+
+      console.log(`🎉 Image migration completed: ${migratedCount} migrated, ${errorCount} errors`);
+      res.json({ 
+        message: 'Image migration completed', 
+        migrated: migratedCount, 
+        errors: errorCount 
+      });
+    } catch (error) {
+      console.error('Error during image migration:', error);
+      res.status(500).json({ message: 'Migration failed' });
+    }
+  });
+
+  // Upload chat image (JSON data URL) and return the data URL for database storage
   router.post('/trips/:id/upload-image', isAuthenticated, requireConfirmedRSVP, async (req: Request, res: Response) => {
     try {
       const authUser = ensureUser(req, res);
@@ -2230,29 +2300,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!base64Regex.test(base64Payload)) {
         return res.status(400).json({ message: 'Invalid base64 image data' });
       }
-      const padding = (base64Payload.endsWith('==') ? 2 : (base64Payload.endsWith('=') ? 1 : 0));
+      const padding = (base64Payload.endsWith('==') ? 2 : (dataUrl.endsWith('=') ? 1 : 0));
       const decodedBytes = Math.floor(base64Payload.length * 3 / 4) - padding;
       const maxBytes = 5 * 1024 * 1024;
       if (decodedBytes > maxBytes) {
         return res.status(413).json({ message: 'Image too large (max 5MB)' });
       }
 
-      // Persist file to uploads/chat
-      const fs = await import('fs/promises');
-      const pathMod = await import('path');
-      const buffer = Buffer.from(base64Payload, 'base64');
-      const ext = mimeType === 'image/png' ? '.png' :
-                  mimeType === 'image/webp' ? '.webp' :
-                  mimeType === 'image/gif' ? '.gif' : '.jpg';
-      const uploadsDir = pathMod.resolve(process.cwd(), 'uploads', 'chat');
-      await fs.mkdir(uploadsDir, { recursive: true });
-      const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
-      const filePath = pathMod.join(uploadsDir, filename);
-      await fs.writeFile(filePath, buffer);
-
-      const baseUrl = `${req.protocol}://${req.get('host')}`;
-      const publicUrl = `${baseUrl}/uploads/chat/${filename}`;
-      return res.status(201).json({ url: publicUrl });
+      // Return the data URL directly for database storage (no file system)
+      // This ensures images persist across redeploys
+      return res.status(201).json({ url: dataUrl });
     } catch (error) {
       console.error('Error uploading chat image:', error);
       return res.status(500).json({ message: 'Server error' });
@@ -2382,12 +2439,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (typeof imageUrl !== 'string') {
           return res.status(400).json({ message: 'Invalid image URL' });
         }
-        // Only allow serving from our uploads or absolute http(s) URLs
-        const isAllowed = imageUrl.startsWith('/uploads/') || imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
-        if (!isAllowed) {
+        
+        // Convert file URLs to base64 for persistence
+        // This ensures no images are lost on redeploy
+        if (imageUrl.startsWith('/uploads/')) {
+          try {
+            // Try to read the file and convert to base64
+            const fs = await import('fs/promises');
+            const pathMod = await import('path');
+            const filePath = pathMod.resolve(process.cwd(), imageUrl.substring(1)); // Remove leading '/'
+            
+            if (await fs.access(filePath).then(() => true).catch(() => false)) {
+              const buffer = await fs.readFile(filePath);
+              const mimeType = getMimeTypeFromPath(filePath);
+              imageDataUrl = `data:${mimeType};base64,${buffer.toString('base64')}`;
+              console.log(`✅ Converted file URL to base64: ${imageUrl}`);
+            } else {
+              console.log(`⚠️ File not found, using original URL: ${imageUrl}`);
+              imageDataUrl = imageUrl;
+            }
+          } catch (error) {
+            console.log(`⚠️ Error converting file to base64, using original URL: ${imageUrl}`, error);
+            imageDataUrl = imageUrl;
+          }
+        } else if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+          // External URLs are fine
+          imageDataUrl = imageUrl;
+        } else {
           return res.status(400).json({ message: 'Unsupported image URL' });
         }
-        imageDataUrl = imageUrl;
       }
 
       const message = await storage.createMessage({

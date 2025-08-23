@@ -1482,6 +1482,21 @@ export class DatabaseStorage {
       }
     }
   }
+
+  // Get all messages (for migration purposes)
+  async getAllMessages(): Promise<any[]> {
+    return await db.select().from(messages);
+  }
+
+  // Update a message (for migration purposes)
+  async updateMessage(id: number, data: Partial<any>): Promise<any | undefined> {
+    const [updated] = await db
+      .update(messages)
+      .set(data)
+      .where(eq(messages.id, id))
+      .returning();
+    return updated || undefined;
+  }
 }
 
 export const storage = new DatabaseStorage();
