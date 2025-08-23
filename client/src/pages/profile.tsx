@@ -133,135 +133,34 @@ export default function Profile() {
       const nameChanged = (profileData?.firstName !== safeFormData.firstName) || (profileData?.lastName !== safeFormData.lastName);
       
       console.log('Profile update completed. Changes detected:', { usernameChanged, nameChanged });
-      console.log('Old profile data:', profileData);
-      console.log('New form data:', safeFormData);
       
       // Always refresh profile data
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/auth/me`] });
       
-      // If username or name changed, completely refresh all user-related data
-      if (usernameChanged || nameChanged) {
-        console.log('Username or name changed, completely refreshing all user-related data...');
-        console.log('Old username:', profileData?.username, 'New username:', safeFormData.username);
-        console.log('Old firstName:', profileData?.firstName, 'New firstName:', safeFormData.firstName);
-        console.log('Old lastName:', profileData?.lastName, 'New lastName:', safeFormData.lastName);
+      // Simple approach: just show a message and let the user refresh if needed
+      if (usernameChanged) {
+        toast({
+          title: "Username Updated",
+          description: "Your username has been updated in the database. To see the changes throughout the app, please refresh the page.",
+        });
         
-        try {
-          // Force refresh the current user data in auth context
-          if (refreshUser) {
-            console.log('Refreshing user data...');
-            await refreshUser();
-            console.log('User data refreshed');
-          }
-          
-          // Small delay to ensure auth context is updated
-          await new Promise(resolve => setTimeout(resolve, 200));
-          
-          // Now invalidate specific key patterns to trigger refetches
-          const patterns = [
-            `${API_BASE}/api/trips`,
-            `${API_BASE}/api/expenses`,
-            `${API_BASE}/api/settlements`,
-            `${API_BASE}/api/activities`,
-            `${API_BASE}/api/flights`,
-            `${API_BASE}/api/messages`,
-            `${API_BASE}/api/polls`,
-            `${API_BASE}/api/members`,
-            `${API_BASE}/api/invitations`,
-            `${API_BASE}/api/users`,
-            `${API_BASE}/api/auth`
-          ];
-          
-          patterns.forEach(pattern => {
-            queryClient.invalidateQueries({ 
-              queryKey: [pattern],
-              exact: false 
-            });
-          });
-          
-          console.log('Invalidated all patterns');
-          
-          // Force a more aggressive invalidation by removing and re-adding queries
-          console.log('Performing aggressive query invalidation...');
-          
-          // Remove all queries with user-related patterns
-          queryClient.removeQueries({ 
-            predicate: (query) => {
-              const queryKey = query.queryKey[0];
-              if (typeof queryKey === 'string') {
-                return queryKey.includes('/api/') && (
-                  queryKey.includes('/trips') ||
-                  queryKey.includes('/expenses') ||
-                  queryKey.includes('/settlements') ||
-                  queryKey.includes('/activities') ||
-                  queryKey.includes('/flights') ||
-                  queryKey.includes('/messages') ||
-                  queryKey.includes('/polls') ||
-                  queryKey.includes('/members') ||
-                  queryKey.includes('/invitations') ||
-                  queryKey.includes('/users') ||
-                  queryKey.includes('/auth')
-                );
-              }
-              return false;
-            }
-          });
-          
-          // Force refetch of critical queries
-          await Promise.all([
-            queryClient.refetchQueries({ queryKey: [`${API_BASE}/api/auth/me`] }),
-            queryClient.refetchQueries({ queryKey: [`${API_BASE}/api/trips`] }),
-            queryClient.refetchQueries({ queryKey: [`${API_BASE}/api/expenses`] }),
-          ]);
-          
-          console.log('Aggressive invalidation completed');
-          
-          // Manually update the profile data in the query cache to ensure immediate UI update
-          if (response && typeof response === 'object') {
-            console.log('Manually updating profile cache with new data...');
-            queryClient.setQueryData([`${API_BASE}/api/auth/me`], response);
-            console.log('Profile cache updated');
-          }
-          
-          // Show success message for name changes
-          if (nameChanged && !usernameChanged) {
-            toast({
-              title: "Profile Updated",
-              description: "Your name has been updated and should now appear throughout the app.",
-            });
-          }
-          
-          // As a last resort, if this is a username change, force a page reload
-          // This ensures all components get fresh data
-          if (usernameChanged) {
-            console.log('Username changed - forcing page reload to ensure all data is fresh...');
-            
-            // Show a toast to inform the user
-            toast({
-              title: "Username Updated",
-              description: "Your username has been updated. The page will reload to ensure all changes are reflected throughout the app.",
-            });
-            
-            setTimeout(() => {
-              window.location.reload();
-            }, 2000); // Give user time to see the message
-          }
-          
-        } catch (error) {
-          console.error('Error during query invalidation:', error);
-          // If all else fails, force a page reload
-          console.log('Falling back to page reload...');
-          setTimeout(() => {
+        // Show a refresh button for username changes
+        setTimeout(() => {
+          if (confirm("Your username has been updated! Would you like to refresh the page to see the changes throughout the app?")) {
             window.location.reload();
-          }, 500);
-        }
+          }
+        }, 1000);
+      } else if (nameChanged) {
+        toast({
+          title: "Profile Updated",
+          description: "Your name has been updated. The changes should appear throughout the app.",
+        });
+      } else {
+        toast({
+          title: "Profile Updated",
+          description: "Your profile has been successfully updated.",
+        });
       }
-      
-      setIsEditing(false);
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been successfully updated.",
-      });
     } catch (error) {
       console.error("Error updating profile:", error);
       toast({
@@ -552,6 +451,9 @@ export default function Profile() {
                       placeholder="Your username"
                       required
                     />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Note: Username changes will require a page refresh to appear throughout the app.
+                    </p>
                   </div>
 
                   <div>

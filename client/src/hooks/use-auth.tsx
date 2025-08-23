@@ -249,47 +249,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = async () => {
     try {
+      console.log('Auth context: Starting user refresh...');
       const token = localStorage.getItem('auth_token');
       const headers: Record<string, string> = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
+      
+      console.log('Auth context: Fetching user data from /api/auth/me...');
       const res = await fetch(`${API_BASE}/api/auth/me`, {
         headers,
         credentials: 'include',
       });
+      
       if (res.ok) {
         const userData = await res.json();
+        console.log('Auth context: Received user data:', userData);
         setUser(userData);
         
-        // Also clear all cached queries to ensure fresh data
-        console.log('Auth context: Clearing all queries after user refresh...');
-        queryClient.clear();
+        // Don't clear queries here as it can interfere with the current execution
+        // Instead, just invalidate the auth query and let the profile update handle the rest
+        console.log('Auth context: Invalidating auth query...');
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/auth/me`] });
         
-        // Invalidate key patterns to trigger refetches
-        const patterns = [
-          `${API_BASE}/api/trips`,
-          `${API_BASE}/api/expenses`,
-          `${API_BASE}/api/settlements`,
-          `${API_BASE}/api/activities`,
-          `${API_BASE}/api/flights`,
-          `${API_BASE}/api/messages`,
-          `${API_BASE}/api/polls`,
-          `${API_BASE}/api/members`,
-          `${API_BASE}/api/invitations`,
-          `${API_BASE}/api/users`,
-          `${API_BASE}/api/auth`
-        ];
-        
-        patterns.forEach(pattern => {
-          queryClient.invalidateQueries({ 
-            queryKey: [pattern],
-            exact: false 
-          });
-        });
-        
-        console.log('Auth context: Queries cleared and invalidated');
+        console.log('Auth context: User refresh completed successfully');
+      } else {
+        console.error('Auth context: Failed to fetch user data, status:', res.status);
       }
     } catch (e) {
       console.error('Error refreshing user:', e);
+      throw e; // Re-throw to let the caller handle the error
     }
   };
 
