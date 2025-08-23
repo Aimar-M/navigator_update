@@ -125,6 +125,11 @@ export default function Profile() {
         if (!serverDataMatches) {
           console.warn('Server response does not match expected data - this might indicate a server issue');
         }
+        
+        // Log the full response structure
+        console.log('Full profile update response:', response);
+        console.log('Response keys:', Object.keys(response));
+        console.log('Response values:', Object.values(response));
       }
       
       // Check if username changed to invalidate all related queries
@@ -133,28 +138,109 @@ export default function Profile() {
       const nameChanged = (profileData?.firstName !== safeFormData.firstName) || (profileData?.lastName !== safeFormData.lastName);
       
       console.log('Profile update completed. Changes detected:', { usernameChanged, nameChanged });
+      console.log('Current auth context user:', user);
+      console.log('Current profile data:', profileData);
+      console.log('Form data being submitted:', safeFormData);
+      console.log('Data structure comparison:', {
+        authUser: {
+          id: user?.id,
+          username: user?.username,
+          name: user?.name,
+          email: user?.email
+        },
+        profileData: {
+          id: profileData?.id,
+          username: profileData?.username,
+          firstName: profileData?.firstName,
+          lastName: profileData?.lastName,
+          email: profileData?.email
+        }
+      });
       
       // Always refresh profile data
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/auth/me`] });
       
-      // Simple approach: just show a message and let the user refresh if needed
-      if (usernameChanged) {
-        toast({
-          title: "Username Updated",
-          description: "Your username has been updated in the database. To see the changes throughout the app, please refresh the page.",
-        });
+      // Comprehensive approach: invalidate all queries that contain user data
+      if (usernameChanged || nameChanged) {
+        console.log('Username or name changed, invalidating all user-related queries...');
         
-        // Show a refresh button for username changes
-        setTimeout(() => {
-          if (confirm("Your username has been updated! Would you like to refresh the page to see the changes throughout the app?")) {
-            window.location.reload();
+        try {
+          // Get all queries from the query client
+          const queries = queryClient.getQueryCache().getAll();
+          console.log('Total queries in cache:', queries.length);
+          
+          // Find and invalidate all queries that might contain user data
+          let invalidatedCount = 0;
+          queries.forEach(query => {
+            const queryKey = query.queryKey;
+            const queryKeyString = Array.isArray(queryKey) ? queryKey.join('/') : String(queryKey);
+            
+            // Check if this query contains user-related data
+            if (
+              queryKeyString.includes('/trips') ||
+              queryKeyString.includes('/expenses') ||
+              queryKeyString.includes('/settlements') ||
+              queryKeyString.includes('/activities') ||
+              queryKeyString.includes('/flights') ||
+              queryKeyString.includes('/memberships') ||
+              queryKeyString.includes('/users') ||
+              queryKeyString.includes('/chats') ||
+              queryKeyString.includes('/messages') ||
+              queryKeyString.includes('/polls') ||
+              queryKeyString.includes('/rsvp')
+            ) {
+              console.log('Invalidating query:', queryKeyString);
+              queryClient.invalidateQueries({ queryKey });
+              invalidatedCount++;
+            }
+          });
+          
+          console.log(`Invalidated ${invalidatedCount} user-related queries`);
+          
+          // Also refresh the current user data
+          if (refreshUser) {
+            await refreshUser();
           }
-        }, 1000);
-      } else if (nameChanged) {
-        toast({
-          title: "Profile Updated",
-          description: "Your name has been updated. The changes should appear throughout the app.",
-        });
+          
+          // Force a small delay to ensure all invalidations are processed
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Show success message
+          if (usernameChanged) {
+            toast({
+              title: "Username Updated",
+              description: `Your username has been updated and ${invalidatedCount} data sources have been refreshed. The changes should now appear throughout the app.`,
+            });
+            
+            // For username changes, offer an option to reload the page if needed
+            setTimeout(() => {
+              if (confirm("Username updated! If you still don't see the changes throughout the app, would you like to reload the page for a complete refresh?")) {
+                window.location.reload();
+              }
+            }, 3000);
+          } else {
+            toast({
+              title: "Profile Updated",
+              description: `Your name has been updated and ${invalidatedCount} data sources have been refreshed. The changes should now appear throughout the app.`,
+            });
+          }
+          
+        } catch (error) {
+          console.error('Error during query invalidation:', error);
+          
+          // Fallback: show message about refreshing
+          if (usernameChanged) {
+            toast({
+              title: "Username Updated",
+              description: "Your username has been updated. If you don't see the changes throughout the app, please refresh the page.",
+            });
+          } else {
+            toast({
+              title: "Profile Updated",
+              description: "Your name has been updated. If you don't see the changes throughout the app, please refresh the page.",
+            });
+          }
+        }
       } else {
         toast({
           title: "Profile Updated",
@@ -581,6 +667,7 @@ export default function Profile() {
 function ProfileCompletionBar({ formData }: { formData: any }) {
   // Define required fields for completion
   const fields = [
+    { key: 'username', label: 'Username' },
     { key: 'firstName', label: 'First Name' },
     { key: 'lastName', label: 'Last Name' },
     { key: 'bio', label: 'Bio' },

@@ -250,6 +250,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshUser = async () => {
     try {
       console.log('Auth context: Starting user refresh...');
+      console.log('Auth context: Current user state before refresh:', user);
+      
       const token = localStorage.getItem('auth_token');
       const headers: Record<string, string> = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -262,21 +264,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (res.ok) {
         const userData = await res.json();
-        console.log('Auth context: Received user data:', userData);
+        console.log('Auth context: Raw response from /api/auth/me:', userData);
+        console.log('Auth context: Data structure analysis:', {
+          hasId: !!userData.id,
+          hasUsername: !!userData.username,
+          hasName: !!userData.name,
+          hasFirstName: !!userData.firstName,
+          hasLastName: !!userData.lastName,
+          hasEmail: !!userData.email,
+          username: userData.username,
+          name: userData.name,
+          firstName: userData.firstName,
+          lastName: userData.lastName
+        });
+        
         setUser(userData);
+        console.log('Auth context: User state after setUser:', userData);
         
         // Don't clear queries here as it can interfere with the current execution
-        // Instead, just invalidate the auth query and let the profile update handle the rest
-        console.log('Auth context: Invalidating auth query...');
-        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/auth/me`] });
+        // Instead, just invalidate key patterns to trigger refetches
+        console.log('Auth context: Invalidating user-related queries...');
+        
+        // Invalidate all queries that might contain user data
+        const patterns = [
+          `${API_BASE}/api/trips`,
+          `${API_BASE}/api/expenses`,
+          `${API_BASE}/api/settlements`,
+          `${API_BASE}/api/activities`,
+          `${API_BASE}/api/flights`,
+          `${API_BASE}/api/users`,
+          `${API_BASE}/api/chats`,
+          `${API_BASE}/api/messages`,
+          `${API_BASE}/api/polls`,
+          `${API_BASE}/api/rsvp`,
+          `${API_BASE}/api/memberships`
+        ];
+        
+        patterns.forEach(pattern => {
+          queryClient.invalidateQueries({ queryKey: [pattern] });
+        });
         
         console.log('Auth context: User refresh completed successfully');
       } else {
-        console.error('Auth context: Failed to fetch user data, status:', res.status);
+        console.error('Auth context: Failed to refresh user data:', res.status);
       }
-    } catch (e) {
-      console.error('Error refreshing user:', e);
-      throw e; // Re-throw to let the caller handle the error
+    } catch (error) {
+      console.error('Auth context: Error refreshing user:', error);
     }
   };
 
