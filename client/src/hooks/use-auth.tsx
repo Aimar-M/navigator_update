@@ -259,9 +259,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (res.ok) {
         const userData = await res.json();
         setUser(userData);
+        
+        // Also clear all cached queries to ensure fresh data
+        console.log('Auth context: Clearing all queries after user refresh...');
+        queryClient.clear();
+        
+        // Invalidate key patterns to trigger refetches
+        const patterns = [
+          `${API_BASE}/api/trips`,
+          `${API_BASE}/api/expenses`,
+          `${API_BASE}/api/settlements`,
+          `${API_BASE}/api/activities`,
+          `${API_BASE}/api/flights`,
+          `${API_BASE}/api/messages`,
+          `${API_BASE}/api/polls`,
+          `${API_BASE}/api/members`,
+          `${API_BASE}/api/invitations`,
+          `${API_BASE}/api/users`,
+          `${API_BASE}/api/auth`
+        ];
+        
+        patterns.forEach(pattern => {
+          queryClient.invalidateQueries({ 
+            queryKey: [pattern],
+            exact: false 
+          });
+        });
+        
+        console.log('Auth context: Queries cleared and invalidated');
       }
     } catch (e) {
-      // ignore
+      console.error('Error refreshing user:', e);
     }
   };
 

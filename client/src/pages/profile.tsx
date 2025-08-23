@@ -105,79 +105,155 @@ export default function Profile() {
 
     try {
       // FIX: Send the data as a plain object, not as a stringified JSON in a 'body' property
-      await apiRequest('PUT', `${API_BASE}/api/users/profile`, safeFormData);
-
+      const response = await apiRequest('PUT', `${API_BASE}/api/users/profile`, safeFormData);
+      console.log('Profile update response:', response);
+      
+      // Verify the response contains the updated data
+      if (response && typeof response === 'object') {
+        console.log('Response username:', response.username, 'Expected:', safeFormData.username);
+        console.log('Response firstName:', response.firstName, 'Expected:', safeFormData.firstName);
+        console.log('Response lastName:', response.lastName, 'Expected:', safeFormData.lastName);
+        
+        // Check if the server actually returned the updated data
+        const serverDataMatches = 
+          response.username === safeFormData.username &&
+          response.firstName === safeFormData.firstName &&
+          response.lastName === safeFormData.lastName;
+        
+        console.log('Server data matches expected:', serverDataMatches);
+        
+        if (!serverDataMatches) {
+          console.warn('Server response does not match expected data - this might indicate a server issue');
+        }
+      }
+      
       // Check if username changed to invalidate all related queries
       const profileData = profile as any;
       const usernameChanged = profileData?.username !== safeFormData.username;
       const nameChanged = (profileData?.firstName !== safeFormData.firstName) || (profileData?.lastName !== safeFormData.lastName);
       
+      console.log('Profile update completed. Changes detected:', { usernameChanged, nameChanged });
+      console.log('Old profile data:', profileData);
+      console.log('New form data:', safeFormData);
+      
       // Always refresh profile data
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/auth/me`] });
       
-      // If username or name changed, invalidate ALL queries that contain user data
+      // If username or name changed, completely refresh all user-related data
       if (usernameChanged || nameChanged) {
-        console.log('Username or name changed, invalidating all user-related queries...');
+        console.log('Username or name changed, completely refreshing all user-related data...');
+        console.log('Old username:', profileData?.username, 'New username:', safeFormData.username);
+        console.log('Old firstName:', profileData?.firstName, 'New firstName:', safeFormData.firstName);
+        console.log('Old lastName:', profileData?.lastName, 'New lastName:', safeFormData.lastName);
         
-        // Invalidate all trip-related queries
-        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
-        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/memberships`] });
-        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/memberships/pending`] });
-        
-        // Invalidate all expense-related queries
-        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/expenses`] });
-        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/*/expenses`] });
-        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/*/expenses/balances`] });
-        
-        // Invalidate all settlement-related queries
-        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/settlements`] });
-        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/settlements/pending`] });
-        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/*/settlements`] });
-        
-        // Invalidate all activity-related queries
-        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/*/activities`] });
-        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/*/activities/preview`] });
-        
-        // Invalidate all flight-related queries
-        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/*/flights`] });
-        
-        // Invalidate all chat-related queries
-        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/*/messages`] });
-        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/*/polls`] });
-        
-        // Invalidate all member-related queries
-        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/*/members`] });
-        
-        // Invalidate all invitation-related queries
-        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/*/invitations`] });
-        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/invitations/pending`] });
-        
-        // Use a more comprehensive approach - invalidate all queries that might contain user data
-        // This catches any queries we might have missed above
-        queryClient.invalidateQueries({ 
-          predicate: (query) => {
-            const queryKey = query.queryKey[0];
-            if (typeof queryKey === 'string') {
-              // Invalidate any query that contains user-related data
-              return queryKey.includes('/api/') && (
-                queryKey.includes('/trips/') ||
-                queryKey.includes('/expenses') ||
-                queryKey.includes('/settlements') ||
-                queryKey.includes('/activities') ||
-                queryKey.includes('/flights') ||
-                queryKey.includes('/messages') ||
-                queryKey.includes('/polls') ||
-                queryKey.includes('/members') ||
-                queryKey.includes('/invitations')
-              );
-            }
-            return false;
+        try {
+          // Force refresh the current user data in auth context
+          if (refreshUser) {
+            console.log('Refreshing user data...');
+            await refreshUser();
+            console.log('User data refreshed');
           }
-        });
-        
-        // Force refresh the current user data in auth context
-        if (refreshUser) {
-          await refreshUser();
+          
+          // Small delay to ensure auth context is updated
+          await new Promise(resolve => setTimeout(resolve, 200));
+          
+          // Now invalidate specific key patterns to trigger refetches
+          const patterns = [
+            `${API_BASE}/api/trips`,
+            `${API_BASE}/api/expenses`,
+            `${API_BASE}/api/settlements`,
+            `${API_BASE}/api/activities`,
+            `${API_BASE}/api/flights`,
+            `${API_BASE}/api/messages`,
+            `${API_BASE}/api/polls`,
+            `${API_BASE}/api/members`,
+            `${API_BASE}/api/invitations`,
+            `${API_BASE}/api/users`,
+            `${API_BASE}/api/auth`
+          ];
+          
+          patterns.forEach(pattern => {
+            queryClient.invalidateQueries({ 
+              queryKey: [pattern],
+              exact: false 
+            });
+          });
+          
+          console.log('Invalidated all patterns');
+          
+          // Force a more aggressive invalidation by removing and re-adding queries
+          console.log('Performing aggressive query invalidation...');
+          
+          // Remove all queries with user-related patterns
+          queryClient.removeQueries({ 
+            predicate: (query) => {
+              const queryKey = query.queryKey[0];
+              if (typeof queryKey === 'string') {
+                return queryKey.includes('/api/') && (
+                  queryKey.includes('/trips') ||
+                  queryKey.includes('/expenses') ||
+                  queryKey.includes('/settlements') ||
+                  queryKey.includes('/activities') ||
+                  queryKey.includes('/flights') ||
+                  queryKey.includes('/messages') ||
+                  queryKey.includes('/polls') ||
+                  queryKey.includes('/members') ||
+                  queryKey.includes('/invitations') ||
+                  queryKey.includes('/users') ||
+                  queryKey.includes('/auth')
+                );
+              }
+              return false;
+            }
+          });
+          
+          // Force refetch of critical queries
+          await Promise.all([
+            queryClient.refetchQueries({ queryKey: [`${API_BASE}/api/auth/me`] }),
+            queryClient.refetchQueries({ queryKey: [`${API_BASE}/api/trips`] }),
+            queryClient.refetchQueries({ queryKey: [`${API_BASE}/api/expenses`] }),
+          ]);
+          
+          console.log('Aggressive invalidation completed');
+          
+          // Manually update the profile data in the query cache to ensure immediate UI update
+          if (response && typeof response === 'object') {
+            console.log('Manually updating profile cache with new data...');
+            queryClient.setQueryData([`${API_BASE}/api/auth/me`], response);
+            console.log('Profile cache updated');
+          }
+          
+          // Show success message for name changes
+          if (nameChanged && !usernameChanged) {
+            toast({
+              title: "Profile Updated",
+              description: "Your name has been updated and should now appear throughout the app.",
+            });
+          }
+          
+          // As a last resort, if this is a username change, force a page reload
+          // This ensures all components get fresh data
+          if (usernameChanged) {
+            console.log('Username changed - forcing page reload to ensure all data is fresh...');
+            
+            // Show a toast to inform the user
+            toast({
+              title: "Username Updated",
+              description: "Your username has been updated. The page will reload to ensure all changes are reflected throughout the app.",
+            });
+            
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000); // Give user time to see the message
+          }
+          
+        } catch (error) {
+          console.error('Error during query invalidation:', error);
+          // If all else fails, force a page reload
+          console.log('Falling back to page reload...');
+          setTimeout(() => {
+            window.location.reload();
+          }, 500);
         }
       }
       
