@@ -307,22 +307,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 <div>
                   <h1 style="margin: 0;">Navigator</h1>
                   <p style="margin: 0;">The world is waiting</p>
-                </div>
+            </div>
               </div>
             </div>
         
             <div class="content">
               <h2>Hello ${userData.name},</h2>
               <p>Thank you for signing up for Navigator. We're excited to have you join our community of travelers and planners.</p>
-        
+              
               <div class="highlight">
                 To get started, please confirm your email address so we can activate your account.
               </div>
-        
+              
               <div style="text-align: center;">
                 <a href="${confirmUrl}" class="button">Confirm My Email</a>
               </div>
-        
+              
               <p>If the button above doesn't work, copy and paste this link into your browser:</p>
               <p style="word-break: break-all; color:#000000;">${confirmUrl}</p>
         
@@ -334,7 +334,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 <li>Discover and share new destinations</li>
                 <li>Access your plans from any device</li>
               </ul>
-        
+              
               <p>We look forward to helping you make your next trip unforgettable.</p>
             </div>
         
@@ -2205,6 +2205,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Message Routes
   // Migration endpoint to convert file-based images to base64 (run once to preserve existing images)
+  // Temporarily commented out until database migration is run
+  /*
   router.post('/admin/migrate-images', isAuthenticated, async (req: Request, res: Response) => {
     try {
       const user = ensureUser(req, res);
@@ -2260,6 +2262,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'Migration failed' });
     }
   });
+  */
 
   // Upload chat image (JSON data URL) and return the data URL for database storage
   router.post('/trips/:id/upload-image', isAuthenticated, requireConfirmedRSVP, async (req: Request, res: Response) => {
@@ -2384,124 +2387,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Not a member of this trip' });
       }
       
-      const { content, imageBase64, imageUrl, images } = req.body as { 
+      const { content, imageBase64, imageUrl } = req.body as { 
         content?: string; 
         imageBase64?: string; 
         imageUrl?: string;
-        images?: string[]; // Support for multiple images
       };
 
-      if ((!content || !content.trim()) && !imageBase64 && !imageUrl && (!images || images.length === 0)) {
+      if ((!content || !content.trim()) && !imageBase64 && !imageUrl) {
         return res.status(400).json({ message: 'Message content or image is required' });
       }
 
-      // Validate and process images
-      let imageDataUrls: string[] = [];
-      
-      // Helper function to validate and process a single image
-      const processImage = (imageData: string, isBase64: boolean = true): string | null => {
-        if (isBase64) {
-          if (typeof imageData !== 'string') {
-            return null;
-          }
-          const allowedMimeTypes = new Set([
-            'image/png',
-            'image/jpeg',
-            'image/jpg',
-            'image/webp',
-            'image/gif'
-          ]);
-
-          let base64Payload = imageData;
-          let mimeType = 'image/png';
-          const isDataUrl = imageData.startsWith('data:');
-          if (isDataUrl) {
-            const match = imageData.match(/^data:([^;]+);base64,(.*)$/);
-            if (!match) {
-              return null;
-            }
-            mimeType = match[1];
-            base64Payload = match[2];
-            if (!allowedMimeTypes.has(mimeType)) {
-              return null;
-            }
-          }
-
-          // Basic base64 validation
-          const base64Regex = /^[A-Za-z0-9+/=]+$/;
-          if (!base64Regex.test(base64Payload)) {
-            return null;
-          }
-
-          // Enforce decoded size limit (5 MB)
-          const padding = (base64Payload.endsWith('==') ? 2 : (base64Payload.endsWith('=') ? 1 : 0));
-          const decodedBytes = Math.floor(base64Payload.length * 3 / 4) - padding;
-          const maxBytes = 5 * 1024 * 1024;
-          if (decodedBytes > maxBytes) {
-            return null;
-          }
-
-          return isDataUrl ? imageData : `data:${mimeType};base64,${base64Payload}`;
-        } else {
-          // Handle file URLs
-          if (typeof imageData !== 'string') {
-            return null;
-          }
-          
-          if (imageData.startsWith('/uploads/')) {
-            try {
-              const fs = await import('fs/promises');
-              const pathMod = await import('path');
-              const filePath = pathMod.resolve(process.cwd(), imageData.substring(1));
-              
-              if (await fs.access(filePath).then(() => true).catch(() => false)) {
-                const buffer = await fs.readFile(filePath);
-                const mimeType = getMimeTypeFromPath(filePath);
-                return `data:${mimeType};base64,${buffer.toString('base64')}`;
-              }
-            } catch (error) {
-              console.log(`⚠️ Error converting file to base64: ${imageData}`, error);
-            }
-          }
-          
-          if (imageData.startsWith('http://') || imageData.startsWith('https://')) {
-            return imageData;
-          }
-          
-          return null;
-        }
-      };
-
-      // Process single image (backward compatibility)
+      // Validate image if provided (simplified for now)
+      let imageDataUrl: string | undefined;
       if (imageBase64) {
-        const processedImage = processImage(imageBase64, true);
-        if (processedImage) {
-          imageDataUrls.push(processedImage);
+        if (typeof imageBase64 !== 'string') {
+          return res.status(400).json({ message: 'Invalid image payload' });
         }
-      }
+        const allowedMimeTypes = new Set([
+          'image/png',
+          'image/jpeg',
+          'image/jpg',
+          'image/webp',
+          'image/gif'
+        ]);
 
-      if (imageUrl) {
-        const processedImage = processImage(imageUrl, false);
-        if (processedImage) {
-          imageDataUrls.push(processedImage);
-        }
-      }
-
-      // Process multiple images array
-      if (images && Array.isArray(images)) {
-        for (const image of images) {
-          const processedImage = processImage(image, true);
-          if (processedImage) {
-            imageDataUrls.push(processedImage);
+        let base64Payload = imageBase64;
+        let mimeType = 'image/png';
+        const isDataUrl = imageBase64.startsWith('data:');
+        if (isDataUrl) {
+          const match = imageBase64.match(/^data:([^;]+);base64,(.*)$/);
+          if (!match) {
+            return res.status(400).json({ message: 'Malformed image data URL' });
+          }
+          mimeType = match[1];
+          base64Payload = match[2];
+          if (!allowedMimeTypes.has(mimeType)) {
+            return res.status(400).json({ message: 'Unsupported image type' });
           }
         }
-      }
 
+        // Basic base64 validation
+        const base64Regex = /^[A-Za-z0-9+/=]+$/;
+        if (!base64Regex.test(base64Payload)) {
+          return res.status(400).json({ message: 'Invalid base64 image data' });
+        }
+
+        // Enforce decoded size limit (5 MB)
+        const padding = (base64Payload.endsWith('==') ? 2 : (base64Payload.endsWith('=') ? 1 : 0));
+        const decodedBytes = Math.floor(base64Payload.length * 3 / 4) - padding;
+        const maxBytes = 5 * 1024 * 1024;
+        if (decodedBytes > maxBytes) {
+          return res.status(413).json({ message: 'Image too large (max 5MB)' });
+        }
+
+        imageDataUrl = isDataUrl ? imageBase64 : `data:${mimeType};base64,${base64Payload}`;
+      } else if (imageUrl) {
+        if (typeof imageUrl !== 'string') {
+          return res.status(400).json({ message: 'Invalid image URL' });
+        }
+        
+        // Convert file URLs to base64 for persistence
+        if (imageUrl.startsWith('/uploads/')) {
+          try {
+            const fs = await import('fs/promises');
+            const pathMod = await import('path');
+            const filePath = pathMod.resolve(process.cwd(), imageUrl.substring(1));
+            
+            if (await fs.access(filePath).then(() => true).catch(() => false)) {
+              const buffer = await fs.readFile(filePath);
+              const mimeType = getMimeTypeFromPath(filePath);
+              imageDataUrl = `data:${mimeType};base64,${buffer.toString('base64')}`;
+              console.log(`✅ Converted file URL to base64: ${imageUrl}`);
+            } else {
+              console.log(`⚠️ File not found, using original URL: ${imageUrl}`);
+              imageDataUrl = imageUrl;
+            }
+          } catch (error) {
+            console.log(`⚠️ Error converting file to base64, using original URL: ${imageUrl}`, error);
+            imageDataUrl = imageUrl;
+          }
+        } else if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+          imageDataUrl = imageUrl;
+        } else {
+          return res.status(400).json({ message: 'Unsupported image URL' });
+        }
+      }
+      
       const message = await storage.createMessage({
         tripId,
         userId: authUser.id,
         content: content?.trim() ?? "",
-        image: imageDataUrls.length > 0 ? imageDataUrls : undefined,
+        image: imageDataUrl,
       });
       
       // Get user details for the response
@@ -4926,12 +4902,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user.email,
         'Reset your Navigator password',
         `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Reset Your Password</title>
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Reset Your Password</title>
             <style>
               body { font-family: Arial, sans-serif; line-height: 1.6; color: #000000; max-width: 600px; margin: 0 auto; padding: 20px; }
               .header { background: #044674; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
@@ -4940,42 +4916,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
               .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
               .notice { background: #fff8e1; border: 1px solid #ffe082; padding: 15px; border-radius: 5px; margin: 20px 0; color: #000000; }
             </style>
-        </head>
-        <body>
-          <div class="header">
+          </head>
+          <body>
+            <div class="header">
             <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
               <div>
                 <h1 style="margin: 0;">Navigator</h1>
                 <p style="margin: 0;">The world is Waiting</p>
-              </div>
+            </div>
             </div>
           </div>
       
-          <div class="content">
+            <div class="content">
             <h2>Hello ${user.name || ''},</h2>
-            <p>We received a request to reset your password for your Navigator account.</p>
-            <p>Click the button below to create a new password. This link will expire in <strong>1 hour</strong> for security reasons.</p>
-      
-            <div style="text-align: center;">
+              <p>We received a request to reset your password for your Navigator account.</p>
+              <p>Click the button below to create a new password. This link will expire in <strong>1 hour</strong> for security reasons.</p>
+              
+              <div style="text-align: center;">
               <a href="${resetUrl}" class="button" style="display:inline-block;background:#044674;color:#ffffff !important;padding:15px 30px;text-decoration:none;border-radius:25px;font-weight:bold;margin:20px 0;">Reset My Password</a>
-            </div>
-      
+              </div>
+              
             <div class="notice">
               <strong>Security Notice:</strong> If you didn't request a password reset, you can safely ignore this email. Your password will remain the same.
-            </div>
-      
+              </div>
+              
             <p>If the button above doesn't work, copy and paste this link into your browser:</p>
             <p style="word-break: break-all; color:#000000;">${resetUrl}</p>
-      
+              
             <p>Tip: Use a strong, unique password to help keep your account secure.</p>
-          </div>
+            </div>
       
-          <div class="footer">
+            <div class="footer">
             <p>Navigator – Your travel planning companion</p>
-            <p>© ${new Date().getFullYear()} Navigator. All rights reserved.</p>
-          </div>
-        </body>
-        </html>
+              <p>© ${new Date().getFullYear()} Navigator. All rights reserved.</p>
+            </div>
+          </body>
+          </html>
         `
       );
 // ... existing code ...
@@ -5135,25 +5111,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 <div>
                   <h1 style="margin: 0;">Navigator</h1>
                   <p style="margin: 0;">The world is waiting</p>
-                </div>
+            </div>
               </div>
             </div>
         
             <div class="content">
               <h2>Hello ${user.name || ''},</h2>
               <p>We've sent you a new confirmation link for your Navigator account.</p>
-        
+              
               <div class="info">
                 Please confirm your email address by clicking the button below.
               </div>
-        
+              
               <div style="text-align: center;">
                 <a href="${confirmUrl}" class="button">Confirm My Email</a>
               </div>
-        
+              
               <p>If the button above doesn't work, copy and paste this link into your browser:</p>
               <p style="word-break: break-all; color:rgb(255, 255, 255);">${confirmUrl}</p>
-        
+              
               <p>This link will expire in <strong>24 hours</strong> for security reasons.</p>
               <p>If you need help, please contact our support team.</p>
             </div>

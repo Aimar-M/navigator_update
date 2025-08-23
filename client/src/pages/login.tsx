@@ -80,7 +80,7 @@ export default function Login() {
             console.log('✅ Permanent token stored, redirecting to homepage...');
             
             // Redirect to homepage with permanent token
-            navigate('/');
+      navigate('/');
           } else {
             console.error(`❌ OAuth token validation failed (attempt ${retryCount + 1}):`, response.status);
             
@@ -200,9 +200,9 @@ export default function Login() {
           </CardHeader>
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
-                             <div className="space-y-2">
+              <div className="space-y-2">
                  <Label htmlFor="identifier">Username or Email</Label>
-                 <Input
+                <Input
                    id="identifier"
                    placeholder="Enter your username or email address"
                    value={identifier}
@@ -214,18 +214,18 @@ export default function Login() {
                  <p className="text-xs text-gray-500">
                    Username or email address 
                  </p>
-               </div>
+              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
-                  <Input
-                    id="password"
+                <Input
+                  id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
                   <button
                     type="button"
                     className="absolute inset-y-0 right-2 flex items-center text-gray-500 hover:text-gray-700"

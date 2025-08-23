@@ -232,7 +232,7 @@ export default function Profile() {
       venmoUsername: venmo ? (venmo.startsWith('@') ? venmo : '@' + venmo.replace(/^@*/, '')) : ''
     };
 
-         try {
+    try {
        // Debug: Check what's being sent
        console.log('📤 Sending profile update with name field:', safeFormData.name);
        
@@ -267,7 +267,7 @@ export default function Profile() {
          // Debug: Verify the cache was updated
          const cachedProfile = queryClient.getQueryData([`${API_BASE}/api/auth/me`]);
          console.log('💾 Updated profile cache:', cachedProfile);
-       }
+      }
     } catch (error) {
       console.error("Error updating profile:", error);
       // Error handling is done in the mutation's onError
@@ -401,7 +401,7 @@ export default function Profile() {
                         {uploadAvatarMutation.isPending ? (
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
                         ) : (
-                          <Camera className="h-4 w-4" />
+                        <Camera className="h-4 w-4" />
                         )}
                       </Button>
                     </label>
