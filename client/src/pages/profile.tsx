@@ -107,8 +107,79 @@ export default function Profile() {
       // FIX: Send the data as a plain object, not as a stringified JSON in a 'body' property
       await apiRequest('PUT', `${API_BASE}/api/users/profile`, safeFormData);
 
-      // Refresh profile data
+      // Check if username changed to invalidate all related queries
+      const profileData = profile as any;
+      const usernameChanged = profileData?.username !== safeFormData.username;
+      const nameChanged = (profileData?.firstName !== safeFormData.firstName) || (profileData?.lastName !== safeFormData.lastName);
+      
+      // Always refresh profile data
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/auth/me`] });
+      
+      // If username or name changed, invalidate ALL queries that contain user data
+      if (usernameChanged || nameChanged) {
+        console.log('Username or name changed, invalidating all user-related queries...');
+        
+        // Invalidate all trip-related queries
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/memberships`] });
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/memberships/pending`] });
+        
+        // Invalidate all expense-related queries
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/expenses`] });
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/*/expenses`] });
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/*/expenses/balances`] });
+        
+        // Invalidate all settlement-related queries
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/settlements`] });
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/settlements/pending`] });
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/*/settlements`] });
+        
+        // Invalidate all activity-related queries
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/*/activities`] });
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/*/activities/preview`] });
+        
+        // Invalidate all flight-related queries
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/*/flights`] });
+        
+        // Invalidate all chat-related queries
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/*/messages`] });
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/*/polls`] });
+        
+        // Invalidate all member-related queries
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/*/members`] });
+        
+        // Invalidate all invitation-related queries
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/*/invitations`] });
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/invitations/pending`] });
+        
+        // Use a more comprehensive approach - invalidate all queries that might contain user data
+        // This catches any queries we might have missed above
+        queryClient.invalidateQueries({ 
+          predicate: (query) => {
+            const queryKey = query.queryKey[0];
+            if (typeof queryKey === 'string') {
+              // Invalidate any query that contains user-related data
+              return queryKey.includes('/api/') && (
+                queryKey.includes('/trips/') ||
+                queryKey.includes('/expenses') ||
+                queryKey.includes('/settlements') ||
+                queryKey.includes('/activities') ||
+                queryKey.includes('/flights') ||
+                queryKey.includes('/messages') ||
+                queryKey.includes('/polls') ||
+                queryKey.includes('/members') ||
+                queryKey.includes('/invitations')
+              );
+            }
+            return false;
+          }
+        });
+        
+        // Force refresh the current user data in auth context
+        if (refreshUser) {
+          await refreshUser();
+        }
+      }
       
       setIsEditing(false);
       toast({
