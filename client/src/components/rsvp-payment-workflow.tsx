@@ -9,6 +9,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { CreditCard, DollarSign, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { invalidateAllUserQueries } from '@/lib/profile-update-utils';
 import { useToast } from "@/hooks/use-toast";
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
@@ -52,6 +53,10 @@ export default function RSVPPaymentWorkflow({
       setIsPaymentDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/members`] });
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}`] });
+      
+      // Also invalidate user queries to ensure profile changes are reflected
+      invalidateAllUserQueries(queryClient, userId);
+      
       onPaymentSubmitted?.();
     },
     onError: (error: any) => {
@@ -73,6 +78,10 @@ export default function RSVPPaymentWorkflow({
         description: "Member payment has been confirmed and RSVP updated.",
       });
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/members`] });
+      
+      // Also invalidate user queries to ensure profile changes are reflected
+      invalidateAllUserQueries(queryClient, userId);
+      
       onPaymentConfirmed?.();
     },
     onError: (error: any) => {

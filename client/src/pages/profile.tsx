@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest } from '@/lib/queryClient';
+import { invalidateAllUserQueries, optimisticallyUpdateUserData } from '@/lib/profile-update-utils';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -26,6 +27,7 @@ export default function Profile() {
   const [formData, setFormData] = useState({
     username: "",
     email: "",
+    name: "",
     firstName: "",
     lastName: "",
     bio: "",
@@ -59,12 +61,10 @@ export default function Profile() {
       // Snapshot the previous value
       const previousProfile = queryClient.getQueryData([`${API_BASE}/api/auth/me`]);
       
-      // Optimistically update the profile
-      queryClient.setQueryData([`${API_BASE}/api/auth/me`], (old: any) => ({
-        ...old,
-        ...updates,
-        name: `${updates.firstName || old?.firstName || ''} ${updates.lastName || old?.lastName || ''}`.trim()
-      }));
+      // Use the utility for optimistic updates
+      if (user?.id) {
+        optimisticallyUpdateUserData(queryClient, user.id, updates);
+      }
       
       // Also optimistically update the auth context
       if (user) {
@@ -72,7 +72,7 @@ export default function Profile() {
           username: updates.username || user.username,
           firstName: updates.firstName || user.firstName,
           lastName: updates.lastName || user.lastName,
-          name: `${updates.firstName || user.firstName || ''} ${updates.lastName || user.lastName || ''}`.trim()
+          name: updates.name || `${updates.firstName || user.firstName || ''} ${updates.lastName || user.lastName || ''}`.trim()
         });
       }
       
@@ -97,18 +97,8 @@ export default function Profile() {
         description: "Your profile has been successfully updated.",
       });
       
-      // Invalidate all queries that might contain user data
-      queryClient.invalidateQueries({ queryKey: ['/trips'] });
-      queryClient.invalidateQueries({ queryKey: ['/expenses'] });
-      queryClient.invalidateQueries({ queryKey: ['/trips'] });
-      queryClient.invalidateQueries({ queryKey: ['/expenses'] });
-      queryClient.invalidateQueries({ queryKey: ['/activities'] });
-      queryClient.invalidateQueries({ queryKey: ['/messages'] });
-      queryClient.invalidateQueries({ queryKey: ['/memberships'] });
-      queryClient.invalidateQueries({ queryKey: ['/settlements'] });
-      queryClient.invalidateQueries({ queryKey: ['/flights'] });
-      queryClient.invalidateQueries({ queryKey: ['/polls'] });
-      queryClient.invalidateQueries({ queryKey: ['/rsvp'] });
+      // Use the comprehensive utility to invalidate ALL user-related queries
+      invalidateAllUserQueries(queryClient, user?.id, user?.username);
     },
     onSettled: () => {
       // Always refetch to ensure sync
@@ -144,11 +134,10 @@ export default function Profile() {
       // Snapshot the previous value
       const previousProfile = queryClient.getQueryData([`${API_BASE}/api/auth/me`]);
       
-      // Optimistically update the avatar
-      queryClient.setQueryData([`${API_BASE}/api/auth/me`], (old: any) => ({
-        ...old,
-        avatar: imageBase64
-      }));
+      // Use the utility for optimistic avatar updates
+      if (user?.id) {
+        optimisticallyUpdateUserData(queryClient, user.id, { avatar: imageBase64 });
+      }
       
       // Also optimistically update the auth context
       if (user) {
@@ -175,16 +164,8 @@ export default function Profile() {
     onSuccess: () => {
       toast({ title: 'Profile photo updated' });
       
-      // Invalidate all queries that might contain user avatars
-      queryClient.invalidateQueries({ queryKey: ['/trips'] });
-      queryClient.invalidateQueries({ queryKey: ['/expenses'] });
-      queryClient.invalidateQueries({ queryKey: ['/activities'] });
-      queryClient.invalidateQueries({ queryKey: ['/messages'] });
-      queryClient.invalidateQueries({ queryKey: ['/memberships'] });
-      queryClient.invalidateQueries({ queryKey: ['/settlements'] });
-      queryClient.invalidateQueries({ queryKey: ['/flights'] });
-      queryClient.invalidateQueries({ queryKey: ['/polls'] });
-      queryClient.invalidateQueries({ queryKey: ['/rsvp'] });
+      // Use the comprehensive utility to invalidate ALL user-related queries
+      invalidateAllUserQueries(queryClient, user?.id, user?.username);
     },
     onSettled: () => {
       // Always refetch to ensure sync
@@ -199,6 +180,7 @@ export default function Profile() {
       setFormData({
         username: profileData.username || "",
         email: profileData.email || "",
+        name: profileData.name || "",
         firstName: profileData.firstName || "",
         lastName: profileData.lastName || "",
         bio: profileData.bio || "",
@@ -263,6 +245,7 @@ export default function Profile() {
         setFormData({
           username: profileData.username || "",
           email: profileData.email || "",
+          name: profileData.name || "",
           firstName: profileData.firstName || "",
           lastName: profileData.lastName || "",
           bio: profileData.bio || "",
@@ -300,6 +283,10 @@ export default function Profile() {
 
   const getDisplayName = () => {
     const profileData = profile as any;
+    // Priority: 1. Custom name, 2. First + Last name, 3. Username
+    if (profileData?.name && profileData.name.trim() !== '') {
+      return profileData.name.trim();
+    }
     if (profileData?.firstName || profileData?.lastName) {
       return `${profileData.firstName || ""} ${profileData.lastName || ""}`.trim();
     }
@@ -344,7 +331,7 @@ export default function Profile() {
           <Card>
             <CardContent className="p-6">
               {/* Profile Completion Bar goes here */}
-              <ProfileCompletionBar formData={profileData} />
+              <ProfileCompletionBar formData={isEditing ? formData : profileData} />
               <div className="flex items-start justify-between mb-6">
                 <div className="flex items-center space-x-4">
                   <div className="relative">
@@ -537,6 +524,22 @@ export default function Profile() {
                   </div>
 
                   <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                      Display Name
+                    </label>
+                    <Input
+                      id="name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      placeholder="Your display name (e.g., John Doe)"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      This is the name that will be displayed throughout the app. Leave empty to use your first and last name.
+                    </p>
+                  </div>
+
+                  <div>
                     <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                       Email
                     </label>
@@ -662,6 +665,7 @@ function ProfileCompletionBar({ formData }: { formData: any }) {
   // Define required fields for completion
   const fields = [
     { key: 'username', label: 'Username' },
+    { key: 'name', label: 'Display Name' },
     { key: 'firstName', label: 'First Name' },
     { key: 'lastName', label: 'Last Name' },
     { key: 'bio', label: 'Bio' },

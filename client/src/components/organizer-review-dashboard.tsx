@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import UserAvatar from "@/components/user-avatar";
 import { toast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { invalidateAllUserQueries } from '@/lib/profile-update-utils';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -76,6 +77,9 @@ export default function OrganizerReviewDashboard({
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`, tripId] });
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
       
+      // Also invalidate user queries to ensure profile changes are reflected
+      invalidateAllUserQueries(queryClient, userId);
+      
       const member = members.find(m => m.userId === userId);
       toast({
         title: "Payment confirmed",
@@ -113,6 +117,9 @@ export default function OrganizerReviewDashboard({
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`, tripId, 'members'] });
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`, tripId] });
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
+      
+      // Also invalidate user queries to ensure profile changes are reflected
+      invalidateAllUserQueries(queryClient, userId);
       
       const member = members.find(m => m.userId === userId);
       toast({

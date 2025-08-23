@@ -23,6 +23,7 @@ import { EnhancedMemberRemovalDialog } from "@/components/EnhancedMemberRemovalD
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { invalidateAllUserQueries } from '@/lib/profile-update-utils';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -180,6 +181,11 @@ export default function TripDetails() {
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/memberships/pending`] });
       
+      // Also invalidate user queries to ensure profile changes are reflected
+      if (user?.id) {
+        invalidateAllUserQueries(queryClient, user.id, user.username);
+      }
+      
       toast({
         title: "RSVP updated",
         description: "Your RSVP status has been updated"
@@ -222,6 +228,12 @@ export default function TripDetails() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/members`] });
+      
+      // Also invalidate user queries to ensure profile changes are reflected
+      if (user?.id) {
+        invalidateAllUserQueries(queryClient, user.id, user.username);
+      }
+      
       toast({
         title: "Admin access updated",
         description: "Member admin access has been successfully updated"
@@ -257,6 +269,11 @@ export default function TripDetails() {
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/activities`] });
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/expenses`] });
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}`] });
+      
+      // Also invalidate user queries to ensure profile changes are reflected
+      if (user?.id) {
+        invalidateAllUserQueries(queryClient, user.id, user.username);
+      }
       
       const memberName = memberToRemove?.user?.name || memberToRemove?.user?.username || 'Member';
       toast({
