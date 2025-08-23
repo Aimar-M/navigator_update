@@ -282,7 +282,7 @@ export const messages = pgTable("messages", {
   userId: integer("user_id").notNull().references(() => users.id),
   content: text("content").notNull(),
   timestamp: timestamp("timestamp").notNull().defaultNow(),
-  image: text("image"), // Temporarily keep as single text until migration is run
+  image: text("image").array(), // Now supports multiple images as array
 });
 
 export const messagesRelations = relations(messages, ({ one }) => ({

@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CreatePollDialog } from "@/components/polls/create-poll-dialog";
+import ImageGallery from "@/components/image-gallery";
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 // Force database storage mode to ensure images persist across redeploys
@@ -374,8 +375,11 @@ export default function Chat() {
                                 : "bg-gray-100 text-gray-800 rounded-tl-sm"
                             }`}
                           >
-                            {/* Temporarily simplified - will use ImageGallery after build works */}
-                            {item.image && (
+                            {item.image && Array.isArray(item.image) && item.image.length > 0 && (
+                              <ImageGallery images={item.image} />
+                            )}
+                            {/* Backward compatibility for single image */}
+                            {item.image && !Array.isArray(item.image) && (
                               <img src={item.image as string} alt="shared" className="max-w-full md:max-w-sm rounded mb-1" loading="lazy" />
                             )}
                             {item.content && (
@@ -557,9 +561,16 @@ export default function Chat() {
                     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
                     if (token) headers['Authorization'] = `Bearer ${token}`;
 
-                    // For now, just send the first image (we'll implement multiple images after the build works)
-                    const file = fileList[0];
-                    if (file.type.startsWith('image/') && file.size <= 5 * 1024 * 1024) {
+                    // Convert all images to base64 first
+                    const imageDataUrls: string[] = [];
+                    
+                    for (const file of fileList) {
+                      if (!file.type.startsWith('image/')) continue;
+                      if (file.size > 5 * 1024 * 1024) {
+                        console.error('Image too large, skipping:', file.name);
+                        continue;
+                      }
+
                       const dataUrl = await new Promise<string>((resolve, reject) => {
                         const reader = new FileReader();
                         reader.onload = () => resolve(reader.result as string);
@@ -567,10 +578,15 @@ export default function Chat() {
                         reader.readAsDataURL(file);
                       });
 
+                      imageDataUrls.push(dataUrl);
+                    }
+
+                    // Send all images in a single message
+                    if (imageDataUrls.length > 0) {
                       const msgRes = await fetch(`${API_BASE}/api/trips/${tripId}/messages`, {
                         method: 'POST',
                         headers,
-                        body: JSON.stringify({ imageBase64: dataUrl })
+                        body: JSON.stringify({ images: imageDataUrls })
                       });
                       if (!msgRes.ok) throw new Error('Failed to send image message');
                     }

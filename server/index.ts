@@ -27,6 +27,7 @@ app.use(cors({
     "https://navigator-update-git-main-aimar-ms-projects.vercel.app",
     "https://navigator-update-1zbs9iahz-aimar-ms-projects.vercel.app",
     "https://navigatorupdate-production.up.railway.app",
+    "https://navigatortrips.com",
     // Allow all origins in production
     ...(process.env.NODE_ENV === 'production' ? [] : [])
   ],

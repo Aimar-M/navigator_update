@@ -2205,8 +2205,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Message Routes
   // Migration endpoint to convert file-based images to base64 (run once to preserve existing images)
-  // Temporarily commented out until database migration is run
-  /*
   router.post('/admin/migrate-images', isAuthenticated, async (req: Request, res: Response) => {
     try {
       const user = ensureUser(req, res);
@@ -2262,7 +2260,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'Migration failed' });
     }
   });
-  */
 
   // Upload chat image (JSON data URL) and return the data URL for database storage
   router.post('/trips/:id/upload-image', isAuthenticated, requireConfirmedRSVP, async (req: Request, res: Response) => {
@@ -2387,89 +2384,116 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Not a member of this trip' });
       }
       
-      const { content, imageBase64, imageUrl } = req.body as { 
+      const { content, imageBase64, imageUrl, images } = req.body as { 
         content?: string; 
         imageBase64?: string; 
         imageUrl?: string;
+        images?: string[]; // Support for multiple images
       };
 
-      if ((!content || !content.trim()) && !imageBase64 && !imageUrl) {
+      if ((!content || !content.trim()) && !imageBase64 && !imageUrl && (!images || images.length === 0)) {
         return res.status(400).json({ message: 'Message content or image is required' });
       }
 
-      // Validate image if provided (simplified for now)
-      let imageDataUrl: string | undefined;
-      if (imageBase64) {
-        if (typeof imageBase64 !== 'string') {
-          return res.status(400).json({ message: 'Invalid image payload' });
-        }
-        const allowedMimeTypes = new Set([
-          'image/png',
-          'image/jpeg',
-          'image/jpg',
-          'image/webp',
-          'image/gif'
-        ]);
-
-        let base64Payload = imageBase64;
-        let mimeType = 'image/png';
-        const isDataUrl = imageBase64.startsWith('data:');
-        if (isDataUrl) {
-          const match = imageBase64.match(/^data:([^;]+);base64,(.*)$/);
-          if (!match) {
-            return res.status(400).json({ message: 'Malformed image data URL' });
+      // Validate and process images
+      let imageDataUrls: string[] = [];
+      
+      // Helper function to validate and process a single image
+      const processImage = async (imageData: string, isBase64: boolean = true): Promise<string | null> => {
+        if (isBase64) {
+          if (typeof imageData !== 'string') {
+            return null;
           }
-          mimeType = match[1];
-          base64Payload = match[2];
-          if (!allowedMimeTypes.has(mimeType)) {
-            return res.status(400).json({ message: 'Unsupported image type' });
-          }
-        }
+          const allowedMimeTypes = new Set([
+            'image/png',
+            'image/jpeg',
+            'image/jpg',
+            'image/webp',
+            'image/gif'
+          ]);
 
-        // Basic base64 validation
-        const base64Regex = /^[A-Za-z0-9+/=]+$/;
-        if (!base64Regex.test(base64Payload)) {
-          return res.status(400).json({ message: 'Invalid base64 image data' });
-        }
-
-        // Enforce decoded size limit (5 MB)
-        const padding = (base64Payload.endsWith('==') ? 2 : (base64Payload.endsWith('=') ? 1 : 0));
-        const decodedBytes = Math.floor(base64Payload.length * 3 / 4) - padding;
-        const maxBytes = 5 * 1024 * 1024;
-        if (decodedBytes > maxBytes) {
-          return res.status(413).json({ message: 'Image too large (max 5MB)' });
-        }
-
-        imageDataUrl = isDataUrl ? imageBase64 : `data:${mimeType};base64,${base64Payload}`;
-      } else if (imageUrl) {
-        if (typeof imageUrl !== 'string') {
-          return res.status(400).json({ message: 'Invalid image URL' });
-        }
-        
-        // Convert file URLs to base64 for persistence
-        if (imageUrl.startsWith('/uploads/')) {
-          try {
-            const fs = await import('fs/promises');
-            const pathMod = await import('path');
-            const filePath = pathMod.resolve(process.cwd(), imageUrl.substring(1));
-            
-            if (await fs.access(filePath).then(() => true).catch(() => false)) {
-              const buffer = await fs.readFile(filePath);
-              const mimeType = getMimeTypeFromPath(filePath);
-              imageDataUrl = `data:${mimeType};base64,${buffer.toString('base64')}`;
-              console.log(`✅ Converted file URL to base64: ${imageUrl}`);
-            } else {
-              console.log(`⚠️ File not found, using original URL: ${imageUrl}`);
-              imageDataUrl = imageUrl;
+          let base64Payload = imageData;
+          let mimeType = 'image/png';
+          const isDataUrl = imageData.startsWith('data:');
+          if (isDataUrl) {
+            const match = imageData.match(/^data:([^;]+);base64,(.*)$/);
+            if (!match) {
+              return null;
             }
-          } catch (error) {
-            console.log(`⚠️ Error converting file to base64, using original URL: ${imageUrl}`, error);
-            imageDataUrl = imageUrl;
+            mimeType = match[1];
+            base64Payload = match[2];
+            if (!allowedMimeTypes.has(mimeType)) {
+              return null;
+            }
           }
-        } else if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-          imageDataUrl = imageUrl;
+
+          // Basic base64 validation
+          const base64Regex = /^[A-Za-z0-9+/=]+$/;
+          if (!base64Regex.test(base64Payload)) {
+            return null;
+          }
+
+          // Enforce decoded size limit (5 MB)
+          const padding = (base64Payload.endsWith('==') ? 2 : (base64Payload.endsWith('=') ? 1 : 0));
+          const decodedBytes = Math.floor(base64Payload.length * 3 / 4) - padding;
+          const maxBytes = 5 * 1024 * 1024;
+          if (decodedBytes > maxBytes) {
+            return null;
+          }
+
+          return isDataUrl ? imageData : `data:${mimeType};base64,${base64Payload}`;
         } else {
-          return res.status(400).json({ message: 'Unsupported image URL' });
+          // Handle file URLs
+          if (typeof imageData !== 'string') {
+            return null;
+          }
+          
+          if (imageData.startsWith('/uploads/')) {
+            try {
+              const fs = await import('fs/promises');
+              const pathMod = await import('path');
+              const filePath = pathMod.resolve(process.cwd(), imageData.substring(1));
+              
+              if (await fs.access(filePath).then(() => true).catch(() => false)) {
+                const buffer = await fs.readFile(filePath);
+                const mimeType = getMimeTypeFromPath(filePath);
+                return `data:${mimeType};base64,${buffer.toString('base64')}`;
+              }
+            } catch (error) {
+              console.log(`⚠️ Error converting file to base64: ${imageData}`, error);
+            }
+          }
+          
+          if (imageData.startsWith('http://') || imageData.startsWith('https://')) {
+            return imageData;
+          }
+          
+          return null;
+        }
+      };
+
+      // Process single image (backward compatibility)
+      if (imageBase64) {
+        const processedImage = await processImage(imageBase64, true);
+        if (processedImage) {
+          imageDataUrls.push(processedImage);
+        }
+      }
+
+      if (imageUrl) {
+        const processedImage = await processImage(imageUrl, false);
+        if (processedImage) {
+          imageDataUrls.push(processedImage);
+        }
+      }
+
+      // Process multiple images array
+      if (images && Array.isArray(images)) {
+        for (const image of images) {
+          const processedImage = await processImage(image, true);
+          if (processedImage) {
+            imageDataUrls.push(processedImage);
+          }
         }
       }
       
@@ -2477,7 +2501,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tripId,
         userId: authUser.id,
         content: content?.trim() ?? "",
-        image: imageDataUrl,
+        image: imageDataUrls.length > 0 ? imageDataUrls : undefined,
       });
       
       // Get user details for the response
