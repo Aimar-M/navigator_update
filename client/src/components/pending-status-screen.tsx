@@ -11,7 +11,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
 import Lottie from "lottie-react";
 import EnhancedItineraryPreview from "@/components/enhanced-itinerary-preview";
-import { openVenmoLinkWithFallback } from "@/lib/utils";
+
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -202,11 +202,8 @@ export default function PendingStatusScreen({ trip, member }: PendingStatusScree
     } else {
       const option = (settlementOptions as SettlementOption[])?.find(opt => opt.method === method);
       if (option?.paymentLink) {
-        if (method === 'venmo') {
-          openVenmoLinkWithFallback(option.paymentLink);
-        } else {
-          window.open(option.paymentLink, '_blank');
-        }
+        // Always open payment links in a new tab/page
+        window.open(option.paymentLink, '_blank', 'noopener,noreferrer');
       }
       setShowPaymentConfirmation(true);
       setPendingPaymentMethod(method);

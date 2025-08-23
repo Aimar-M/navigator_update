@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { ExternalLink, CreditCard, DollarSign, CheckCircle, Clock } from "lucide-react";
-import { openVenmoLinkWithFallback } from "@/lib/utils";
+
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -152,11 +152,8 @@ export function SettlementWorkflow({ tripId, balance, isOpen, onClose }: Settlem
   };
 
   const openPaymentLink = (url: string) => {
-    if (selectedMethod === 'venmo') {
-      openVenmoLinkWithFallback(url);
-    } else {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    }
+    // Always open payment links in a new tab/page
+    window.open(url, '_blank', 'noopener,noreferrer');
     setHasRedirected(true);
     setShowConfirmation(true);
   };
