@@ -177,6 +177,7 @@ export default function Profile() {
   useEffect(() => {
     if (profile) {
       const profileData = profile as any;
+      console.log('🔄 Initializing form data from profile:', profileData);
       setFormData({
         username: profileData.username || "",
         email: profileData.email || "",
@@ -231,29 +232,42 @@ export default function Profile() {
       venmoUsername: venmo ? (venmo.startsWith('@') ? venmo : '@' + venmo.replace(/^@*/, '')) : ''
     };
 
-    try {
-      // Use the optimistic update mutation
-      await updateProfileMutation.mutateAsync(safeFormData);
-      
-      // Success! The optimistic update handled everything
-      setIsEditing(false);
-      localStorage.removeItem('profileEditDraft');
-      
-      // Reset form data to latest profile
-      if (profile) {
-        const profileData = profile as any;
-        setFormData({
-          username: profileData.username || "",
-          email: profileData.email || "",
-          name: profileData.name || "",
-          firstName: profileData.firstName || "",
-          lastName: profileData.lastName || "",
-          bio: profileData.bio || "",
-          location: profileData.location || "",
-          venmoUsername: profileData.venmoUsername || "",
-          paypalEmail: profileData.paypalEmail || "",
-        });
-      }
+         try {
+       // Debug: Check what's being sent
+       console.log('📤 Sending profile update with name field:', safeFormData.name);
+       
+       // Use the optimistic update mutation and get the response
+       const updatedProfile = await updateProfileMutation.mutateAsync(safeFormData);
+       
+       // Debug: Check what the server returned
+       console.log('📥 Server returned updated profile:', updatedProfile);
+       
+       // Success! The optimistic update handled everything
+       setIsEditing(false);
+       localStorage.removeItem('profileEditDraft');
+       
+       // Reset form data to the NEWLY UPDATED profile from server response
+       if (updatedProfile) {
+         setFormData({
+           username: updatedProfile.username || "",
+           email: updatedProfile.email || "",
+           name: updatedProfile.name || "",
+           firstName: updatedProfile.firstName || "",
+           lastName: updatedProfile.lastName || "",
+           bio: updatedProfile.bio || "",
+           location: updatedProfile.location || "",
+           venmoUsername: updatedProfile.venmoUsername || "",
+           paypalEmail: updatedProfile.paypalEmail || "",
+         });
+         
+         // CRITICAL: Update the profile query cache with the new data
+         // This ensures the profile data persists across the app
+         queryClient.setQueryData([`${API_BASE}/api/auth/me`], updatedProfile);
+         
+         // Debug: Verify the cache was updated
+         const cachedProfile = queryClient.getQueryData([`${API_BASE}/api/auth/me`]);
+         console.log('💾 Updated profile cache:', cachedProfile);
+       }
     } catch (error) {
       console.error("Error updating profile:", error);
       // Error handling is done in the mutation's onError
@@ -271,6 +285,7 @@ export default function Profile() {
       setFormData({
         username: profileData.username || "",
         email: profileData.email || "",
+        name: profileData.name || "",
         firstName: profileData.firstName || "",
         lastName: profileData.lastName || "",
         bio: profileData.bio || "",

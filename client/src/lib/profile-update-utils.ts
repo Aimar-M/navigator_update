@@ -5,7 +5,6 @@ import { QueryClient } from '@tanstack/react-query';
  * containing user information across the entire application
  */
 export function invalidateAllUserQueries(queryClient: QueryClient, userId?: number, username?: string) {
-  console.log('🔄 Invalidating all user-related queries for:', { userId, username });
 
   // 1. Basic data queries
   queryClient.invalidateQueries({ queryKey: ['/trips'] });
@@ -98,8 +97,6 @@ export function invalidateAllUserQueries(queryClient: QueryClient, userId?: numb
   specificPatterns.forEach(pattern => {
     queryClient.invalidateQueries({ queryKey: pattern });
   });
-
-  console.log('✅ All user-related queries invalidated');
 }
 
 /**
@@ -128,5 +125,4 @@ export function optimisticallyUpdateUserData(
       : old?.name)
   }));
 
-  console.log('🚀 Optimistically updated user data:', updates);
 }

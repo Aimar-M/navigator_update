@@ -33,7 +33,6 @@ export async function apiRequest<T = any>(
   url: string,
   data?: unknown | undefined,
 ): Promise<T> {
-  console.log("apiRequest called:", method, url, data);
   // Set up headers with authentication token
   const headers: Record<string, string> = data ? { "Content-Type": "application/json" } : {};
   const token = localStorage.getItem('auth_token');
@@ -42,8 +41,6 @@ export async function apiRequest<T = any>(
   }
   const baseUrl = import.meta.env.VITE_API_URL;
   const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
-
-  console.log("apiRequest: about to fetch", fullUrl, headers);
 
   const fetchOptions: RequestInit = {
     method,
@@ -57,12 +54,9 @@ export async function apiRequest<T = any>(
 
   const res = await fetch(fullUrl, fetchOptions);
 
-  console.log("apiRequest: got response", res);
-
   await throwIfResNotOk(res);
 
   const json = await res.json();
-  console.log("apiRequest: parsed json", json);
   return json;
 }
 

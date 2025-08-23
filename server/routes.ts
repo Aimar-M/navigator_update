@@ -3990,7 +3990,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = ensureUser(req, res);
       if (!user) return;
 
-      const { username, email, firstName, lastName, bio, location, venmoUsername, paypalEmail } = req.body;
+      const { username, email, name, firstName, lastName, bio, location, venmoUsername, paypalEmail } = req.body;
+      
+      // Debug: Check if name field is being received
+      if (name !== undefined) {
+        console.log('✅ Name field received:', name);
+      } else {
+        console.log('❌ Name field missing from request body');
+      }
 
       // Validate payment methods if provided
       if (venmoUsername && !venmoUsername.startsWith('@')) {
@@ -4020,6 +4027,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedUser = await storage.updateUser(user.id, {
         username: username || user.username,
         email: email || user.email,
+        name: name || user.name,
         firstName: firstName || user.firstName,
         lastName: lastName || user.lastName,
         bio: bio || user.bio,
