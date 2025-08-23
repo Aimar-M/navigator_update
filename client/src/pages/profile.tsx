@@ -19,7 +19,7 @@ const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export default function Profile() {
   const [, navigate] = useLocation();
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, updateUserData } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -200,6 +200,28 @@ export default function Profile() {
           // Also refresh the current user data
           if (refreshUser) {
             await refreshUser();
+          }
+          
+          // Immediately update the auth context with the new data
+          if (response && typeof response === 'object') {
+            console.log('Immediately updating auth context with new user data...');
+            updateUserData({
+              username: response.username,
+              firstName: response.firstName,
+              lastName: response.lastName,
+              name: response.name || `${response.firstName || ''} ${response.lastName || ''}`.trim()
+            });
+            console.log('Auth context updated with new user data');
+          } else {
+            // Fallback: update with form data if server response is incomplete
+            console.log('Server response incomplete, updating auth context with form data...');
+            updateUserData({
+              username: safeFormData.username,
+              firstName: safeFormData.firstName,
+              lastName: safeFormData.lastName,
+              name: `${safeFormData.firstName || ''} ${safeFormData.lastName || ''}`.trim()
+            });
+            console.log('Auth context updated with form data');
           }
           
           // Force a small delay to ensure all invalidations are processed

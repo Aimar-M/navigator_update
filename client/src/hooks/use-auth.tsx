@@ -13,6 +13,8 @@ interface User {
   username: string;
   email: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
   avatar?: string;
 }
 
@@ -23,6 +25,7 @@ interface AuthContextType {
   register: (userData: RegisterData) => Promise<any>; // Can return user data for email confirmation
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateUserData: (userData: Partial<User>) => void;
 }
 
 interface RegisterData {
@@ -278,8 +281,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           lastName: userData.lastName
         });
         
-        setUser(userData);
-        console.log('Auth context: User state after setUser:', userData);
+        // Ensure the user data has the correct structure for the auth context
+        const normalizedUserData = {
+          id: userData.id,
+          username: userData.username,
+          email: userData.email,
+          name: userData.name || `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          avatar: userData.avatar
+        };
+        
+        console.log('Auth context: Normalized user data:', normalizedUserData);
+        setUser(normalizedUserData);
+        console.log('Auth context: User state after setUser:', normalizedUserData);
         
         // Don't clear queries here as it can interfere with the current execution
         // Instead, just invalidate key patterns to trigger refetches
@@ -313,8 +328,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateUserData = (userData: Partial<User>) => {
+    setUser(prevUser => {
+      if (prevUser) {
+        return { ...prevUser, ...userData };
+      }
+      return null;
+    });
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout, refreshUser, updateUserData }}>
       {children}
     </AuthContext.Provider>
   );
