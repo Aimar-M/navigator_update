@@ -286,7 +286,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: userData.id,
           username: userData.username,
           email: userData.email,
-          name: userData.name || `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
+          name: `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
           firstName: userData.firstName,
           lastName: userData.lastName,
           avatar: userData.avatar

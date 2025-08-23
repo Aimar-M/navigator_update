@@ -209,7 +209,7 @@ export default function Profile() {
               username: response.username,
               firstName: response.firstName,
               lastName: response.lastName,
-              name: response.name || `${response.firstName || ''} ${response.lastName || ''}`.trim()
+              name: `${response.firstName || ''} ${response.lastName || ''}`.trim()
             });
             console.log('Auth context updated with new user data');
           } else {
