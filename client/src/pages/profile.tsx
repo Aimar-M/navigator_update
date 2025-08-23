@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Camera, Edit, Save, X, Calendar, MapPin } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { queryClient } from "@/lib/queryClient";
@@ -44,6 +44,152 @@ export default function Profile() {
   const { data: tripStats, isLoading: isStatsLoading } = useQuery({
     queryKey: [`${API_BASE}/api/users/stats`],
     enabled: !!user,
+  });
+
+  // Profile update mutation with optimistic updates
+  const updateProfileMutation = useMutation({
+    mutationFn: async (updates: any) => {
+      const response = await apiRequest('PUT', `${API_BASE}/api/users/profile`, updates);
+      return response;
+    },
+    onMutate: async (updates) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: [`${API_BASE}/api/auth/me`] });
+      
+      // Snapshot the previous value
+      const previousProfile = queryClient.getQueryData([`${API_BASE}/api/auth/me`]);
+      
+      // Optimistically update the profile
+      queryClient.setQueryData([`${API_BASE}/api/auth/me`], (old: any) => ({
+        ...old,
+        ...updates,
+        name: `${updates.firstName || old?.firstName || ''} ${updates.lastName || old?.lastName || ''}`.trim()
+      }));
+      
+      // Also optimistically update the auth context
+      if (user) {
+        updateUserData({
+          username: updates.username || user.username,
+          firstName: updates.firstName || user.firstName,
+          lastName: updates.lastName || user.lastName,
+          name: `${updates.firstName || user.firstName || ''} ${updates.lastName || user.lastName || ''}`.trim()
+        });
+      }
+      
+      return { previousProfile };
+    },
+    onError: (err, updates, context) => {
+      // Rollback on error
+      if (context?.previousProfile) {
+        queryClient.setQueryData([`${API_BASE}/api/auth/me`], context.previousProfile);
+      }
+      
+      toast({
+        title: "Error updating profile",
+        description: "There was a problem updating your profile. Please try again.",
+        variant: "destructive",
+      });
+    },
+    onSuccess: (response, updates) => {
+      // Success! The optimistic update was correct
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been successfully updated.",
+      });
+      
+      // Invalidate all queries that might contain user data
+      queryClient.invalidateQueries({ queryKey: ['/trips'] });
+      queryClient.invalidateQueries({ queryKey: ['/expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['/trips'] });
+      queryClient.invalidateQueries({ queryKey: ['/expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['/activities'] });
+      queryClient.invalidateQueries({ queryKey: ['/messages'] });
+      queryClient.invalidateQueries({ queryKey: ['/memberships'] });
+      queryClient.invalidateQueries({ queryKey: ['/settlements'] });
+      queryClient.invalidateQueries({ queryKey: ['/flights'] });
+      queryClient.invalidateQueries({ queryKey: ['/polls'] });
+      queryClient.invalidateQueries({ queryKey: ['/rsvp'] });
+    },
+    onSettled: () => {
+      // Always refetch to ensure sync
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/auth/me`] });
+    },
+  });
+
+  // Avatar upload mutation with optimistic updates
+  const uploadAvatarMutation = useMutation({
+    mutationFn: async (imageBase64: string) => {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`${API_BASE}/api/users/avatar`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        credentials: 'include',
+        body: JSON.stringify({ imageBase64 }),
+      });
+      
+      if (!response.ok) {
+        const msg = await response.text();
+        throw new Error(msg || 'Failed to upload avatar');
+      }
+      
+      return response.json();
+    },
+    onMutate: async (imageBase64) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: [`${API_BASE}/api/auth/me`] });
+      
+      // Snapshot the previous value
+      const previousProfile = queryClient.getQueryData([`${API_BASE}/api/auth/me`]);
+      
+      // Optimistically update the avatar
+      queryClient.setQueryData([`${API_BASE}/api/auth/me`], (old: any) => ({
+        ...old,
+        avatar: imageBase64
+      }));
+      
+      // Also optimistically update the auth context
+      if (user) {
+        updateUserData({
+          ...user,
+          avatar: imageBase64
+        });
+      }
+      
+      return { previousProfile };
+    },
+    onError: (err, imageBase64, context) => {
+      // Rollback on error
+      if (context?.previousProfile) {
+        queryClient.setQueryData([`${API_BASE}/api/auth/me`], context.previousProfile);
+      }
+      
+      toast({ 
+        title: 'Upload failed', 
+        description: err instanceof Error ? err.message : 'Please try again', 
+        variant: 'destructive' 
+      });
+    },
+    onSuccess: () => {
+      toast({ title: 'Profile photo updated' });
+      
+      // Invalidate all queries that might contain user avatars
+      queryClient.invalidateQueries({ queryKey: ['/trips'] });
+      queryClient.invalidateQueries({ queryKey: ['/expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['/activities'] });
+      queryClient.invalidateQueries({ queryKey: ['/messages'] });
+      queryClient.invalidateQueries({ queryKey: ['/memberships'] });
+      queryClient.invalidateQueries({ queryKey: ['/settlements'] });
+      queryClient.invalidateQueries({ queryKey: ['/flights'] });
+      queryClient.invalidateQueries({ queryKey: ['/polls'] });
+      queryClient.invalidateQueries({ queryKey: ['/rsvp'] });
+    },
+    onSettled: () => {
+      // Always refetch to ensure sync
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/auth/me`] });
+    },
   });
 
   // Initialize form data when profile loads
@@ -104,182 +250,14 @@ export default function Profile() {
     };
 
     try {
-      // FIX: Send the data as a plain object, not as a stringified JSON in a 'body' property
-      const response = await apiRequest('PUT', `${API_BASE}/api/users/profile`, safeFormData);
-      console.log('Profile update response:', response);
+      // Use the optimistic update mutation
+      await updateProfileMutation.mutateAsync(safeFormData);
       
-      // Verify the response contains the updated data
-      if (response && typeof response === 'object') {
-        console.log('Response username:', response.username, 'Expected:', safeFormData.username);
-        console.log('Response firstName:', response.firstName, 'Expected:', safeFormData.firstName);
-        console.log('Response lastName:', response.lastName, 'Expected:', safeFormData.lastName);
-        
-        // Check if the server actually returned the updated data
-        const serverDataMatches = 
-          response.username === safeFormData.username &&
-          response.firstName === safeFormData.firstName &&
-          response.lastName === safeFormData.lastName;
-        
-        console.log('Server data matches expected:', serverDataMatches);
-        
-        if (!serverDataMatches) {
-          console.warn('Server response does not match expected data - this might indicate a server issue');
-        }
-        
-        // Log the full response structure
-        console.log('Full profile update response:', response);
-        console.log('Response keys:', Object.keys(response));
-        console.log('Response values:', Object.values(response));
-      }
-      
-      // Check if username changed to invalidate all related queries
-      const profileData = profile as any;
-      const usernameChanged = profileData?.username !== safeFormData.username;
-      const nameChanged = (profileData?.firstName !== safeFormData.firstName) || (profileData?.lastName !== safeFormData.lastName);
-      
-      console.log('Profile update completed. Changes detected:', { usernameChanged, nameChanged });
-      console.log('Current auth context user:', user);
-      console.log('Current profile data:', profileData);
-      console.log('Form data being submitted:', safeFormData);
-      console.log('Data structure comparison:', {
-        authUser: {
-          id: user?.id,
-          username: user?.username,
-          name: user?.name,
-          email: user?.email
-        },
-        profileData: {
-          id: profileData?.id,
-          username: profileData?.username,
-          firstName: profileData?.firstName,
-          lastName: profileData?.lastName,
-          email: profileData?.email
-        }
-      });
-      
-      // Always refresh profile data
-      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/auth/me`] });
-      
-      // Comprehensive approach: invalidate all queries that contain user data
-      if (usernameChanged || nameChanged) {
-        console.log('Username or name changed, invalidating all user-related queries...');
-        
-        try {
-          // Get all queries from the query client
-          const queries = queryClient.getQueryCache().getAll();
-          console.log('Total queries in cache:', queries.length);
-          
-          // Find and invalidate all queries that might contain user data
-          let invalidatedCount = 0;
-          queries.forEach(query => {
-            const queryKey = query.queryKey;
-            const queryKeyString = Array.isArray(queryKey) ? queryKey.join('/') : String(queryKey);
-            
-            // Check if this query contains user-related data
-            if (
-              queryKeyString.includes('/trips') ||
-              queryKeyString.includes('/expenses') ||
-              queryKeyString.includes('/settlements') ||
-              queryKeyString.includes('/activities') ||
-              queryKeyString.includes('/flights') ||
-              queryKeyString.includes('/memberships') ||
-              queryKeyString.includes('/users') ||
-              queryKeyString.includes('/chats') ||
-              queryKeyString.includes('/messages') ||
-              queryKeyString.includes('/polls') ||
-              queryKeyString.includes('/rsvp')
-            ) {
-              console.log('Invalidating query:', queryKeyString);
-              queryClient.invalidateQueries({ queryKey });
-              invalidatedCount++;
-            }
-          });
-          
-          console.log(`Invalidated ${invalidatedCount} user-related queries`);
-          
-          // Also refresh the current user data
-          if (refreshUser) {
-            await refreshUser();
-          }
-          
-          // Immediately update the auth context with the new data
-          if (response && typeof response === 'object') {
-            console.log('Immediately updating auth context with new user data...');
-            updateUserData({
-              username: response.username,
-              firstName: response.firstName,
-              lastName: response.lastName,
-              name: `${response.firstName || ''} ${response.lastName || ''}`.trim()
-            });
-            console.log('Auth context updated with new user data');
-          } else {
-            // Fallback: update with form data if server response is incomplete
-            console.log('Server response incomplete, updating auth context with form data...');
-            updateUserData({
-              username: safeFormData.username,
-              firstName: safeFormData.firstName,
-              lastName: safeFormData.lastName,
-              name: `${safeFormData.firstName || ''} ${safeFormData.lastName || ''}`.trim()
-            });
-            console.log('Auth context updated with form data');
-          }
-          
-          // Force a small delay to ensure all invalidations are processed
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // Show success message
-          if (usernameChanged) {
-            toast({
-              title: "Username Updated",
-              description: `Your username has been updated and ${invalidatedCount} data sources have been refreshed. The changes should now appear throughout the app.`,
-            });
-            
-            // For username changes, offer an option to reload the page if needed
-            setTimeout(() => {
-              if (confirm("Username updated! If you still don't see the changes throughout the app, would you like to reload the page for a complete refresh?")) {
-                window.location.reload();
-              }
-            }, 3000);
-          } else {
-            toast({
-              title: "Profile Updated",
-              description: `Your name has been updated and ${invalidatedCount} data sources have been refreshed. The changes should now appear throughout the app.`,
-            });
-          }
-          
-        } catch (error) {
-          console.error('Error during query invalidation:', error);
-          
-          // Fallback: show message about refreshing
-          if (usernameChanged) {
-            toast({
-              title: "Username Updated",
-              description: "Your username has been updated. If you don't see the changes throughout the app, please refresh the page.",
-            });
-          } else {
-            toast({
-              title: "Profile Updated",
-              description: "Your name has been updated. If you don't see the changes throughout the app, please refresh the page.",
-            });
-          }
-        }
-      } else {
-        toast({
-          title: "Profile Updated",
-          description: "Your profile has been successfully updated.",
-        });
-      }
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      toast({
-        title: "Error updating profile",
-        description: "There was a problem updating your profile. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
+      // Success! The optimistic update handled everything
+      setIsEditing(false);
       localStorage.removeItem('profileEditDraft');
-      // Always reset formData to latest profile after save
+      
+      // Reset form data to latest profile
       if (profile) {
         const profileData = profile as any;
         setFormData({
@@ -293,6 +271,11 @@ export default function Profile() {
           paypalEmail: profileData.paypalEmail || "",
         });
       }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      // Error handling is done in the mutation's onError
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -395,25 +378,9 @@ export default function Profile() {
                               reader.readAsDataURL(f);
                             });
                             const imageBase64 = await toBase64(file);
-                            const API_BASE = import.meta.env.VITE_API_URL || '';
-                            const token = localStorage.getItem('auth_token');
-                            const res = await fetch(`${API_BASE}/api/users/avatar`, {
-                              method: 'POST',
-                              headers: {
-                                'Content-Type': 'application/json',
-                                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-                              },
-                              credentials: 'include',
-                              body: JSON.stringify({ imageBase64 }),
-                            });
-                            if (!res.ok) {
-                              const msg = await res.text();
-                              throw new Error(msg || 'Failed to upload avatar');
-                            }
-                            toast({ title: 'Profile photo updated' });
-                            // Refresh profile and header avatar
-                            await refreshUser();
-                            await queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/auth/me`] });
+                            // Use the optimistic update mutation
+                            await uploadAvatarMutation.mutateAsync(imageBase64);
+                            // The mutation handles all the updates automatically
                           } catch (err) {
                             console.error(err);
                             toast({ title: 'Upload failed', description: err instanceof Error ? err.message : 'Please try again', variant: 'destructive' });
@@ -427,8 +394,13 @@ export default function Profile() {
                         size="sm"
                         variant="secondary"
                         className="h-8 w-8 rounded-full p-0 pointer-events-none"
+                        disabled={uploadAvatarMutation.isPending}
                       >
-                        <Camera className="h-4 w-4" />
+                        {uploadAvatarMutation.isPending ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                        ) : (
+                          <Camera className="h-4 w-4" />
+                        )}
                       </Button>
                     </label>
                   </div>
@@ -660,8 +632,8 @@ export default function Profile() {
                     <Button type="button" variant="outline" onClick={cancelEdit}>
                       Cancel
                     </Button>
-                    <Button type="submit" disabled={isSubmitting}>
-                      {isSubmitting ? (
+                    <Button type="submit" disabled={updateProfileMutation.isPending}>
+                      {updateProfileMutation.isPending ? (
                         <>
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                           Saving...
