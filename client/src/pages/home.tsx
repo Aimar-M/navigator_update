@@ -403,7 +403,7 @@ export default function Home() {
       
       <main className="flex-1 flex flex-col md:flex-row overflow-hidden pb-16 md:pb-0">
         {/* Navigation Panel */}
-        <div className="w-full md:w-80 md:min-w-[320px] bg-white border-r border-gray-200 md:h-full overflow-y-auto">
+        <div className="w-full md:w-80 md:min-w-[320px] bg-white border-r border-gray-200 md:h-full flex flex-col">
 
 
           {/* Search Bar */}
@@ -421,8 +421,8 @@ export default function Home() {
           </div>
 
           {/* Trip List */}
-          <div className="pt-2">
-            <div className="px-4 pb-2 flex justify-between items-center">
+          <div className="pt-2 flex-1 flex flex-col min-h-0">
+            <div className="px-4 pb-2 flex justify-between items-center flex-shrink-0">
               <h2 className="text-sm font-medium text-gray-500 uppercase">Your Trips</h2>
               <Button
                 variant="ghost"
@@ -436,20 +436,21 @@ export default function Home() {
 
             {/* We've moved the invitations section to the Tabs, so this section is no longer needed */}
             
-            {isLoading ? (
-              <div className="space-y-3 p-4">
-                {[1, 2, 3].map((i) => (
-                  <Card key={i}>
-                    <CardContent className="p-4">
-                      <Skeleton className="h-5 w-3/4 mb-2" />
-                      <Skeleton className="h-4 w-1/2 mb-2" />
-                      <Skeleton className="h-3 w-1/3" />
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : trips && trips.length > 0 ? (
-              <div className="space-y-1">
+            <div className="flex-1 overflow-y-auto min-h-0">
+              {isLoading ? (
+                <div className="space-y-3 p-4">
+                  {[1, 2, 3].map((i) => (
+                    <Card key={i}>
+                      <CardContent className="p-4">
+                        <Skeleton className="h-5 w-3/4 mb-2" />
+                        <Skeleton className="h-4 w-1/2 mb-2" />
+                        <Skeleton className="h-3 w-1/3" />
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : trips && trips.length > 0 ? (
+                <div className="space-y-1">
                 <Tabs
                   defaultValue="upcoming"
                   value={activeTab}
@@ -624,6 +625,7 @@ export default function Home() {
                 </Button>
               </div>
             )}
+            </div>
           </div>
         </div>
         
