@@ -482,6 +482,22 @@ export default function Profile() {
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                      Display Name
+                    </label>
+                    <Input
+                      id="name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      placeholder="Your display name (e.g., John Doe)"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      This is the name that will be displayed throughout the app.
+                    </p>
+                  </div>
+
+                  <div>
                     <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
                       Username
                     </label>
@@ -495,22 +511,6 @@ export default function Profile() {
                     />
                     <p className="text-xs text-gray-500 mt-1">
                       Note: Username changes will require a page refresh to appear throughout the app.
-                    </p>
-                  </div>
-
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                      Display Name
-                    </label>
-                    <Input
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      placeholder="Your display name (e.g., John Doe)"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      This is the name that will be displayed throughout the app.
                     </p>
                   </div>
 
