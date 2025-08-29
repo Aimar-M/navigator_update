@@ -639,8 +639,8 @@ export default function Profile() {
 function ProfileCompletionBar({ formData }: { formData: any }) {
   // Define required fields for completion
   const fields = [
-    { key: 'username', label: 'Username' },
     { key: 'name', label: 'Display Name' },
+    { key: 'username', label: 'Username' },
     { key: 'bio', label: 'Bio' },
     { key: 'location', label: 'Location' },
     { key: 'venmoUsername', label: 'Venmo Username' },
