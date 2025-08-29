@@ -401,9 +401,9 @@ export default function Home() {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
       
-      <main className="flex-1 flex flex-col md:flex-row overflow-hidden pb-16 md:pb-0">
+      <main className="flex-1 flex flex-col md:flex-row overflow-hidden pb-16 md:pb-0 h-0">
         {/* Navigation Panel */}
-        <div className="w-full md:w-80 md:min-w-[320px] bg-white border-r border-gray-200 md:h-full flex flex-col">
+        <div className="w-full md:w-80 md:min-w-[320px] bg-white border-r border-gray-200 h-full flex flex-col">
 
 
           {/* Search Bar */}
@@ -450,7 +450,7 @@ export default function Home() {
                   ))}
                 </div>
               ) : trips && trips.length > 0 ? (
-                <div className="space-y-1">
+                <div className="space-y-1 h-full">
                 <Tabs
                   defaultValue="upcoming"
                   value={activeTab}
@@ -458,14 +458,14 @@ export default function Home() {
                     setActiveTab(val);
                     setShowArchived(val === "archived");
                   }}
-                  className="w-full"
+                  className="w-full h-full flex flex-col"
                 >
-                  <TabsList className="w-full justify-start px-4 pb-2">
+                  <TabsList className="w-full justify-start px-4 pb-2 flex-shrink-0">
                     <TabsTrigger value="upcoming" className="text-xs">Upcoming</TabsTrigger>
                     <TabsTrigger value="archived" className="text-xs">Archived</TabsTrigger>
                   </TabsList>
                   
-                  <TabsContent value="upcoming">
+                  <TabsContent value="upcoming" className="flex-1 overflow-y-auto min-h-0">
                     {/* Only non-archived, upcoming trips */}
                     {upcomingTrips.filter((trip: any) => !trip.isArchived).length > 0 ? (
                       upcomingTrips.filter((trip: any) => !trip.isArchived).map((trip: any) => (
@@ -493,7 +493,7 @@ export default function Home() {
                     )}
                   </TabsContent>
                   
-                  <TabsContent value="new">
+                  <TabsContent value="new" className="flex-1 overflow-y-auto min-h-0">
                     {pendingInvitations && pendingInvitations.length > 0 ? (
                       <div className="space-y-2 px-1">
                         {pendingInvitations.map((invitation: any) => (
@@ -587,7 +587,7 @@ export default function Home() {
                     )}
                   </TabsContent>
                   
-                  <TabsContent value="archived">
+                  <TabsContent value="archived" className="flex-1 overflow-y-auto min-h-0">
                     {/* Only archived trips */}
                     {filteredTrips.filter((trip: any) => trip.isArchived).length > 0 ? (
                       filteredTrips.filter((trip: any) => trip.isArchived).map((trip: any) => (
