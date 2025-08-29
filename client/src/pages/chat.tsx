@@ -502,16 +502,6 @@ export default function Chat() {
                   </PopoverTrigger>
                   <PopoverContent side="top" align="start" className="w-48 p-2">
                     <div className="space-y-1">
-                      <Button 
-                        type="button" 
-                        variant="ghost" 
-                        size="sm" 
-                        className="w-full justify-start"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isSubmitting || isUploadingImage}
-                      >
-                        📷 Send Photo
-                      </Button>
                       <CreatePollDialog tripId={tripId} variant="compact">
                         <Button variant="ghost" size="sm" className="w-full justify-start">
                           <PieChart className="h-4 w-4 mr-2" />
