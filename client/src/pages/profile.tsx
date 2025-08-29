@@ -28,8 +28,6 @@ export default function Profile() {
     username: "",
     email: "",
     name: "",
-    firstName: "",
-    lastName: "",
     bio: "",
     location: "",
     venmoUsername: "",
@@ -70,9 +68,7 @@ export default function Profile() {
       if (user) {
         updateUserData({
           username: updates.username || user.username,
-          firstName: updates.firstName || user.firstName,
-          lastName: updates.lastName || user.lastName,
-          name: updates.name || `${updates.firstName || user.firstName || ''} ${updates.lastName || user.lastName || ''}`.trim()
+          name: updates.name || user.name
         });
       }
       
@@ -182,8 +178,6 @@ export default function Profile() {
         username: profileData.username || "",
         email: profileData.email || "",
         name: profileData.name || "",
-        firstName: profileData.firstName || "",
-        lastName: profileData.lastName || "",
         bio: profileData.bio || "",
         location: profileData.location || "",
         venmoUsername: profileData.venmoUsername || "",
@@ -252,8 +246,6 @@ export default function Profile() {
            username: updatedProfile.username || "",
            email: updatedProfile.email || "",
            name: updatedProfile.name || "",
-           firstName: updatedProfile.firstName || "",
-           lastName: updatedProfile.lastName || "",
            bio: updatedProfile.bio || "",
            location: updatedProfile.location || "",
            venmoUsername: updatedProfile.venmoUsername || "",
@@ -286,8 +278,6 @@ export default function Profile() {
         username: profileData.username || "",
         email: profileData.email || "",
         name: profileData.name || "",
-        firstName: profileData.firstName || "",
-        lastName: profileData.lastName || "",
         bio: profileData.bio || "",
         location: profileData.location || "",
         venmoUsername: profileData.venmoUsername || "",
@@ -298,12 +288,9 @@ export default function Profile() {
 
   const getDisplayName = () => {
     const profileData = profile as any;
-    // Priority: 1. Custom name, 2. First + Last name, 3. Username
+    // Priority: 1. Custom name, 2. Username
     if (profileData?.name && profileData.name.trim() !== '') {
       return profileData.name.trim();
-    }
-    if (profileData?.firstName || profileData?.lastName) {
-      return `${profileData.firstName || ""} ${profileData.lastName || ""}`.trim();
     }
     return profileData?.username || "User";
   };
@@ -494,33 +481,6 @@ export default function Profile() {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
-                        First Name
-                      </label>
-                      <Input
-                        id="firstName"
-                        name="firstName"
-                        value={formData.firstName}
-                        onChange={handleInputChange}
-                        placeholder="Your first name"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
-                        Last Name
-                      </label>
-                      <Input
-                        id="lastName"
-                        name="lastName"
-                        value={formData.lastName}
-                        onChange={handleInputChange}
-                        placeholder="Your last name"
-                      />
-                    </div>
-                  </div>
-
                   <div>
                     <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
                       Username
@@ -550,7 +510,7 @@ export default function Profile() {
                       placeholder="Your display name (e.g., John Doe)"
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      This is the name that will be displayed throughout the app. Leave empty to use your first and last name.
+                      This is the name that will be displayed throughout the app.
                     </p>
                   </div>
 
@@ -681,8 +641,6 @@ function ProfileCompletionBar({ formData }: { formData: any }) {
   const fields = [
     { key: 'username', label: 'Username' },
     { key: 'name', label: 'Display Name' },
-    { key: 'firstName', label: 'First Name' },
-    { key: 'lastName', label: 'Last Name' },
     { key: 'bio', label: 'Bio' },
     { key: 'location', label: 'Location' },
     { key: 'venmoUsername', label: 'Venmo Username' },

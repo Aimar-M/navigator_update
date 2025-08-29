@@ -110,19 +110,13 @@ export function optimisticallyUpdateUserData(
   // Update the main user profile query
   queryClient.setQueryData([`${import.meta.env.VITE_API_URL || ''}/api/auth/me`], (old: any) => ({
     ...old,
-    ...updates,
-    name: updates.name || (updates.firstName && updates.lastName 
-      ? `${updates.firstName} ${updates.lastName}`.trim()
-      : old?.name)
+    ...updates
   }));
 
   // Update any user-specific queries
   queryClient.setQueryData([`${import.meta.env.VITE_API_URL || ''}/api/users/${userId}`], (old: any) => ({
     ...old,
-    ...updates,
-    name: updates.name || (updates.firstName && updates.lastName 
-      ? `${updates.firstName} ${updates.lastName}`.trim()
-      : old?.name)
+    ...updates
   }));
 
 }

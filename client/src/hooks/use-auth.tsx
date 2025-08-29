@@ -13,8 +13,6 @@ interface User {
   username: string;
   email: string;
   name: string;
-  firstName?: string;
-  lastName?: string;
   avatar?: string;
 }
 
@@ -272,13 +270,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           hasId: !!userData.id,
           hasUsername: !!userData.username,
           hasName: !!userData.name,
-          hasFirstName: !!userData.firstName,
-          hasLastName: !!userData.lastName,
           hasEmail: !!userData.email,
           username: userData.username,
-          name: userData.name,
-          firstName: userData.firstName,
-          lastName: userData.lastName
+          name: userData.name
         });
         
         // Ensure the user data has the correct structure for the auth context
@@ -286,9 +280,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: userData.id,
           username: userData.username,
           email: userData.email,
-          name: `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
-          firstName: userData.firstName,
-          lastName: userData.lastName,
+          name: userData.name,
           avatar: userData.avatar
         };
         

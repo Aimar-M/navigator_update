@@ -4097,7 +4097,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = ensureUser(req, res);
       if (!user) return;
 
-      const { username, email, name, firstName, lastName, bio, location, venmoUsername, paypalEmail } = req.body;
+      const { username, email, name, bio, location, venmoUsername, paypalEmail } = req.body;
       
       // Debug: Check if name field is being received
       if (name !== undefined) {
@@ -4135,8 +4135,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         username: username || user.username,
         email: email || user.email,
         name: name || user.name,
-        firstName: firstName || user.firstName,
-        lastName: lastName || user.lastName,
         bio: bio || user.bio,
         location: location || user.location,
         venmoUsername: venmoUsername || null,
@@ -4239,8 +4237,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: user.id,
         username: user.username,
         name: user.name,
-        firstName: user.firstName,
-        lastName: user.lastName,
         bio: user.bio,
         location: user.location,
         avatar: user.avatar,

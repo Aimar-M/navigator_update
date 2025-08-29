@@ -12,8 +12,6 @@ interface UserProfileData {
   username: string;
   email: string;
   name: string;
-  firstName?: string;
-  lastName?: string;
   bio?: string;
   location?: string;
   avatar?: string;
@@ -78,9 +76,6 @@ export default function UserProfile() {
   }
 
   const getDisplayName = () => {
-    if (profile.firstName || profile.lastName) {
-      return `${profile.firstName || ""} ${profile.lastName || ""}`.trim();
-    }
     return profile.name || profile.username;
   };
 
