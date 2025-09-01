@@ -279,6 +279,18 @@ export default function TripsCalendar() {
   // Fetch all trips
   const { data: trips, isLoading: tripsLoading, error: tripsError, refetch: refetchTrips } = useQuery({
     queryKey: [`${API_BASE}/api/trips`],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const token = localStorage.getItem('auth_token');
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await apiRequest('GET', `${API_BASE}/api/trips`);
+      return response;
+    },
     enabled: !!user,
   });
 
