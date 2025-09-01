@@ -278,40 +278,24 @@ export default function TripsCalendar() {
 
   // Fetch all trips
   const { data: trips, isLoading: tripsLoading, error: tripsError, refetch: refetchTrips } = useQuery({
-    queryKey: [`${API_BASE}/api/trips`, user?.id, token],
-    queryFn: async () => {
-      if (!user || !token) return [];
-      
-      try {
-        const response = await apiRequest('GET', `${API_BASE}/api/trips`);
-        return response;
-      } catch (error) {
-        throw error;
-      }
-    },
-    enabled: !!user && !!token,
-    staleTime: 0,
+    queryKey: [`${API_BASE}/api/trips`],
+    enabled: !!user,
   });
 
   // Fetch all activities across trips
   const { data: activities, isLoading: activitiesLoading, error: activitiesError, refetch: refetchActivities } = useQuery({
-    queryKey: [`${API_BASE}/api/activities`, user?.id, token],
+    queryKey: [`${API_BASE}/api/activities`],
     queryFn: async () => {
-      if (!user || !token) return [];
+      if (!user) return [];
       
-      try {
-        const response = await apiRequest('GET', `${API_BASE}/api/activities`);
-        return response.map((activity: any) => ({
-          ...activity,
-          type: 'activity',
-          date: activity.date
-        }));
-      } catch (error) {
-        throw error;
-      }
+      const response = await apiRequest('GET', `${API_BASE}/api/activities`);
+      return response.map((activity: any) => ({
+        ...activity,
+        type: 'activity',
+        date: activity.date
+      }));
     },
-    enabled: !!user && !!token,
-    staleTime: 0,
+    enabled: !!user,
   });
 
 
