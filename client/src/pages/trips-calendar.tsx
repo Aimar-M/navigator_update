@@ -288,8 +288,16 @@ export default function TripsCalendar() {
         headers['Authorization'] = `Bearer ${token}`;
       }
       
-      const response = await apiRequest('GET', `${API_BASE}/api/trips`);
-      return response;
+      const response = await fetch(`${API_BASE}/api/trips`, {
+        headers,
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch trips');
+      }
+      
+      return response.json();
     },
     enabled: !!user,
   });
@@ -300,8 +308,23 @@ export default function TripsCalendar() {
     queryFn: async () => {
       if (!user) return [];
       
-      const response = await apiRequest('GET', `${API_BASE}/api/activities`);
-      return response.map((activity: any) => ({
+      const token = localStorage.getItem('auth_token');
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch(`${API_BASE}/api/activities`, {
+        headers,
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch activities');
+      }
+      
+      const data = await response.json();
+      return data.map((activity: any) => ({
         ...activity,
         type: 'activity',
         date: activity.date
