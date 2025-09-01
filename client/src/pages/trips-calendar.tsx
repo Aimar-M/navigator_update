@@ -274,52 +274,72 @@ export default function TripsCalendar() {
   const [view, setView] = useState("month"); // month, year
   const [yearView, setYearView] = useState(currentDate.getFullYear());
 
-  // Fetch all trips
-  const { data: trips, isLoading: tripsLoading } = useQuery({
+  // Fetch all trips with better mobile support
+  const { data: trips, isLoading: tripsLoading, error: tripsError, refetch: refetchTrips } = useQuery({
     queryKey: [`${API_BASE}/api/trips`],
     queryFn: async () => {
       if (!user) return [];
       
-      const token = localStorage.getItem('auth_token');
-      const headers: Record<string, string> = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
+      console.log("Calendar: Fetching trips for user:", user.id);
       
-      const response = await apiRequest('GET', `${API_BASE}/api/trips`);
-      if (!response.ok) throw new Error("Failed to fetch trips");
-      return response.json();
+      try {
+        const response = await apiRequest('GET', `${API_BASE}/api/trips`);
+        console.log("Calendar: Trips response received, count:", response?.length || 0);
+        return response;
+      } catch (error) {
+        console.error("Calendar: Error fetching trips:", error);
+        throw error;
+      }
     },
     enabled: !!user,
+    retry: 3,
+    retryDelay: 1000,
+    staleTime: 5 * 60 * 1000, // 5 minutes for better mobile experience
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 
-  // Fetch all activities across trips
-  const { data: activities, isLoading: activitiesLoading } = useQuery({
+  // Fetch all activities across trips with better mobile support
+  const { data: activities, isLoading: activitiesLoading, error: activitiesError, refetch: refetchActivities } = useQuery({
     queryKey: [`${API_BASE}/api/activities`],
     queryFn: async () => {
       if (!user) return [];
       
-      const token = localStorage.getItem('auth_token');
-      const headers: Record<string, string> = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
+      console.log("Calendar: Fetching activities for user:", user.id);
       
-      // Use our new dedicated endpoint to get all activities
-      const response = await apiRequest('GET', `${API_BASE}/api/activities`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch activities');
+      try {
+        const response = await apiRequest('GET', `${API_BASE}/api/activities`);
+        console.log("Calendar: Activities response received, count:", response?.length || 0);
+        return response.map((activity: any) => ({
+          ...activity,
+          type: 'activity',
+          date: activity.date
+        }));
+      } catch (error) {
+        console.error("Calendar: Error fetching activities:", error);
+        throw error;
       }
-      
-      const allActivities = await response.json();
-      return allActivities.map((activity: any) => ({
-        ...activity,
-        type: 'activity',
-        date: activity.date
-      }));
     },
     enabled: !!user,
+    retry: 3,
+    retryDelay: 1000,
+    staleTime: 5 * 60 * 1000, // 5 minutes for better mobile experience
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
+
+  // Debug logging for calendar events
+  useEffect(() => {
+    console.log("Calendar: Current state:", {
+      user: !!user,
+      trips: trips?.length || 0,
+      activities: activities?.length || 0,
+      tripsLoading,
+      activitiesLoading,
+      tripsError,
+      activitiesError
+    });
+  }, [user, trips, activities, tripsLoading, activitiesLoading, tripsError, activitiesError]);
 
   // Prepare calendar events by combining trips and activities
   const calendarEvents = [...(trips || []).map((trip: any) => ({
@@ -342,6 +362,13 @@ export default function TripsCalendar() {
     });
   });
 
+  // Handle retry for failed requests
+  const handleRetry = () => {
+    console.log("Calendar: Retrying failed requests...");
+    refetchTrips();
+    refetchActivities();
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -356,6 +383,7 @@ export default function TripsCalendar() {
   }
 
   const isLoading = tripsLoading || activitiesLoading;
+  const hasError = tripsError || activitiesError;
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -412,18 +440,49 @@ export default function TripsCalendar() {
           </div>
         </div>
 
+        {/* Error State */}
+        {hasError && (
+          <div className="p-4 bg-red-50 border border-red-200">
+            <div className="flex items-center gap-2 text-red-800">
+              <AlertCircle className="h-5 w-5" />
+              <div className="flex-1">
+                <p className="font-medium">Failed to load calendar data</p>
+                <p className="text-sm">Please check your connection and try again.</p>
+              </div>
+              <Button variant="outline" size="sm" onClick={handleRetry}>
+                Retry
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Calendar View */}
         <div className="flex-1 overflow-y-auto p-4">
           {isLoading ? (
             <div className="space-y-4">
-              <Skeleton className="h-64 w-full" />
+              <div className="text-center py-8">
+                <Skeleton className="h-64 w-full mb-4" />
+                <p className="text-gray-600">Loading your trips and activities...</p>
+              </div>
             </div>
           ) : view === "month" ? (
-            <Calendar 
-              date={currentDate} 
-              events={calendarEvents} 
-              onDateChange={setCurrentDate} 
-            />
+            <>
+              {/* Debug info for mobile users */}
+              {process.env.NODE_ENV === 'development' && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+                  <p><strong>Debug Info:</strong></p>
+                  <p>Trips loaded: {trips?.length || 0}</p>
+                  <p>Activities loaded: {activities?.length || 0}</p>
+                  <p>Total events: {calendarEvents.length}</p>
+                </div>
+              )}
+              
+              <Calendar 
+                date={currentDate} 
+                events={calendarEvents} 
+                onDateChange={setCurrentDate} 
+              />
+            </>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {Array(12).fill(0).map((_, monthIndex) => {
