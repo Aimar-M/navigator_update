@@ -274,11 +274,13 @@ export default function TripsCalendar() {
   const [view, setView] = useState("month"); // month, year
   const [yearView, setYearView] = useState(currentDate.getFullYear());
 
+  const token = user ? localStorage.getItem('auth_token') : null;
+
   // Fetch all trips
   const { data: trips, isLoading: tripsLoading, error: tripsError, refetch: refetchTrips } = useQuery({
-    queryKey: [`${API_BASE}/api/trips`, user?.id, localStorage.getItem('auth_token')],
+    queryKey: [`${API_BASE}/api/trips`, user?.id, token],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user || !token) return [];
       
       try {
         const response = await apiRequest('GET', `${API_BASE}/api/trips`);
@@ -287,15 +289,15 @@ export default function TripsCalendar() {
         throw error;
       }
     },
-    enabled: !!user && !authLoading,
+    enabled: !!user && !!token,
     staleTime: 0,
   });
 
   // Fetch all activities across trips
   const { data: activities, isLoading: activitiesLoading, error: activitiesError, refetch: refetchActivities } = useQuery({
-    queryKey: [`${API_BASE}/api/activities`, user?.id, localStorage.getItem('auth_token')],
+    queryKey: [`${API_BASE}/api/activities`, user?.id, token],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user || !token) return [];
       
       try {
         const response = await apiRequest('GET', `${API_BASE}/api/activities`);
@@ -308,7 +310,7 @@ export default function TripsCalendar() {
         throw error;
       }
     },
-    enabled: !!user && !authLoading,
+    enabled: !!user && !!token,
     staleTime: 0,
   });
 
