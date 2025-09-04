@@ -10,7 +10,7 @@ try {
     secure: false, // true for port 465, false for 587
     auth: {
       user: 'info@navigatortrips.com',
-      pass: 'fdyn bfuv ykxh tqry',
+      pass: 'fnrs azhv ntcp pkeu',
     },
     // Add connection timeout and greeting timeout for better reliability
     connectionTimeout: 60000, // 60 seconds
