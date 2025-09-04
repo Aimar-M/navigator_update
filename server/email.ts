@@ -1,35 +1,17 @@
 import nodemailer from 'nodemailer';
 
-// Validate required environment variables
-const requiredEnvVars = ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASS'];
-const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
-
-if (missingVars.length > 0) {
-  console.warn('⚠️ Missing SMTP environment variables:', missingVars);
-  console.warn('Email functionality will be disabled. Please set the following environment variables:');
-  missingVars.forEach(varName => console.warn(`  - ${varName}`));
-  
-  // In production, don't crash the server, just warn
-  if (process.env.NODE_ENV === 'production') {
-    console.warn('🚨 Server will start but email functionality will be disabled');
-  } else {
-    console.error('❌ Development mode: Server cannot start without SMTP configuration');
-    process.exit(1);
-  }
-}
-
-// Create transporter only if all required variables are present
+// Create transporter with hardcoded credentials for info@navigatortrips.com
 let transporter: nodemailer.Transporter | null = null;
 
-if (missingVars.length === 0) {
+try {
   transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: false, // true for port 465, false for 587
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false, // true for port 465, false for 587
+    auth: {
+      user: 'info@navigatortrips.com',
+      pass: 'fdyn bfuv ykxh tqry',
+    },
     // Add connection timeout and greeting timeout for better reliability
     connectionTimeout: 60000, // 60 seconds
     greetingTimeout: 30000, // 30 seconds
@@ -42,11 +24,13 @@ if (missingVars.length === 0) {
       console.warn('⚠️ Email functionality will be disabled');
       transporter = null;
     } else {
-      console.log('✅ SMTP server is ready to send emails');
+      console.log('✅ SMTP server is ready to send emails from info@navigatortrips.com');
     }
   });
-} else {
-  console.warn('⚠️ No SMTP transporter created due to missing configuration');
+} catch (error) {
+  console.error('❌ Error creating SMTP transporter:', error);
+  console.warn('⚠️ Email functionality will be disabled');
+  transporter = null;
 }
 
 export async function sendEmail(to: string, subject: string, html: string) {
@@ -118,4 +102,4 @@ export async function sendEmail(to: string, subject: string, html: string) {
     
     throw error;
   }
-} 
+}

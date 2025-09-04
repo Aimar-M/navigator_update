@@ -154,10 +154,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       uptime: process.uptime(),
         environment: process.env.NODE_ENV || 'development',
         email: {
-          configured: !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS),
-          host: process.env.SMTP_HOST || 'not set',
-          user: process.env.SMTP_USER || 'not set',
-          port: process.env.SMTP_PORT || '587'
+          configured: true,
+          host: 'smtp.gmail.com',
+          user: 'info@navigatortrips.com',
+          port: '587'
         },
         database: 'connected', // We'll assume it's connected if we reach this point
         version: '1.0.0'
