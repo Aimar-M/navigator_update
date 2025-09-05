@@ -7,10 +7,21 @@ let transporter: nodemailer.Transporter | null = null;
 
 try {
   transporter = nodemailer.createTransport({
-    service: 'gmail',  // This automatically configures host, port, etc.
+    host: 'smtp.gmail.com',
+    port: 587,
     auth: {
+      
       user: 'info@navigatortrips.com',
       pass: 'tpmp jfoc emgr nbgm',
+    },
+    // Standard timeouts for reliability
+    connectionTimeout: 15000,  // 15 seconds
+    greetingTimeout: 10000,    // 10 seconds
+    socketTimeout: 15000,     // 15 seconds
+    // Standard TLS configuration
+    tls: {
+      rejectUnauthorized: true, // Validate certificates
+      ciphers: 'TLSv1.2'       // Modern TLS version
     }
   } as any);
 
@@ -80,10 +91,19 @@ export async function sendEmail(to: string, subject: string, html: string) {
     try {
       console.log('🔄 Recreating SMTP connection...');
       transporter = nodemailer.createTransport({
-        service: 'gmail',  // This automatically configures host, port, etc.
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
         auth: {
           user: 'info@navigatortrips.com',
           pass: 'tpmp jfoc emgr nbgm',
+        },
+        connectionTimeout: 15000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000,
+        tls: {
+          rejectUnauthorized: true,
+          ciphers: 'TLSv1.2'
         }
       } as any);
       
