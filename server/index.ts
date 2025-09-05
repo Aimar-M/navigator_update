@@ -7,6 +7,7 @@ import passport from "./google-auth";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
+import { preWarmEmailConnection } from "./email";
 import path from "path";
 
 config();
@@ -202,9 +203,16 @@ app.use((req, res, next) => {
       port,
       host: "0.0.0.0",
       reusePort: true,
-    }, () => {
+    }, async () => {
       log(`🚀 Server running on port ${port}`);
       log(`📡 API available at http://0.0.0.0:${port}/api`);
+      
+      // Pre-warm email connection for faster first email
+      setTimeout(() => {
+        preWarmEmailConnection().catch(() => {
+          // Ignore errors, will retry on first email send
+        });
+      }, 2000); // Wait 2 seconds after server start
     });
   } catch (error) {
     console.error('Error starting server:', error);

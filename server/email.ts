@@ -23,9 +23,12 @@ try {
     },
     // Pool configuration for better performance
     pool: true,
-    maxConnections: 5,
-    maxMessages: 100,
-    rateLimit: 14 // 14 emails per second (Gmail limit)
+    maxConnections: 2, // Reduced for faster connection
+    maxMessages: 50,   // Reduced for faster processing
+    rateLimit: 14,    // 14 emails per second (Gmail limit)
+    // Keep connections alive for faster subsequent emails
+    keepAlive: true,
+    keepAliveMsecs: 30000
   });
 
   // Verify transporter configuration with retry
@@ -54,8 +57,10 @@ try {
     }
   };
 
-  // Try to verify connection
-  verifyConnection();
+  // Try to verify connection asynchronously (don't block startup)
+  verifyConnection().catch(error => {
+    console.log('⚠️ Initial SMTP verification failed, will retry on first email send');
+  });
 } catch (error) {
   console.error('❌ Error creating SMTP transporter:', error);
   console.warn('⚠️ Email functionality will be disabled');
@@ -69,6 +74,18 @@ export function getEmailStatus() {
     ready: transporter !== null,
     timestamp: new Date().toISOString()
   };
+}
+
+// Pre-warm the email connection for faster first email
+export async function preWarmEmailConnection() {
+  if (transporter) {
+    try {
+      await transporter.verify();
+      console.log('✅ Email connection pre-warmed successfully');
+    } catch (error) {
+      console.log('⚠️ Email pre-warming failed, will retry on first send');
+    }
+  }
 }
 
 export async function sendEmail(to: string, subject: string, html: string) {
@@ -92,13 +109,14 @@ export async function sendEmail(to: string, subject: string, html: string) {
           ciphers: 'SSLv3'
         },
         pool: true,
-        maxConnections: 5,
-        maxMessages: 100,
-        rateLimit: 14
+        maxConnections: 2,
+        maxMessages: 50,
+        rateLimit: 14,
+        keepAlive: true,
+        keepAliveMsecs: 30000
       });
       
-      // Try to verify the new connection
-      await transporter.verify();
+      // Skip verification to speed up email sending
       console.log('✅ SMTP connection recreated successfully');
     } catch (error: any) {
       console.error('❌ Failed to recreate SMTP connection:', error.message);
