@@ -7,22 +7,15 @@ let transporter: nodemailer.Transporter | null = null;
 
 try {
   transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
+    service: 'gmail',  // This automatically configures everything for Gmail
     auth: {
-      
       user: 'info@navigatortrips.com',
       pass: 'tpmp jfoc emgr nbgm',
     },
-    // Standard timeouts for reliability
-    connectionTimeout: 15000,  // 15 seconds
-    greetingTimeout: 10000,    // 10 seconds
-    socketTimeout: 15000,     // 15 seconds
-    // Standard TLS configuration
-    tls: {
-      rejectUnauthorized: true, // Validate certificates
-      ciphers: 'TLSv1.2'       // Modern TLS version
-    }
+    // Optimized timeouts for faster email sending
+    connectionTimeout: 10000,  // 10 seconds
+    greetingTimeout: 5000,     // 5 seconds  
+    socketTimeout: 10000,      // 10 seconds
   } as any);
 
   // Verify transporter configuration with retry
@@ -51,10 +44,8 @@ try {
     }
   };
 
-  // Try to verify connection asynchronously (don't block startup)
-  verifyConnection().catch(error => {
-    console.log('⚠️ Initial SMTP verification failed, will retry on first email send');
-  });
+  // Skip initial verification to speed up startup - will verify on first email send
+  console.log('📧 SMTP transporter created, will verify on first email send');
 } catch (error) {
   console.error('❌ Error creating SMTP transporter:', error);
   console.warn('⚠️ Email functionality will be disabled');
@@ -74,10 +65,14 @@ export function getEmailStatus() {
 export async function preWarmEmailConnection() {
   if (transporter) {
     try {
-      await transporter.verify();
+      // Quick verification with shorter timeout
+      await Promise.race([
+        transporter.verify(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+      ]);
       console.log('✅ Email connection pre-warmed successfully');
     } catch (error) {
-      console.log('⚠️ Email pre-warming failed, will retry on first send');
+      console.log('⚠️ Email pre-warming skipped for faster startup');
     }
   }
 }
@@ -91,20 +86,14 @@ export async function sendEmail(to: string, subject: string, html: string) {
     try {
       console.log('🔄 Recreating SMTP connection...');
       transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false,
+        service: 'gmail',  // This automatically configures everything for Gmail
         auth: {
           user: 'info@navigatortrips.com',
           pass: 'tpmp jfoc emgr nbgm',
         },
-        connectionTimeout: 15000,
-        greetingTimeout: 10000,
-        socketTimeout: 15000,
-        tls: {
-          rejectUnauthorized: true,
-          ciphers: 'TLSv1.2'
-        }
+        connectionTimeout: 10000,
+        greetingTimeout: 5000,
+        socketTimeout: 10000,
       } as any);
       
       console.log('✅ SMTP connection recreated successfully');
@@ -131,7 +120,7 @@ export async function sendEmail(to: string, subject: string, html: string) {
       throw new Error(`Invalid email format: ${to}`);
     }
 
-    console.log(`📧 Attempting to send email to: ${to}`);
+    console.log(`📧 Sending email to: ${to}`);
     console.log(`📧 Subject: ${subject}`);
 
     const mailOptions = {
@@ -143,7 +132,11 @@ export async function sendEmail(to: string, subject: string, html: string) {
       text: html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim(),
     };
 
-    const info = await transporter!.sendMail(mailOptions);
+    // Send email with timeout to prevent hanging
+    const info = await Promise.race([
+      transporter!.sendMail(mailOptions),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Email send timeout')), 15000))
+    ]);
     console.log('✅ Email sent successfully:', info.messageId);
     console.log(`📧 Email sent to: ${to}`);
     console.log(`📧 Response: ${info.response}`);
