@@ -12,10 +12,10 @@ try {
       user: 'info@navigatortrips.com',
       pass: 'tpmp jfoc emgr nbgm',
     },
-    // Railway-optimized timeouts (shorter for faster failure detection)
-    connectionTimeout: 10000, // 10 seconds
-    greetingTimeout: 5000,    // 5 seconds
-    socketTimeout: 10000,    // 10 seconds
+    // Railway-optimized timeouts (very short for quick failure)
+    connectionTimeout: 5000,  // 5 seconds
+    greetingTimeout: 3000,    // 3 seconds
+    socketTimeout: 5000,     // 5 seconds
     // Production TLS configuration
     tls: {
       rejectUnauthorized: false,
@@ -110,9 +110,9 @@ export async function sendEmail(to: string, subject: string, html: string) {
             user: 'info@navigatortrips.com',
             pass: 'tpmp jfoc emgr nbgm',
           },
-          connectionTimeout: 10000,
-          greetingTimeout: 5000,
-          socketTimeout: 10000,
+          connectionTimeout: 5000,
+          greetingTimeout: 3000,
+          socketTimeout: 5000,
           tls: {
             rejectUnauthorized: false,
             ciphers: 'SSLv3'

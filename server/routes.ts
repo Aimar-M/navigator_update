@@ -4982,15 +4982,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (emailError) {
         console.error('❌ Failed to send password reset email:', emailError);
         
-        // Check if it's due to missing SMTP configuration
-        if (emailError instanceof Error && emailError.message.includes('SMTP not configured')) {
-          console.warn('⚠️ Email functionality is disabled - providing manual reset instructions');
+        // Check if it's due to SMTP connection issues
+        if (emailError instanceof Error && (
+          emailError.message.includes('SMTP not configured') ||
+          emailError.message.includes('Connection timeout') ||
+          emailError.message.includes('ETIMEDOUT')
+        )) {
+          console.warn('⚠️ Email functionality is disabled due to SMTP connection issues');
           
-          // Return the reset URL directly to the user (for development/testing)
+          // Return the reset URL directly to the user
           res.json({ 
-            message: 'Password reset link generated successfully. Email functionality is currently disabled.',
+            message: 'Password reset link generated successfully. Please copy the link below as email delivery is currently unavailable.',
             resetUrl: resetUrl,
-            note: 'Please copy this link manually as email delivery is not available.'
+            note: 'This link will expire in 1 hour. Please copy and paste it into your browser.'
           });
         } else {
           // Re-throw other email errors
