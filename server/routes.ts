@@ -4928,8 +4928,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         console.log(`🔐 About to send email to: ${user.email}`);
         console.log(`🔐 Email function:`, typeof sendEmail);
-        // ... existing code ...
-        await sendEmail(
+       // ... existing code ...
+       await sendEmail(
         user.email,
         'Reset your Navigator password',
         `
@@ -4989,7 +4989,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
 
         console.log(`✅ Password reset email sent successfully to: ${user.email}`);
-        res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
+      res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
       } catch (emailError) {
         console.error('❌ Failed to send password reset email:', emailError);
         

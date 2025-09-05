@@ -11,11 +11,8 @@ try {
     auth: {
       user: 'info@navigatortrips.com',
       pass: 'tpmp jfoc emgr nbgm',
-    },
-    // Optimized timeouts for faster email sending
-    connectionTimeout: 10000,  // 10 seconds
-    greetingTimeout: 5000,     // 5 seconds  
-    socketTimeout: 10000,      // 10 seconds
+    }
+    // No timeouts - let Gmail handle the connection timing
   } as any);
 
   // Verify transporter configuration with retry
@@ -65,11 +62,7 @@ export function getEmailStatus() {
 export async function preWarmEmailConnection() {
   if (transporter) {
     try {
-      // Quick verification with shorter timeout
-      await Promise.race([
-        transporter.verify(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
-      ]);
+      await transporter.verify();
       console.log('✅ Email connection pre-warmed successfully');
     } catch (error) {
       console.log('⚠️ Email pre-warming skipped for faster startup');
@@ -90,10 +83,8 @@ export async function sendEmail(to: string, subject: string, html: string) {
         auth: {
           user: 'info@navigatortrips.com',
           pass: 'tpmp jfoc emgr nbgm',
-        },
-        connectionTimeout: 10000,
-        greetingTimeout: 5000,
-        socketTimeout: 10000,
+        }
+        // No timeouts - let Gmail handle the connection timing
       } as any);
       
       console.log('✅ SMTP connection recreated successfully');
@@ -132,11 +123,8 @@ export async function sendEmail(to: string, subject: string, html: string) {
       text: html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim(),
     };
 
-    // Send email with timeout to prevent hanging
-    const info = await Promise.race([
-      transporter!.sendMail(mailOptions),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Email send timeout')), 15000))
-    ]);
+    // Send email - let Gmail handle timing
+    const info = await transporter!.sendMail(mailOptions);
     console.log('✅ Email sent successfully:', info.messageId);
     console.log(`📧 Email sent to: ${to}`);
     console.log(`📧 Response: ${info.response}`);
