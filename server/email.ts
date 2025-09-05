@@ -29,7 +29,7 @@ try {
     // Keep connections alive for faster subsequent emails
     keepAlive: true,
     keepAliveMsecs: 30000
-  });
+  } as any);
 
   // Verify transporter configuration with retry
   const verifyConnection = async () => {
@@ -123,7 +123,7 @@ export async function sendEmail(to: string, subject: string, html: string) {
           rateLimit: 14,
           keepAlive: true,
           keepAliveMsecs: 30000
-        });
+        } as any);
         
         // Skip verification to speed up email sending
         console.log(`✅ SMTP connection recreated successfully with ${config.name}`);
@@ -178,7 +178,7 @@ export async function sendEmail(to: string, subject: string, html: string) {
       text: html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim(),
     };
 
-    const info = await transporter.sendMail(mailOptions);
+    const info = await transporter!.sendMail(mailOptions);
     console.log('✅ Email sent successfully:', info.messageId);
     console.log(`📧 Email sent to: ${to}`);
     console.log(`📧 Response: ${info.response}`);
