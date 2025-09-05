@@ -1,5 +1,7 @@
 import nodemailer from 'nodemailer';
 
+console.log('📧 Email module loaded successfully');
+
 // Create transporter with hardcoded credentials for info@navigatortrips.com
 let transporter: nodemailer.Transporter | null = null;
 

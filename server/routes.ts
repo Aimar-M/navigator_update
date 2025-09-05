@@ -173,6 +173,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('🏓 Ping requested');
     res.status(200).json({ message: 'pong', timestamp: new Date().toISOString() });
   });
+
+  // Test endpoint to verify server is working
+  router.get('/test', (req: Request, res: Response) => {
+    console.log('🧪 Test endpoint hit');
+    res.status(200).json({ 
+      message: 'Server is working', 
+      timestamp: new Date().toISOString(),
+      emailModule: 'loaded'
+    });
+  });
   
   // Username validation endpoint
   router.get('/users/validate', async (req: Request, res: Response) => {
@@ -4853,6 +4863,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Forgot password endpoint
+  console.log('🔐 Registering forgot-password endpoint');
   router.post('/auth/forgot-password', async (req: Request, res: Response) => {
     try {
       console.log('🔐 Forgot password request received:', { 
