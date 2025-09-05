@@ -8,29 +8,21 @@ let transporter: nodemailer.Transporter | null = null;
 try {
   transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // true for port 465, false for 587
+    port: 587,
+    secure: false, // false for port 587 (STARTTLS)
     auth: {
       user: 'info@navigatortrips.com',
       pass: 'tpmp jfoc emgr nbgm',
     },
-    // Railway-optimized timeouts (very short for quick failure)
-    connectionTimeout: 5000,  // 5 seconds
-    greetingTimeout: 3000,    // 3 seconds
-    socketTimeout: 5000,     // 5 seconds
-    // Production TLS configuration
+    // Standard timeouts for reliability
+    connectionTimeout: 15000,  // 15 seconds
+    greetingTimeout: 10000,    // 10 seconds
+    socketTimeout: 15000,     // 15 seconds
+    // Standard TLS configuration
     tls: {
-      rejectUnauthorized: false,
-      ciphers: 'SSLv3'
-    },
-    // Pool configuration for better performance
-    pool: true,
-    maxConnections: 2, // Reduced for faster connection
-    maxMessages: 50,   // Reduced for faster processing
-    rateLimit: 14,    // 14 emails per second (Gmail limit)
-    // Keep connections alive for faster subsequent emails
-    keepAlive: true,
-    keepAliveMsecs: 30000
+      rejectUnauthorized: true, // Validate certificates
+      ciphers: 'TLSv1.2'       // Modern TLS version
+    }
   } as any);
 
   // Verify transporter configuration with retry
@@ -95,64 +87,35 @@ export async function sendEmail(to: string, subject: string, html: string) {
   if (!transporter) {
     console.log('🔄 Attempting to recreate SMTP connection...');
     
-    // Try port 465 first (SSL), then fallback to port 587 (STARTTLS)
-    const configs = [
-      { port: 465, secure: true, name: 'SSL (465)' },
-      { port: 587, secure: false, name: 'STARTTLS (587)' }
-    ];
-    
-    for (const config of configs) {
-      try {
-        console.log(`🔄 Trying ${config.name}...`);
-        transporter = nodemailer.createTransport({
-          host: 'smtp.gmail.com',
-          port: config.port,
-          secure: config.secure,
-          auth: {
-            user: 'info@navigatortrips.com',
-            pass: 'tpmp jfoc emgr nbgm',
-          },
-          connectionTimeout: 5000,
-          greetingTimeout: 3000,
-          socketTimeout: 5000,
-          tls: {
-            rejectUnauthorized: false,
-            ciphers: 'SSLv3'
-          },
-          pool: true,
-          maxConnections: 2,
-          maxMessages: 50,
-          rateLimit: 14,
-          keepAlive: true,
-          keepAliveMsecs: 30000
-        } as any);
-        
-        // Skip verification to speed up email sending
-        console.log(`✅ SMTP connection recreated successfully with ${config.name}`);
-        break; // Success, exit the loop
-      } catch (error: any) {
-        console.error(`❌ Failed to recreate SMTP connection with ${config.name}:`, error.message);
-        if (config === configs[configs.length - 1]) {
-          // Last config failed, give up
-          console.warn('⚠️ Email functionality is disabled due to missing SMTP configuration');
-          console.warn(`📧 Would have sent email to: ${to}`);
-          console.warn(`📧 Subject: ${subject}`);
-          
-          // In production, you might want to log this to a service or queue
-          if (process.env.NODE_ENV === 'production') {
-            // Log to console for now, but you could integrate with a logging service
-            console.log('📧 Email request logged (SMTP disabled):', {
-              to,
-              subject,
-              timestamp: new Date().toISOString(),
-              html: html.substring(0, 100) + '...' // Log first 100 chars
-            });
-          }
-          
-          // Return a mock success response to prevent crashes
-          return { messageId: 'mock-email-disabled', response: 'SMTP not configured' };
+    // Try to recreate with the same simple config
+    try {
+      console.log('🔄 Recreating SMTP connection...');
+      transporter = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
+        auth: {
+          user: 'info@navigatortrips.com',
+          pass: 'tpmp jfoc emgr nbgm',
+        },
+        connectionTimeout: 15000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000,
+        tls: {
+          rejectUnauthorized: true,
+          ciphers: 'TLSv1.2'
         }
-      }
+      } as any);
+      
+      console.log('✅ SMTP connection recreated successfully');
+    } catch (error: any) {
+      console.error('❌ Failed to recreate SMTP connection:', error.message);
+      console.warn('⚠️ Email functionality is disabled due to missing SMTP configuration');
+      console.warn(`📧 Would have sent email to: ${to}`);
+      console.warn(`📧 Subject: ${subject}`);
+      
+      // Return a mock success response to prevent crashes
+      return { messageId: 'mock-email-disabled', response: 'SMTP not configured' };
     }
   }
 
