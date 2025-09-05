@@ -4857,7 +4857,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('🔐 Forgot password request received:', { 
         body: req.body, 
-        timestamp: new Date().toISOString() 
+        timestamp: new Date().toISOString(),
+        headers: req.headers
       });
 
       const { email } = req.body;
@@ -4876,7 +4877,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log(`🔐 Looking up user with email: ${email}`);
+      console.log(`🔐 Storage object:`, typeof storage, storage ? 'exists' : 'null');
       const user = await storage.getUserByEmail(email);
+      console.log(`🔐 User lookup result:`, user ? `Found user ${user.username}` : 'No user found');
       
       if (!user) {
         console.log(`🔐 No user found with email: ${email} (returning generic message for security)`);
@@ -4912,8 +4915,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`🔐 Reset URL: ${resetUrl}`);
       
       try {
-       // ... existing code ...
-       await sendEmail(
+        console.log(`🔐 About to send email to: ${user.email}`);
+        console.log(`🔐 Email function:`, typeof sendEmail);
+        // ... existing code ...
+        await sendEmail(
         user.email,
         'Reset your Navigator password',
         `
