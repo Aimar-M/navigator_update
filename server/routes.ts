@@ -16,7 +16,7 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from 'bcrypt';
-import { sendEmail } from './email';
+import { sendEmail, getEmailStatus } from './email';
 import passport from './google-auth';
 
 // Generate a random token for password reset
@@ -153,12 +153,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
         environment: process.env.NODE_ENV || 'development',
-        email: {
-          configured: true,
-          host: 'smtp.gmail.com',
-          user: 'info@navigatortrips.com',
-          port: '587'
-        },
+        email: getEmailStatus(),
         database: 'connected', // We'll assume it's connected if we reach this point
         version: '1.0.0'
       };
@@ -5213,91 +5208,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Debug route to check environment variables
-  router.get('/auth/debug', (req: Request, res: Response) => {
-    // Get all environment variables that start with FRONTEND or CLIENT
-    const allEnvVars = Object.keys(process.env);
-    const frontendVars = allEnvVars.filter(key => 
-      key.toUpperCase().includes('FRONTEND') || 
-      key.toUpperCase().includes('CLIENT')
-    );
-    
-    res.json({
-      message: 'Environment variables check',
-      googleClientId: process.env.GOOGLE_CLIENT_ID ? '✅ Set' : '❌ Missing',
-      googleClientSecret: process.env.GOOGLE_CLIENT_SECRET ? '✅ Set' : '❌ Missing',
-      backendUrl: process.env.BACKEND_URL || '❌ Missing',
-      frontendUrl: process.env.FRONTEND_URL || '❌ Missing',
-      clientUrl: process.env.CLIENT_URL || '❌ Missing',
-      callbackUrl: `${process.env.BACKEND_URL}/api/auth/google/callback`,
-      nodeEnv: process.env.NODE_ENV || '❌ Missing',
-      // Debug: Show all environment variables that might be related
-      allFrontendClientVars: frontendVars,
-      // Debug: Show raw values
-      rawFrontendUrl: process.env.FRONTEND_URL,
-      rawClientUrl: process.env.CLIENT_URL,
-      // Debug: Show all env vars (be careful with sensitive data)
-      allEnvVars: allEnvVars.filter(key => !key.toLowerCase().includes('secret') && !key.toLowerCase().includes('password'))
-    });
-  });
-
-  // Test redirect route
-  router.get('/auth/test-redirect', (req: Request, res: Response) => {
-    const frontendUrl = 'https://navigator-update.vercel.app';
-    console.log('🧪 Test redirect to:', `${frontendUrl}/`);
-    console.log('🧪 Test redirect URL:', `${frontendUrl}/`);
-    
-    // Try different redirect approaches
-    try {
-      console.log('🔄 Attempting test redirect...');
-      res.redirect(302, `${frontendUrl}/`);
-    } catch (redirectError) {
-      console.error('❌ Test redirect failed:', redirectError);
-      res.json({
-        message: 'Test redirect failed',
-        redirectUrl: `${frontendUrl}/`,
-        error: redirectError.message
-      });
-    }
-  });
-
-  // Debug route to check users in database
-  router.get('/auth/check-users', async (req: Request, res: Response) => {
-    try {
-      const allUsers = await storage.getAllUsers();
-      const googleUsers = allUsers.filter(user => user.googleId);
-      
-      res.json({
-        message: 'Database users check',
-        totalUsers: allUsers.length,
-        googleOAuthUsers: googleUsers.length,
-        googleUsers: googleUsers.map(user => ({
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          googleId: user.googleId,
-          isOAuthUser: user.isOAuthUser
-        }))
-      });
-    } catch (error) {
-      console.error('❌ Error checking users:', error);
-      res.status(500).json({ error: 'Failed to check users' });
-    }
-  });
-
-  // Debug route to check session state
-  router.get('/auth/check-session', (req: Request, res: Response) => {
-    res.json({
-      message: 'Session check',
-      sessionID: req.sessionID,
-      sessionData: req.session,
-      userId: req.session?.userId,
-      user: req.user,
-      cookies: req.headers.cookie,
-      origin: req.headers.origin,
-      referer: req.headers.referer
-    });
-  });
 
   // Google OAuth Routes
   router.get('/auth/google', (req: Request, res: Response, next: NextFunction) => {
@@ -5325,25 +5235,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   }, passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-  // Test OAuth flow endpoint
-  router.get('/auth/oauth/test', (req: Request, res: Response) => {
-    res.json({
-      message: 'OAuth test endpoint working',
-      timestamp: new Date().toISOString(),
-      environment: {
-        nodeEnv: process.env.NODE_ENV,
-        backendUrl: process.env.BACKEND_URL,
-        frontendUrl: process.env.FRONTEND_URL,
-        googleClientId: process.env.GOOGLE_CLIENT_ID ? '✅ Set' : '❌ Missing',
-        googleClientSecret: process.env.GOOGLE_CLIENT_SECRET ? '✅ Set' : '❌ Missing'
-      },
-      oauthEndpoints: {
-        googleAuth: `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/auth/google`,
-        googleCallback: `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/auth/google/callback`,
-        oauthValidate: `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/auth/oauth/validate`
-      }
-    });
-  });
 
   // OAuth token validation endpoint
   router.post('/auth/oauth/validate', async (req: Request, res: Response) => {
