@@ -11,13 +11,14 @@ console.log('🔍 Google OAuth Configuration:', {
   callbackURL: `${process.env.BACKEND_URL}/api/auth/google/callback`
 });
 
-// Configure Google OAuth Strategy
-passport.use(new GoogleStrategy({
-  clientID: process.env.GOOGLE_CLIENT_ID!,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-  callbackURL: `${process.env.BACKEND_URL}/api/auth/google/callback`,
-  scope: ['profile', 'email']
-}, async (accessToken, refreshToken, profile, done) => {
+// Configure Google OAuth Strategy (only if environment variables are set)
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.BACKEND_URL) {
+  passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: `${process.env.BACKEND_URL}/api/auth/google/callback`,
+    scope: ['profile', 'email']
+  }, async (accessToken, refreshToken, profile, done) => {
   try {
     console.log('🔐 Google OAuth callback received:', {
       googleId: profile.id,
@@ -118,6 +119,9 @@ passport.use(new GoogleStrategy({
     return done(error as Error);
   }
 }));
+} else {
+  console.log('⚠️ Google OAuth not configured - OAuth functionality disabled');
+}
 
 // Serialize user for session
 passport.serializeUser((user: any, done) => {

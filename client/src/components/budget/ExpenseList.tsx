@@ -244,8 +244,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ tripId, currentUserId, isOrga
               tripId={tripId}
               onSuccess={() => {
                 setIsAddExpenseOpen(false);
-                queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`, tripId, 'expenses'] });
-                queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`, tripId, 'expenses/summary'] });
+                // queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`, tripId, 'expenses'] });
+                // queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`, tripId, 'expenses/summary'] });
               }}
             />
           </DialogContent>
@@ -362,8 +362,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ tripId, currentUserId, isOrga
               onSuccess={() => {
                 setIsEditExpenseOpen(false);
                 setSelectedExpense(null);
-                queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips``, tripId, 'expenses'] });
-                queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`,tripId, 'expenses/summary'] });
+                // queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`, tripId, 'expenses'] });
+                // queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`, tripId, 'expenses/summary'] });
                 toast({
                   title: "Expense updated successfully",
                   description: "The expense has been updated with your changes.",

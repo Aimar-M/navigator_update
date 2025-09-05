@@ -130,7 +130,8 @@ const FlightSearch: React.FC<FlightSearchProps> = ({ tripId }) => {
     setIsSearching(true);
     try {
       const formattedDate = format(data.date, "yyyy-MM-dd");
-      const response = await apiRequest(`${API_BASE}/api/flights/search?departureCity=${encodeURIComponent(data.departureCity)}&arrivalCity=${encodeURIComponent(data.arrivalCity)}&date=${formattedDate}`, {
+      // const response = await apiRequest(`${API_BASE}/api/flights/search?departureCity=${encodeURIComponent(data.departureCity)}&arrivalCity=${encodeURIComponent(data.arrivalCity)}&date=${formattedDate}`, {
+      const response = await apiRequest(`/api/flights/search?departureCity=${encodeURIComponent(data.departureCity)}&arrivalCity=${encodeURIComponent(data.arrivalCity)}&date=${formattedDate}`, {
         method: "GET",
       });
       setSearchResults(response || []);
