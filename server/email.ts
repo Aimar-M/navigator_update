@@ -41,8 +41,10 @@ try {
     }
   };
 
-  // Skip initial verification to speed up startup - will verify on first email send
-  console.log('📧 SMTP transporter created, will verify on first email send');
+  
+
+  // Skip initial verification completely for fastest startup
+  console.log('📧 SMTP transporter created, ready for email sending');
 } catch (error) {
   console.error('❌ Error creating SMTP transporter:', error);
   console.warn('⚠️ Email functionality will be disabled');
