@@ -6,24 +6,25 @@ console.log('📧 Email module loaded successfully');
 let transporter: nodemailer.Transporter | null = null;
 
 try {
-  // Try SSL port 465 first (often faster)
+  // Simple, reliable Gmail configuration
   transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // SSL for port 465
+    service: 'gmail',
     auth: {
       user: 'info@navigatortrips.com',
       pass: 'tpmp jfoc emgr nbgm',
     },
-    // Ultra-fast timeout settings
-    connectionTimeout: 5000,  // 5 seconds - fail very fast
-    greetingTimeout: 3000,    // 3 seconds - fail very fast
-    socketTimeout: 10000,     // 10 seconds - fail fast
-    // Minimal pooling for speed
-    pool: false, // Disable pooling for faster single sends
-    // Fast retry settings
-    retryDelay: 500, // 0.5 second between retries
-    retryAttempts: 1, // Only 1 retry for maximum speed
+    // Reasonable timeouts for reliable connection
+    connectionTimeout: 30000,  // 30 seconds - give Gmail time to connect
+    greetingTimeout: 15000,    // 15 seconds - reasonable greeting time
+    socketTimeout: 60000,      // 60 seconds - allow time for email sending
+    // Connection pooling for better performance
+    pool: true,
+    maxConnections: 5,
+    maxMessages: 100,
+    rateLimit: 10, // max 10 messages per second
+    // Retry settings
+    retryDelay: 2000, // 2 seconds between retries
+    retryAttempts: 3, // 3 attempts for reliability
     // Additional reliability settings
     tls: {
       rejectUnauthorized: false
@@ -87,31 +88,33 @@ export async function preWarmEmailConnection() {
   }
 }
 
+
 export async function sendEmail(to: string, subject: string, html: string) {
   // Check if email functionality is available, try to recreate if needed
   if (!transporter) {
     console.log('🔄 Attempting to recreate SMTP connection...');
     
-    // Try to recreate with the same improved config
+    // Try to recreate with the same reliable config
     try {
       console.log('🔄 Recreating SMTP connection...');
       transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 465,
-        secure: true, // SSL for port 465
+        service: 'gmail',
         auth: {
           user: 'info@navigatortrips.com',
           pass: 'tpmp jfoc emgr nbgm',
         },
-        // Ultra-fast timeout settings
-        connectionTimeout: 5000,  // 5 seconds - fail very fast
-        greetingTimeout: 3000,    // 3 seconds - fail very fast
-        socketTimeout: 10000,     // 10 seconds - fail fast
-        // Minimal pooling for speed
-        pool: false, // Disable pooling for faster single sends
-        // Fast retry settings
-        retryDelay: 500, // 0.5 second between retries
-        retryAttempts: 1, // Only 1 retry for maximum speed
+        // Reasonable timeouts for reliable connection
+        connectionTimeout: 30000,  // 30 seconds - give Gmail time to connect
+        greetingTimeout: 15000,    // 15 seconds - reasonable greeting time
+        socketTimeout: 60000,      // 60 seconds - allow time for email sending
+        // Connection pooling for better performance
+        pool: true,
+        maxConnections: 5,
+        maxMessages: 100,
+        rateLimit: 10, // max 10 messages per second
+        // Retry settings
+        retryDelay: 2000, // 2 seconds between retries
+        retryAttempts: 3, // 3 attempts for reliability
         // Additional reliability settings
         tls: {
           rejectUnauthorized: false
@@ -154,13 +157,13 @@ export async function sendEmail(to: string, subject: string, html: string) {
       text: html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim(),
     };
 
-    // Send email with minimal retry for maximum speed
+    // Send email with proper retry logic
     let lastError: any;
-    const maxRetries = 1; // Only 1 retry for speed
+    const maxRetries = 3; // 3 attempts for reliability
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        console.log(`📧 Sending email (attempt ${attempt})...`);
+        console.log(`📧 Sending email (attempt ${attempt}/${maxRetries})...`);
         const info = await transporter!.sendMail(mailOptions);
         console.log('✅ Email sent successfully:', info.messageId);
         console.log(`📧 Email sent to: ${to}`);
@@ -169,11 +172,11 @@ export async function sendEmail(to: string, subject: string, html: string) {
         return info;
       } catch (error: any) {
         lastError = error;
-        console.warn(`⚠️ Attempt ${attempt} failed:`, error.message);
+        console.warn(`⚠️ Attempt ${attempt}/${maxRetries} failed:`, error.message);
         
-        // If it's a timeout error and we have retries left, wait briefly before retrying
+        // If it's a timeout error and we have retries left, wait before retrying
         if (attempt < maxRetries && (error.code === 'ETIMEDOUT' || error.code === 'ECONNRESET')) {
-          const delay = 500; // 0.5 second delay for speed
+          const delay = 2000; // 2 second delay between retries
           console.log(`⏳ Waiting ${delay}ms before retry...`);
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
