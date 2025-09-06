@@ -5010,14 +5010,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           stack: emailError instanceof Error ? emailError.stack?.substring(0, 300) + '...' : undefined
         });
         
-        // Check if it's due to SMTP connection issues
+        // Check if it's due to Gmail API configuration issues
         if (emailError instanceof Error && (
-          emailError.message.includes('SMTP not configured') ||
-          emailError.message.includes('Connection timeout') ||
-          emailError.message.includes('ETIMEDOUT')
+          emailError.message.includes('Gmail API not configured') ||
+          emailError.message.includes('GOOGLE_SERVICE_ACCOUNT_EMAIL') ||
+          emailError.message.includes('GOOGLE_SERVICE_ACCOUNT_KEY')
         )) {
-          console.warn('⚠️ [ROUTES] Email functionality is disabled due to SMTP connection issues');
-          console.warn('⚠️ [ROUTES] All Gmail SMTP configurations failed - Railway may be blocking outbound SMTP');
+          console.warn('⚠️ [ROUTES] Email functionality is disabled due to Gmail API configuration issues');
+          console.warn('⚠️ [ROUTES] Gmail API environment variables not set');
           console.warn(`⚠️ [ROUTES] Providing reset URL directly to user: ${resetUrl}`);
           
           // Return the reset URL directly to the user
@@ -5026,7 +5026,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             resetUrl: resetUrl,
             note: 'This link will expire in 1 hour. Please copy and paste it into your browser.',
             emailStatus: 'failed',
-            reason: 'SMTP connection blocked by hosting provider'
+            reason: 'Gmail API not configured - missing environment variables'
           });
         } else {
           // Re-throw other email errors

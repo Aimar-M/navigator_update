@@ -90,9 +90,23 @@ export async function sendEmailViaGmailAPI(to: string, subject: string, html: st
 
 // Health check function
 export function getGmailAPIStatus() {
+  const hasEmail = !!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  const hasKey = !!process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+  const configured = hasEmail && hasKey;
+  
+  console.log('🔍 [GMAIL-API] Status check:', {
+    hasEmail,
+    hasKey,
+    configured,
+    emailValue: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL ? 'SET' : 'NOT SET',
+    keyValue: process.env.GOOGLE_SERVICE_ACCOUNT_KEY ? 'SET' : 'NOT SET'
+  });
+  
   return {
-    configured: !!(process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_SERVICE_ACCOUNT_KEY),
-    ready: true,
+    configured,
+    ready: configured,
+    hasEmail,
+    hasKey,
     timestamp: new Date().toISOString()
   };
 }

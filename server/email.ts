@@ -1,8 +1,10 @@
-import nodemailer from 'nodemailer';
+// import nodemailer from 'nodemailer'; // COMMENTED OUT - Using Gmail API only
 import { sendEmailViaGmailAPI, getGmailAPIStatus } from './gmail-api';
 
-console.log('📧 Email module loaded successfully');
+console.log('📧 Email module loaded successfully - Gmail API only');
 
+// SMTP CODE COMMENTED OUT - Using Gmail API only
+/*
 // Create transporter with hardcoded credentials for info@navigatortrips.com
 let transporter: nodemailer.Transporter | null = null;
 
@@ -44,9 +46,9 @@ try {
       host: 'smtp.gmail.com',
       port: 465,
       secure: true,
-    auth: {
-      user: 'info@navigatortrips.com',
-      pass: 'tpmp jfoc emgr nbgm',
+      auth: {
+        user: 'info@navigatortrips.com',
+        pass: 'tpmp jfoc emgr nbgm',
       },
       connectionTimeout: 15000,
       greetingTimeout: 10000,
@@ -101,8 +103,6 @@ try {
     }
   };
 
-  
-
   // Skip initial verification completely for fastest startup
   console.log('📧 SMTP transporter created, ready for email sending');
 } catch (error) {
@@ -110,20 +110,22 @@ try {
   console.warn('⚠️ Email functionality will be disabled');
   transporter = null;
 }
+*/
 
 // Health check function for production monitoring
 export function getEmailStatus() {
   const gmailAPIStatus = getGmailAPIStatus();
   return {
-    configured: transporter !== null || gmailAPIStatus.configured,
-    ready: transporter !== null || gmailAPIStatus.configured,
-    smtpConfigured: transporter !== null,
+    configured: gmailAPIStatus.configured,
+    ready: gmailAPIStatus.configured,
+    smtpConfigured: false, // SMTP disabled
     gmailAPIConfigured: gmailAPIStatus.configured,
     timestamp: new Date().toISOString()
   };
 }
 
-// Pre-warm the email connection for faster first email
+// Pre-warm the email connection for faster first email - COMMENTED OUT (SMTP disabled)
+/*
 export async function preWarmEmailConnection() {
   if (transporter) {
     try {
@@ -134,223 +136,44 @@ export async function preWarmEmailConnection() {
     }
   }
 }
+*/
+
+// Gmail API doesn't need pre-warming
+export async function preWarmEmailConnection() {
+  console.log('📧 Gmail API ready - no pre-warming needed');
+}
 
 
 export async function sendEmail(to: string, subject: string, html: string) {
-  console.log('🚀 [EMAIL] Starting sendEmail function');
+  console.log('🚀 [EMAIL] Starting sendEmail function - Gmail API only');
   console.log('🚀 [EMAIL] Parameters:', { to, subject, htmlLength: html.length });
   
-  // Check Gmail API status first
+  // Check Gmail API status
   const gmailAPIStatus = getGmailAPIStatus();
   console.log('🔍 [EMAIL] Gmail API status:', gmailAPIStatus);
   
-  // Try Gmail API first (preferred method)
-  if (gmailAPIStatus.configured) {
-    try {
-      console.log('🚀 [EMAIL] Attempting to send via Gmail API...');
-      return await sendEmailViaGmailAPI(to, subject, html);
-    } catch (error: any) {
-      console.error('❌ [EMAIL] Gmail API failed:', error.message);
-      console.log('🔄 [EMAIL] Falling back to SMTP...');
-    }
-  } else {
-    console.log('⚠️ [EMAIL] Gmail API not configured, using SMTP fallback');
-  }
-  
-  // Check if email functionality is available, try to recreate if needed
-  if (!transporter) {
-    console.log('🔄 [EMAIL] No transporter available, attempting to recreate SMTP connection...');
+  // Only use Gmail API - no SMTP fallback
+  if (!gmailAPIStatus.configured) {
+    console.error('❌ [EMAIL] Gmail API not configured - email sending disabled');
+    console.error('❌ [EMAIL] Missing environment variables:', {
+      email: gmailAPIStatus.hasEmail ? 'SET' : 'MISSING',
+      key: gmailAPIStatus.hasKey ? 'SET' : 'MISSING'
+    });
     
-    // Try to recreate with multiple Gmail configurations
-    try {
-      console.log('🔄 [EMAIL] Creating new transporter with multiple configs...');
-      const startTime = Date.now();
-      
-      const gmailConfigs = [
-        // Config 1: Standard Gmail with service
-        {
-          service: 'gmail',
-          auth: {
-            user: 'info@navigatortrips.com',
-            pass: 'tpmp jfoc emgr nbgm',
-          },
-          connectionTimeout: 15000,
-          greetingTimeout: 10000,
-          socketTimeout: 20000,
-          pool: false,
-          retryAttempts: 0,
-          tls: { rejectUnauthorized: false }
-        },
-        // Config 2: Explicit host/port with STARTTLS
-        {
-          host: 'smtp.gmail.com',
-          port: 587,
-          secure: false,
-          auth: {
-            user: 'info@navigatortrips.com',
-            pass: 'tpmp jfoc emgr nbgm',
-          },
-          connectionTimeout: 15000,
-          greetingTimeout: 10000,
-          socketTimeout: 20000,
-          pool: false,
-          retryAttempts: 0,
-          tls: { rejectUnauthorized: false }
-        },
-        // Config 3: SSL port 465
-        {
-          host: 'smtp.gmail.com',
-          port: 465,
-          secure: true,
-        auth: {
-          user: 'info@navigatortrips.com',
-          pass: 'tpmp jfoc emgr nbgm',
-          },
-          connectionTimeout: 15000,
-          greetingTimeout: 10000,
-          socketTimeout: 20000,
-          pool: false,
-          retryAttempts: 0,
-          tls: { rejectUnauthorized: false }
-        }
-      ];
-
-      // Try each configuration
-      for (let i = 0; i < gmailConfigs.length; i++) {
-        try {
-          console.log(`🔄 [EMAIL] Trying recreation config ${i + 1}/${gmailConfigs.length}...`);
-          transporter = nodemailer.createTransport(gmailConfigs[i] as any);
-          await transporter.verify();
-          console.log(`✅ [EMAIL] Recreation config ${i + 1} working!`);
-          break;
-        } catch (error: any) {
-          console.log(`❌ [EMAIL] Recreation config ${i + 1} failed:`, error.message);
-          if (i === gmailConfigs.length - 1) {
-            throw error; // All configs failed
-          }
-        }
-      }
-      
-      const createTime = Date.now() - startTime;
-      console.log(`✅ [EMAIL] SMTP transporter created successfully in ${createTime}ms`);
-      
-    } catch (error: any) {
-      console.error('❌ [EMAIL] Failed to create SMTP transporter:', error.message);
-      console.error('❌ [EMAIL] Error details:', {
-        code: error.code,
-        command: error.command,
-        stack: error.stack?.substring(0, 200) + '...'
-      });
-      console.warn('⚠️ [EMAIL] Email functionality is disabled due to missing SMTP configuration');
-      console.warn(`📧 [EMAIL] Would have sent email to: ${to}`);
-      console.warn(`📧 [EMAIL] Subject: ${subject}`);
-      
-      // Return a mock success response to prevent crashes
-      return { messageId: 'mock-email-disabled', response: 'SMTP not configured' };
-    }
-  } else {
-    console.log('✅ [EMAIL] Transporter already available');
+    // Return error instead of fallback
+    throw new Error('Gmail API not configured. Please set GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_SERVICE_ACCOUNT_KEY environment variables.');
   }
 
   try {
-    console.log('🔍 [EMAIL] Starting validation phase...');
-    
-    // Validate inputs
-    if (!to || !subject || !html) {
-      console.error('❌ [EMAIL] Validation failed: Missing required parameters');
-      throw new Error('Missing required parameters: to, subject, or html');
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(to)) {
-      console.error(`❌ [EMAIL] Validation failed: Invalid email format: ${to}`);
-      throw new Error(`Invalid email format: ${to}`);
-    }
-
-    console.log('✅ [EMAIL] Validation passed');
-    console.log(`📧 [EMAIL] Sending email to: ${to}`);
-    console.log(`📧 [EMAIL] Subject: ${subject}`);
-    console.log(`📧 [EMAIL] HTML content length: ${html.length} characters`);
-
-    const mailOptions = {
-      from: `"Navigator" <info@navigatortrips.com>`,
-      to,
-      subject,
-      html,
-      // Add text version for email clients that don't support HTML
-      text: html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim(),
-    };
-
-    console.log('📧 [EMAIL] Mail options prepared:', {
-      from: mailOptions.from,
-      to: mailOptions.to,
-      subject: mailOptions.subject,
-      htmlLength: mailOptions.html.length,
-      textLength: mailOptions.text.length
+    console.log('🚀 [EMAIL] Sending via Gmail API...');
+    return await sendEmailViaGmailAPI(to, subject, html);
+  } catch (error: any) {
+    console.error('❌ [EMAIL] Gmail API failed:', error.message);
+    console.error('❌ [EMAIL] Gmail API error details:', {
+      code: error.code,
+      status: error.status,
+      response: error.response?.data
     });
-
-    // Send email with minimal retry for speed
-    let lastError: any;
-    const maxRetries = 1; // Only 1 retry for speed
-    
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      const attemptStartTime = Date.now(); // Move outside try block for scope
-      
-      try {
-        console.log(`📧 [EMAIL] Attempt ${attempt}/${maxRetries} - Starting sendMail...`);
-        
-    const info = await transporter!.sendMail(mailOptions);
-        
-        const attemptTime = Date.now() - attemptStartTime;
-        console.log(`✅ [EMAIL] Email sent successfully in ${attemptTime}ms`);
-        console.log(`📧 [EMAIL] Message ID: ${info.messageId}`);
-        console.log(`📧 [EMAIL] Response: ${info.response}`);
-        console.log(`📧 [EMAIL] Accepted recipients: ${info.accepted}`);
-        console.log(`📧 [EMAIL] Rejected recipients: ${info.rejected}`);
-        
-        return info;
-      } catch (error: any) {
-        const attemptTime = Date.now() - attemptStartTime;
-        lastError = error;
-        console.error(`❌ [EMAIL] Attempt ${attempt} failed after ${attemptTime}ms`);
-        console.error(`❌ [EMAIL] Error message: ${error.message}`);
-        console.error(`❌ [EMAIL] Error code: ${error.code}`);
-        console.error(`❌ [EMAIL] Error command: ${error.command}`);
-        console.error(`❌ [EMAIL] Error response: ${error.response}`);
-        console.error(`❌ [EMAIL] Error responseCode: ${error.responseCode}`);
-        
-        // If it's a timeout error and we have retries left, wait briefly before retrying
-        if (attempt < maxRetries && (error.code === 'ETIMEDOUT' || error.code === 'ECONNRESET')) {
-          const delay = 1000; // 1 second delay for speed
-          console.log(`⏳ [EMAIL] Waiting ${delay}ms before retry...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-          continue;
-        }
-        
-        // If it's not a retryable error or we're out of retries, break
-        break;
-      }
-    }
-    
-    // If we get here, all retries failed
-    console.error('❌ [EMAIL] All attempts failed, throwing error');
-    throw lastError;
-  } catch (error) {
-    console.error('❌ Error sending email:', error);
-    console.error(`📧 Failed to send email to: ${to}`);
-    console.error(`📧 Subject: ${subject}`);
-    
-    // Log additional error details for debugging (only in development)
-    if (error instanceof Error && process.env.NODE_ENV !== 'production') {
-      console.error('❌ Error details:', {
-        message: error.message,
-        stack: error.stack,
-        code: (error as any).code,
-        command: (error as any).command,
-      });
-    }
-    
     throw error;
   }
 }
