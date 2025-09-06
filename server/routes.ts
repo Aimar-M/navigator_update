@@ -4928,7 +4928,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         console.log(`🔐 About to send email to: ${user.email}`);
         console.log(`🔐 Email function:`, typeof sendEmail);
-       // ... existing code ...
+        console.log(`🔐 Reset URL: ${resetUrl}`);
+        console.log(`🔐 User details:`, { id: user.id, name: user.name, email: user.email });
+        
+        const emailStartTime = Date.now();
+        console.log(`📧 [ROUTES] Starting email send at ${new Date().toISOString()}`);
+        
        await sendEmail(
         user.email,
         'Reset your Navigator password',
@@ -4985,13 +4990,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           </html>
         `
       );
-// ... existing code ...
         
-
+        const emailEndTime = Date.now();
+        const emailDuration = emailEndTime - emailStartTime;
+        console.log(`✅ [ROUTES] Email send completed in ${emailDuration}ms`);
         console.log(`✅ Password reset email sent successfully to: ${user.email}`);
+        
       res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
       } catch (emailError) {
+        const emailEndTime = Date.now();
+        const emailDuration = emailEndTime - emailStartTime;
+        console.error(`❌ [ROUTES] Email send failed after ${emailDuration}ms`);
         console.error('❌ Failed to send password reset email:', emailError);
+        console.error('❌ [ROUTES] Error details:', {
+          message: emailError instanceof Error ? emailError.message : 'Unknown error',
+          code: (emailError as any)?.code,
+          command: (emailError as any)?.command,
+          response: (emailError as any)?.response,
+          stack: emailError instanceof Error ? emailError.stack?.substring(0, 300) + '...' : undefined
+        });
         
         // Check if it's due to SMTP connection issues
         if (emailError instanceof Error && (

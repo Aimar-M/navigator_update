@@ -86,13 +86,18 @@ export async function preWarmEmailConnection() {
 
 
 export async function sendEmail(to: string, subject: string, html: string) {
+  console.log('🚀 [EMAIL] Starting sendEmail function');
+  console.log('🚀 [EMAIL] Parameters:', { to, subject, htmlLength: html.length });
+  
   // Check if email functionality is available, try to recreate if needed
   if (!transporter) {
-    console.log('🔄 Attempting to recreate SMTP connection...');
+    console.log('🔄 [EMAIL] No transporter available, attempting to recreate SMTP connection...');
     
     // Try to recreate with the same reliable config
     try {
-      console.log('🔄 Recreating SMTP connection...');
+      console.log('🔄 [EMAIL] Creating new transporter...');
+      const startTime = Date.now();
+      
       transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
@@ -113,32 +118,47 @@ export async function sendEmail(to: string, subject: string, html: string) {
         }
       } as any);
       
-      console.log('✅ SMTP connection recreated successfully');
+      const createTime = Date.now() - startTime;
+      console.log(`✅ [EMAIL] SMTP transporter created successfully in ${createTime}ms`);
+      
     } catch (error: any) {
-      console.error('❌ Failed to recreate SMTP connection:', error.message);
-      console.warn('⚠️ Email functionality is disabled due to missing SMTP configuration');
-      console.warn(`📧 Would have sent email to: ${to}`);
-      console.warn(`📧 Subject: ${subject}`);
+      console.error('❌ [EMAIL] Failed to create SMTP transporter:', error.message);
+      console.error('❌ [EMAIL] Error details:', {
+        code: error.code,
+        command: error.command,
+        stack: error.stack?.substring(0, 200) + '...'
+      });
+      console.warn('⚠️ [EMAIL] Email functionality is disabled due to missing SMTP configuration');
+      console.warn(`📧 [EMAIL] Would have sent email to: ${to}`);
+      console.warn(`📧 [EMAIL] Subject: ${subject}`);
       
       // Return a mock success response to prevent crashes
       return { messageId: 'mock-email-disabled', response: 'SMTP not configured' };
     }
+  } else {
+    console.log('✅ [EMAIL] Transporter already available');
   }
 
   try {
+    console.log('🔍 [EMAIL] Starting validation phase...');
+    
     // Validate inputs
     if (!to || !subject || !html) {
+      console.error('❌ [EMAIL] Validation failed: Missing required parameters');
       throw new Error('Missing required parameters: to, subject, or html');
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(to)) {
+      console.error(`❌ [EMAIL] Validation failed: Invalid email format: ${to}`);
       throw new Error(`Invalid email format: ${to}`);
     }
 
-    console.log(`📧 Sending email to: ${to}`);
-    console.log(`📧 Subject: ${subject}`);
+    console.log('✅ [EMAIL] Validation passed');
+    console.log(`📧 [EMAIL] Sending email to: ${to}`);
+    console.log(`📧 [EMAIL] Subject: ${subject}`);
+    console.log(`📧 [EMAIL] HTML content length: ${html.length} characters`);
 
     const mailOptions = {
       from: `"Navigator" <info@navigatortrips.com>`,
@@ -149,27 +169,47 @@ export async function sendEmail(to: string, subject: string, html: string) {
       text: html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim(),
     };
 
+    console.log('📧 [EMAIL] Mail options prepared:', {
+      from: mailOptions.from,
+      to: mailOptions.to,
+      subject: mailOptions.subject,
+      htmlLength: mailOptions.html.length,
+      textLength: mailOptions.text.length
+    });
+
     // Send email with minimal retry for speed
     let lastError: any;
     const maxRetries = 1; // Only 1 retry for speed
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        console.log(`📧 Sending email (attempt ${attempt})...`);
+        console.log(`📧 [EMAIL] Attempt ${attempt}/${maxRetries} - Starting sendMail...`);
+        const attemptStartTime = Date.now();
+        
         const info = await transporter!.sendMail(mailOptions);
-        console.log('✅ Email sent successfully:', info.messageId);
-        console.log(`📧 Email sent to: ${to}`);
-        console.log(`📧 Response: ${info.response}`);
+        
+        const attemptTime = Date.now() - attemptStartTime;
+        console.log(`✅ [EMAIL] Email sent successfully in ${attemptTime}ms`);
+        console.log(`📧 [EMAIL] Message ID: ${info.messageId}`);
+        console.log(`📧 [EMAIL] Response: ${info.response}`);
+        console.log(`📧 [EMAIL] Accepted recipients: ${info.accepted}`);
+        console.log(`📧 [EMAIL] Rejected recipients: ${info.rejected}`);
         
         return info;
       } catch (error: any) {
+        const attemptTime = Date.now() - attemptStartTime;
         lastError = error;
-        console.warn(`⚠️ Attempt ${attempt} failed:`, error.message);
+        console.error(`❌ [EMAIL] Attempt ${attempt} failed after ${attemptTime}ms`);
+        console.error(`❌ [EMAIL] Error message: ${error.message}`);
+        console.error(`❌ [EMAIL] Error code: ${error.code}`);
+        console.error(`❌ [EMAIL] Error command: ${error.command}`);
+        console.error(`❌ [EMAIL] Error response: ${error.response}`);
+        console.error(`❌ [EMAIL] Error responseCode: ${error.responseCode}`);
         
         // If it's a timeout error and we have retries left, wait briefly before retrying
         if (attempt < maxRetries && (error.code === 'ETIMEDOUT' || error.code === 'ECONNRESET')) {
           const delay = 1000; // 1 second delay for speed
-          console.log(`⏳ Waiting ${delay}ms before retry...`);
+          console.log(`⏳ [EMAIL] Waiting ${delay}ms before retry...`);
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }
@@ -180,6 +220,7 @@ export async function sendEmail(to: string, subject: string, html: string) {
     }
     
     // If we get here, all retries failed
+    console.error('❌ [EMAIL] All attempts failed, throwing error');
     throw lastError;
   } catch (error) {
     console.error('❌ Error sending email:', error);

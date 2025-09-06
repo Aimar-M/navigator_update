@@ -40,8 +40,16 @@ export default function ForgotPassword() {
     e.preventDefault();
     if (!validate()) return;
 
+    console.log('🚀 [FRONTEND] Starting forgot password request');
+    console.log('🚀 [FRONTEND] Email:', email);
+    console.log('🚀 [FRONTEND] API Base:', API_BASE);
+    
     setIsLoading(true);
+    const startTime = Date.now();
+    
     try {
+      console.log('📡 [FRONTEND] Sending request to:', `${API_BASE}/api/auth/forgot-password`);
+      
       const response = await fetch(`${API_BASE}/api/auth/forgot-password`, {
         method: 'POST',
         headers: {
@@ -50,7 +58,15 @@ export default function ForgotPassword() {
         body: JSON.stringify({ email }),
       });
 
+      const requestTime = Date.now() - startTime;
+      console.log(`📡 [FRONTEND] Request completed in ${requestTime}ms`);
+      console.log('📡 [FRONTEND] Response status:', response.status);
+      console.log('📡 [FRONTEND] Response ok:', response.ok);
+
       if (response.ok) {
+        const responseData = await response.json();
+        console.log('✅ [FRONTEND] Success response:', responseData);
+        
         setIsSubmitted(true);
         toast({
           title: "Email sent",
@@ -58,13 +74,24 @@ export default function ForgotPassword() {
         });
       } else {
         const errorData = await response.json();
+        console.error('❌ [FRONTEND] Error response:', errorData);
+        console.error('❌ [FRONTEND] Response status:', response.status);
         setErrors({ email: errorData.message || "Failed to send reset email" });
       }
     } catch (error) {
-      console.error("Forgot password error:", error);
+      const requestTime = Date.now() - startTime;
+      console.error(`❌ [FRONTEND] Request failed after ${requestTime}ms`);
+      console.error("❌ [FRONTEND] Forgot password error:", error);
+      console.error("❌ [FRONTEND] Error details:", {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack?.substring(0, 200) + '...' : undefined
+      });
       setErrors({ email: "Failed to send reset email. Please try again." });
     } finally {
       setIsLoading(false);
+      const totalTime = Date.now() - startTime;
+      console.log(`🏁 [FRONTEND] Total request time: ${totalTime}ms`);
     }
   };
 
