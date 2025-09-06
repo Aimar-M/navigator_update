@@ -6,26 +6,73 @@ console.log('📧 Email module loaded successfully');
 let transporter: nodemailer.Transporter | null = null;
 
 try {
-  // Fast, simple Gmail configuration
-  transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: 'info@navigatortrips.com',
-      pass: 'tpmp jfoc emgr nbgm',
+  // Try multiple Gmail configurations that might work with Railway
+  const gmailConfigs = [
+    // Config 1: Standard Gmail with service
+    {
+      service: 'gmail',
+      auth: {
+        user: 'info@navigatortrips.com',
+        pass: 'tpmp jfoc emgr nbgm',
+      },
+      connectionTimeout: 15000,
+      greetingTimeout: 10000,
+      socketTimeout: 20000,
+      pool: false,
+      retryAttempts: 0,
+      tls: { rejectUnauthorized: false }
     },
-    // Fast timeouts for quick response
-    connectionTimeout: 10000,  // 10 seconds - fail fast if can't connect
-    greetingTimeout: 5000,     // 5 seconds - fail fast if no greeting
-    socketTimeout: 15000,      // 15 seconds - fail fast if sending hangs
-    // No pooling for single sends
-    pool: false,
-    // No retries at transport level - handle in sendEmail function
-    retryAttempts: 0,
-    // Additional reliability settings
-    tls: {
-      rejectUnauthorized: false
+    // Config 2: Explicit host/port with STARTTLS
+    {
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
+      auth: {
+        user: 'info@navigatortrips.com',
+        pass: 'tpmp jfoc emgr nbgm',
+      },
+      connectionTimeout: 15000,
+      greetingTimeout: 10000,
+      socketTimeout: 20000,
+      pool: false,
+      retryAttempts: 0,
+      tls: { rejectUnauthorized: false }
+    },
+    // Config 3: SSL port 465
+    {
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true,
+      auth: {
+        user: 'info@navigatortrips.com',
+        pass: 'tpmp jfoc emgr nbgm',
+      },
+      connectionTimeout: 15000,
+      greetingTimeout: 10000,
+      socketTimeout: 20000,
+      pool: false,
+      retryAttempts: 0,
+      tls: { rejectUnauthorized: false }
     }
-  } as any);
+  ];
+
+  // Try each configuration until one works
+  for (let i = 0; i < gmailConfigs.length; i++) {
+    try {
+      console.log(`📧 [EMAIL] Trying Gmail config ${i + 1}/${gmailConfigs.length}...`);
+      transporter = nodemailer.createTransport(gmailConfigs[i] as any);
+      
+      // Quick test connection
+      await transporter.verify();
+      console.log(`✅ [EMAIL] Gmail config ${i + 1} working!`);
+      break;
+    } catch (error: any) {
+      console.log(`❌ [EMAIL] Gmail config ${i + 1} failed:`, error.message);
+      if (i === gmailConfigs.length - 1) {
+        throw error; // All configs failed
+      }
+    }
+  }
 
   // Verify transporter configuration with retry
   const verifyConnection = async () => {
@@ -93,30 +140,75 @@ export async function sendEmail(to: string, subject: string, html: string) {
   if (!transporter) {
     console.log('🔄 [EMAIL] No transporter available, attempting to recreate SMTP connection...');
     
-    // Try to recreate with the same reliable config
+    // Try to recreate with multiple Gmail configurations
     try {
-      console.log('🔄 [EMAIL] Creating new transporter...');
+      console.log('🔄 [EMAIL] Creating new transporter with multiple configs...');
       const startTime = Date.now();
       
-      transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: 'info@navigatortrips.com',
-          pass: 'tpmp jfoc emgr nbgm',
+      const gmailConfigs = [
+        // Config 1: Standard Gmail with service
+        {
+          service: 'gmail',
+          auth: {
+            user: 'info@navigatortrips.com',
+            pass: 'tpmp jfoc emgr nbgm',
+          },
+          connectionTimeout: 15000,
+          greetingTimeout: 10000,
+          socketTimeout: 20000,
+          pool: false,
+          retryAttempts: 0,
+          tls: { rejectUnauthorized: false }
         },
-        // Fast timeouts for quick response
-        connectionTimeout: 10000,  // 10 seconds - fail fast if can't connect
-        greetingTimeout: 5000,     // 5 seconds - fail fast if no greeting
-        socketTimeout: 15000,      // 15 seconds - fail fast if sending hangs
-        // No pooling for single sends
-        pool: false,
-        // No retries at transport level - handle in sendEmail function
-        retryAttempts: 0,
-        // Additional reliability settings
-        tls: {
-          rejectUnauthorized: false
+        // Config 2: Explicit host/port with STARTTLS
+        {
+          host: 'smtp.gmail.com',
+          port: 587,
+          secure: false,
+          auth: {
+            user: 'info@navigatortrips.com',
+            pass: 'tpmp jfoc emgr nbgm',
+          },
+          connectionTimeout: 15000,
+          greetingTimeout: 10000,
+          socketTimeout: 20000,
+          pool: false,
+          retryAttempts: 0,
+          tls: { rejectUnauthorized: false }
+        },
+        // Config 3: SSL port 465
+        {
+          host: 'smtp.gmail.com',
+          port: 465,
+          secure: true,
+          auth: {
+            user: 'info@navigatortrips.com',
+            pass: 'tpmp jfoc emgr nbgm',
+          },
+          connectionTimeout: 15000,
+          greetingTimeout: 10000,
+          socketTimeout: 20000,
+          pool: false,
+          retryAttempts: 0,
+          tls: { rejectUnauthorized: false }
         }
-      } as any);
+      ];
+
+      // Try each configuration
+      for (let i = 0; i < gmailConfigs.length; i++) {
+        try {
+          console.log(`🔄 [EMAIL] Trying recreation config ${i + 1}/${gmailConfigs.length}...`);
+          transporter = nodemailer.createTransport(gmailConfigs[i] as any);
+          await transporter.verify();
+          console.log(`✅ [EMAIL] Recreation config ${i + 1} working!`);
+          break;
+        } catch (error: any) {
+          console.log(`❌ [EMAIL] Recreation config ${i + 1} failed:`, error.message);
+          if (i === gmailConfigs.length - 1) {
+            throw error; // All configs failed
+          }
+        }
+      }
       
       const createTime = Date.now() - startTime;
       console.log(`✅ [EMAIL] SMTP transporter created successfully in ${createTime}ms`);
