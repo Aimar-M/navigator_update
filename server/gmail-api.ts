@@ -5,10 +5,10 @@ console.log('📧 Gmail API module loaded successfully');
 // Gmail API configuration
 const gmail = google.gmail({ version: 'v1' });
 
-// Create OAuth2 client for Gmail API using separate email credentials
+// Create OAuth2 client for Gmail API using existing credentials
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET_EMAILS, // Separate secret for email sending
+  process.env.GOOGLE_CLIENT_SECRET, // Use same secret for both user auth and email sending
   process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/auth/google/callback` : 'http://localhost:3000/auth/google/callback'
 );
 

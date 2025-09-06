@@ -1,10 +1,10 @@
 const { google } = require('googleapis');
 const readline = require('readline');
 
-// OAuth2 setup for Gmail API - using separate email credentials
+// OAuth2 setup for Gmail API - using existing credentials
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID || 'YOUR_CLIENT_ID', // Use existing OAuth2 Client ID
-  process.env.GOOGLE_CLIENT_SECRET_EMAILS || 'YOUR_CLIENT_SECRET_EMAILS', // Separate secret for email sending
+  process.env.GOOGLE_CLIENT_SECRET || 'YOUR_CLIENT_SECRET', // Use same secret for both user auth and email sending
   process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/auth/google/callback` : 'http://localhost:3000/auth/google/callback'
 );
 
@@ -14,9 +14,9 @@ const SCOPES = ['https://www.googleapis.com/auth/gmail.send'];
 async function getRefreshToken() {
   try {
     console.log('🔐 Getting OAuth2 refresh token for Gmail API...');
-    console.log('🔍 Using OAuth2 credentials for email sending:');
+    console.log('🔍 Using your existing OAuth2 credentials:');
     console.log(`   Client ID: ${oauth2Client._clientId ? 'SET' : 'NOT SET'}`);
-    console.log(`   Client Secret (Emails): ${oauth2Client._clientSecret ? 'SET' : 'NOT SET'}`);
+    console.log(`   Client Secret: ${oauth2Client._clientSecret ? 'SET' : 'NOT SET'}`);
     console.log(`   Redirect URI: ${oauth2Client._redirectUri}`);
     
     // Generate auth URL
@@ -50,12 +50,11 @@ async function getRefreshToken() {
     const { tokens } = await oauth2Client.getToken(authCode);
     oauth2Client.setCredentials(tokens);
 
-    console.log('\n✅ Success! Gmail API permissions configured!');
-    console.log('\n📧 Add these environment variables to Railway:');
-    console.log(`GOOGLE_CLIENT_SECRET_EMAILS=${oauth2Client._clientSecret}`);
+    console.log('\n✅ Success! Gmail API permissions added to your existing OAuth2 setup!');
+    console.log('\n📧 Add these NEW environment variables to Railway:');
     console.log(`GOOGLE_REFRESH_TOKEN=${tokens.refresh_token}`);
     console.log(`GOOGLE_ACCESS_TOKEN=${tokens.access_token}`);
-    console.log('\n💡 Note: You already have GOOGLE_CLIENT_ID set up for user authentication!');
+    console.log('\n💡 Note: You already have GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET set up!');
 
     // Test Gmail API
     console.log('\n🧪 Testing Gmail API...');
