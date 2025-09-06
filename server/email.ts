@@ -8,7 +8,6 @@ let transporter: nodemailer.Transporter | null = null;
 try {
   // Try SSL port 465 first (often faster)
   transporter = nodemailer.createTransport({
-    service: 'gmail',
     host: 'smtp.gmail.com',
     port: 465,
     secure: true, // SSL for port 465
@@ -29,7 +28,7 @@ try {
     tls: {
       rejectUnauthorized: false
     }
-  });
+  } as any);
 
   // Verify transporter configuration with retry
   const verifyConnection = async () => {
@@ -97,7 +96,6 @@ export async function sendEmail(to: string, subject: string, html: string) {
     try {
       console.log('🔄 Recreating SMTP connection...');
       transporter = nodemailer.createTransport({
-        service: 'gmail',
         host: 'smtp.gmail.com',
         port: 465,
         secure: true, // SSL for port 465
@@ -118,7 +116,7 @@ export async function sendEmail(to: string, subject: string, html: string) {
         tls: {
           rejectUnauthorized: false
         }
-      });
+      } as any);
       
       console.log('✅ SMTP connection recreated successfully');
     } catch (error: any) {
