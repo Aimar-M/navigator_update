@@ -156,8 +156,8 @@ export async function sendEmail(to: string, subject: string, html: string) {
   if (!gmailAPIStatus.configured) {
     console.error('❌ [EMAIL] Gmail API not configured - email sending disabled');
     console.error('❌ [EMAIL] Missing environment variables:', {
-      email: gmailAPIStatus.hasEmail ? 'SET' : 'MISSING',
-      key: gmailAPIStatus.hasKey ? 'SET' : 'MISSING'
+      oauth2Configured: gmailAPIStatus.oauth2Configured ? 'SET' : 'MISSING',
+      serviceAccountConfigured: gmailAPIStatus.serviceAccountConfigured ? 'SET' : 'MISSING'
     });
     
     // Return error instead of fallback
