@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { sendEmailViaGmailAPI, getGmailAPIStatus } from './gmail-api';
 
 console.log('📧 Email module loaded successfully');
 
@@ -43,9 +44,9 @@ try {
       host: 'smtp.gmail.com',
       port: 465,
       secure: true,
-      auth: {
-        user: 'info@navigatortrips.com',
-        pass: 'tpmp jfoc emgr nbgm',
+    auth: {
+      user: 'info@navigatortrips.com',
+      pass: 'tpmp jfoc emgr nbgm',
       },
       connectionTimeout: 15000,
       greetingTimeout: 10000,
@@ -112,9 +113,12 @@ try {
 
 // Health check function for production monitoring
 export function getEmailStatus() {
+  const gmailAPIStatus = getGmailAPIStatus();
   return {
-    configured: transporter !== null,
-    ready: transporter !== null,
+    configured: transporter !== null || gmailAPIStatus.configured,
+    ready: transporter !== null || gmailAPIStatus.configured,
+    smtpConfigured: transporter !== null,
+    gmailAPIConfigured: gmailAPIStatus.configured,
     timestamp: new Date().toISOString()
   };
 }
@@ -135,6 +139,23 @@ export async function preWarmEmailConnection() {
 export async function sendEmail(to: string, subject: string, html: string) {
   console.log('🚀 [EMAIL] Starting sendEmail function');
   console.log('🚀 [EMAIL] Parameters:', { to, subject, htmlLength: html.length });
+  
+  // Check Gmail API status first
+  const gmailAPIStatus = getGmailAPIStatus();
+  console.log('🔍 [EMAIL] Gmail API status:', gmailAPIStatus);
+  
+  // Try Gmail API first (preferred method)
+  if (gmailAPIStatus.configured) {
+    try {
+      console.log('🚀 [EMAIL] Attempting to send via Gmail API...');
+      return await sendEmailViaGmailAPI(to, subject, html);
+    } catch (error: any) {
+      console.error('❌ [EMAIL] Gmail API failed:', error.message);
+      console.log('🔄 [EMAIL] Falling back to SMTP...');
+    }
+  } else {
+    console.log('⚠️ [EMAIL] Gmail API not configured, using SMTP fallback');
+  }
   
   // Check if email functionality is available, try to recreate if needed
   if (!transporter) {
@@ -181,9 +202,9 @@ export async function sendEmail(to: string, subject: string, html: string) {
           host: 'smtp.gmail.com',
           port: 465,
           secure: true,
-          auth: {
-            user: 'info@navigatortrips.com',
-            pass: 'tpmp jfoc emgr nbgm',
+        auth: {
+          user: 'info@navigatortrips.com',
+          pass: 'tpmp jfoc emgr nbgm',
           },
           connectionTimeout: 15000,
           greetingTimeout: 10000,
@@ -279,7 +300,7 @@ export async function sendEmail(to: string, subject: string, html: string) {
       try {
         console.log(`📧 [EMAIL] Attempt ${attempt}/${maxRetries} - Starting sendMail...`);
         
-        const info = await transporter!.sendMail(mailOptions);
+    const info = await transporter!.sendMail(mailOptions);
         
         const attemptTime = Date.now() - attemptStartTime;
         console.log(`✅ [EMAIL] Email sent successfully in ${attemptTime}ms`);

@@ -4993,10 +4993,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         const emailEndTime = Date.now();
         const emailDuration = emailEndTime - emailStartTime;
-        console.log(`✅ [ROUTES] Email send completed in ${emailDuration}ms`);
+        console.log(`✅ [ROUTES] Email send completed successfully in ${emailDuration}ms`);
         console.log(`✅ Password reset email sent successfully to: ${user.email}`);
         
-      res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
+        res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
       } catch (emailError) {
         const emailEndTime = Date.now();
         const emailDuration = emailEndTime - emailStartTime;
@@ -5016,13 +5016,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           emailError.message.includes('Connection timeout') ||
           emailError.message.includes('ETIMEDOUT')
         )) {
-          console.warn('⚠️ Email functionality is disabled due to SMTP connection issues');
+          console.warn('⚠️ [ROUTES] Email functionality is disabled due to SMTP connection issues');
+          console.warn('⚠️ [ROUTES] All Gmail SMTP configurations failed - Railway may be blocking outbound SMTP');
+          console.warn(`⚠️ [ROUTES] Providing reset URL directly to user: ${resetUrl}`);
           
           // Return the reset URL directly to the user
           res.json({ 
             message: 'Password reset link generated successfully. Please copy the link below as email delivery is currently unavailable.',
             resetUrl: resetUrl,
-            note: 'This link will expire in 1 hour. Please copy and paste it into your browser.'
+            note: 'This link will expire in 1 hour. Please copy and paste it into your browser.',
+            emailStatus: 'failed',
+            reason: 'SMTP connection blocked by hosting provider'
           });
         } else {
           // Re-throw other email errors

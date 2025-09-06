@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Payment Redirect Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .info {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Mobile Payment Redirect Test</h1>
+    
+    <div class="info">
+        <strong>Current Device:</strong> <span id="device-info"></span><br>
+        <strong>Platform:</strong> <span id="platform-info"></span>
+    </div>
+
+    <div class="test-section">
+        <h3>Venmo Test Links</h3>
+        <button onclick="testVenmoWeb()">Test Venmo Web Link</button>
+        <button onclick="testVenmoMobile()">Test Venmo Mobile App</button>
+        <p><small>Web: https://venmo.com/testuser?txn=pay&amount=10&note=Test%20payment</small></p>
+    </div>
+
+    <div class="test-section">
+        <h3>PayPal Test Links</h3>
+        <button onclick="testPayPalWeb()">Test PayPal Web Link</button>
+        <button onclick="testPayPalMobile()">Test PayPal Mobile App</button>
+        <p><small>Web: https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=test@example.com&amount=10&item_name=Test%20payment&currency_code=USD</small></p>
+    </div>
+
+    <div class="test-section">
+        <h3>Universal Payment Test</h3>
+        <button onclick="testUniversalVenmo()">Universal Venmo</button>
+        <button onclick="testUniversalPayPal()">Universal PayPal</button>
+    </div>
+
+    <script>
+        // Copy the utility functions from utils.ts for testing
+        function isMobileDevice() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+
+        function getMobilePlatform() {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            const isAndroid = /Android/.test(navigator.userAgent);
+            
+            if (isIOS) return 'ios';
+            if (isAndroid) return 'android';
+            return 'desktop';
+        }
+
+        function openVenmoLinkWithFallback(webUrl, timeoutMs = 1600) {
+            try {
+                const url = new URL(webUrl);
+                const handle = decodeURIComponent(url.pathname.replace(/^\//, ''));
+                const params = url.searchParams;
+                const txn = params.get('txn') || 'pay';
+                const amount = params.get('amount') || '';
+                const note = params.get('note') || '';
+
+                const platform = getMobilePlatform();
+                const isMobile = isMobileDevice();
+
+                const appLink = `venmo://paycharge?txn=${encodeURIComponent(txn)}&recipients=${encodeURIComponent(handle)}&amount=${encodeURIComponent(amount)}&note=${encodeURIComponent(note)}`;
+
+                const appStoreUrl = 'https://apps.apple.com/app/id351727428';
+                const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.venmo';
+
+                if (isMobile) {
+                    let didHide = false;
+                    const onVisibilityChange = () => { if (document.hidden) didHide = true; };
+                    document.addEventListener('visibilitychange', onVisibilityChange);
+
+                    window.location.href = appLink;
+
+                    setTimeout(() => {
+                        document.removeEventListener('visibilitychange', onVisibilityChange);
+                        if (!didHide) {
+                            if (platform === 'ios') {
+                                window.location.href = appStoreUrl;
+                            } else if (platform === 'android') {
+                                window.location.href = playStoreUrl;
+                            } else {
+                                window.open(webUrl, '_blank', 'noopener,noreferrer');
+                            }
+                        }
+                    }, timeoutMs);
+                } else {
+                    window.open(webUrl, '_blank', 'noopener,noreferrer');
+                }
+            } catch {
+                window.open(webUrl, '_blank', 'noopener,noreferrer');
+            }
+        }
+
+        function openPayPalLinkWithFallback(webUrl, timeoutMs = 1600) {
+            try {
+                const url = new URL(webUrl);
+                const platform = getMobilePlatform();
+                const isMobile = isMobileDevice();
+
+                const businessParam = url.searchParams.get('business');
+                const amount = url.searchParams.get('amount') || '';
+                const itemName = url.searchParams.get('item_name') || '';
+
+                const appLink = `paypal://sendmoney?recipient=${encodeURIComponent(businessParam || '')}&amount=${encodeURIComponent(amount)}&note=${encodeURIComponent(itemName)}`;
+
+                const appStoreUrl = 'https://apps.apple.com/app/id283646709';
+                const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.paypal.android.p2pmobile';
+
+                if (isMobile) {
+                    let didHide = false;
+                    const onVisibilityChange = () => { if (document.hidden) didHide = true; };
+                    document.addEventListener('visibilitychange', onVisibilityChange);
+
+                    window.location.href = appLink;
+
+                    setTimeout(() => {
+                        document.removeEventListener('visibilitychange', onVisibilityChange);
+                        if (!didHide) {
+                            if (platform === 'ios') {
+                                window.location.href = appStoreUrl;
+                            } else if (platform === 'android') {
+                                window.location.href = playStoreUrl;
+                            } else {
+                                window.open(webUrl, '_blank', 'noopener,noreferrer');
+                            }
+                        }
+                    }, timeoutMs);
+                } else {
+                    window.open(webUrl, '_blank', 'noopener,noreferrer');
+                }
+            } catch {
+                window.open(webUrl, '_blank', 'noopener,noreferrer');
+            }
+        }
+
+        function openPaymentLinkWithMobileFallback(paymentLink, paymentMethod) {
+            if (paymentMethod === 'venmo') {
+                openVenmoLinkWithFallback(paymentLink);
+            } else if (paymentMethod === 'paypal') {
+                openPayPalLinkWithFallback(paymentLink);
+            } else {
+                window.open(paymentLink, '_blank', 'noopener,noreferrer');
+            }
+        }
+
+        // Test functions
+        function testVenmoWeb() {
+            const url = 'https://venmo.com/testuser?txn=pay&amount=10&note=Test%20payment';
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+
+        function testVenmoMobile() {
+            const url = 'https://venmo.com/testuser?txn=pay&amount=10&note=Test%20payment';
+            openVenmoLinkWithFallback(url);
+        }
+
+        function testPayPalWeb() {
+            const url = 'https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=test@example.com&amount=10&item_name=Test%20payment&currency_code=USD';
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+
+        function testPayPalMobile() {
+            const url = 'https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=test@example.com&amount=10&item_name=Test%20payment&currency_code=USD';
+            openPayPalLinkWithFallback(url);
+        }
+
+        function testUniversalVenmo() {
+            const url = 'https://venmo.com/testuser?txn=pay&amount=10&note=Test%20payment';
+            openPaymentLinkWithMobileFallback(url, 'venmo');
+        }
+
+        function testUniversalPayPal() {
+            const url = 'https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=test@example.com&amount=10&item_name=Test%20payment&currency_code=USD';
+            openPaymentLinkWithMobileFallback(url, 'paypal');
+        }
+
+        // Update device info
+        document.getElementById('device-info').textContent = isMobileDevice() ? 'Mobile' : 'Desktop';
+        document.getElementById('platform-info').textContent = getMobilePlatform();
+    </script>
+</body>
+</html>

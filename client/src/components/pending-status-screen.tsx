@@ -9,6 +9,7 @@ import { CreditCard, Clock, CheckCircle, AlertCircle, Bell, Timer, DollarSign, C
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
+import { openPaymentLinkWithMobileFallback } from "@/lib/utils";
 import Lottie from "lottie-react";
 import EnhancedItineraryPreview from "@/components/enhanced-itinerary-preview";
 
@@ -202,8 +203,9 @@ export default function PendingStatusScreen({ trip, member }: PendingStatusScree
     } else {
       const option = (settlementOptions as SettlementOption[])?.find(opt => opt.method === method);
       if (option?.paymentLink) {
-        // Always open payment links in a new tab/page
-        window.open(option.paymentLink, '_blank', 'noopener,noreferrer');
+        // Use mobile app redirects with fallbacks
+        const paymentMethod = method as 'venmo' | 'paypal';
+        openPaymentLinkWithMobileFallback(option.paymentLink, paymentMethod);
       }
       setShowPaymentConfirmation(true);
       setPendingPaymentMethod(method);

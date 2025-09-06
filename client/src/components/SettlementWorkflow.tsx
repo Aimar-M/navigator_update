@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { openPaymentLinkWithMobileFallback } from "@/lib/utils";
 import { ExternalLink, CreditCard, DollarSign, CheckCircle, Clock } from "lucide-react";
 
 
@@ -152,8 +153,9 @@ export function SettlementWorkflow({ tripId, balance, isOpen, onClose }: Settlem
   };
 
   const openPaymentLink = (url: string) => {
-    // Always open payment links in a new tab/page
-    window.open(url, '_blank', 'noopener,noreferrer');
+    // Use mobile app redirects with fallbacks
+    const paymentMethod = selectedMethod as 'venmo' | 'paypal';
+    openPaymentLinkWithMobileFallback(url, paymentMethod);
     setHasRedirected(true);
     setShowConfirmation(true);
   };

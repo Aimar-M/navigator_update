@@ -130,7 +130,22 @@ export const weatherIcons: Record<string, string> = {
   'Snowy': 'ri-snowy-line'
 };
 
-// Attempt to open Venmo app with a fallback to the web link
+// Detect if user is on mobile device
+export function isMobileDevice(): boolean {
+	return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+// Detect specific mobile platform
+export function getMobilePlatform(): 'ios' | 'android' | 'desktop' {
+	const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+	const isAndroid = /Android/.test(navigator.userAgent);
+	
+	if (isIOS) return 'ios';
+	if (isAndroid) return 'android';
+	return 'desktop';
+}
+
+// Attempt to open Venmo app with mobile app deep links and fallbacks
 export function openVenmoLinkWithFallback(webUrl: string, timeoutMs: number = 1600): void {
 	try {
 		const url = new URL(webUrl);
@@ -141,37 +156,108 @@ export function openVenmoLinkWithFallback(webUrl: string, timeoutMs: number = 16
 		const amount = params.get('amount') || '';
 		const note = params.get('note') || '';
 
+		const platform = getMobilePlatform();
+		const isMobile = isMobileDevice();
+
 		// Build app deep link
 		const appLink = `venmo://paycharge?txn=${encodeURIComponent(txn)}&recipients=${encodeURIComponent(handle)}&amount=${encodeURIComponent(amount)}&note=${encodeURIComponent(note)}`;
 
-		const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-		const isAndroid = /Android/.test(navigator.userAgent);
 		const appStoreUrl = 'https://apps.apple.com/app/id351727428';
 		const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.venmo';
 
-		let didHide = false;
-		const onVisibilityChange = () => { if (document.hidden) didHide = true; };
-		document.addEventListener('visibilitychange', onVisibilityChange);
+		// On mobile, try app deep link first
+		if (isMobile) {
+			let didHide = false;
+			const onVisibilityChange = () => { if (document.hidden) didHide = true; };
+			document.addEventListener('visibilitychange', onVisibilityChange);
 
-		// Attempt to open the Venmo app
-		(window as any).location.href = appLink;
+			// Attempt to open the Venmo app
+			(window as any).location.href = appLink;
 
-		// If the app doesn't open, fall back appropriately
-		setTimeout(() => {
-			document.removeEventListener('visibilitychange', onVisibilityChange);
-			if (!didHide) {
-				if (isIOS) {
-					(window as any).location.href = appStoreUrl;
-				} else if (isAndroid) {
-					// Prefer Play Store; some Android browsers may still prefer web link
-					(window as any).location.href = playStoreUrl;
-				} else {
-					(window as any).location.href = webUrl;
+			// If the app doesn't open, fall back to app store
+			setTimeout(() => {
+				document.removeEventListener('visibilitychange', onVisibilityChange);
+				if (!didHide) {
+					if (platform === 'ios') {
+						(window as any).location.href = appStoreUrl;
+					} else if (platform === 'android') {
+						(window as any).location.href = playStoreUrl;
+					} else {
+						// Fallback to web on desktop
+						window.open(webUrl, '_blank', 'noopener,noreferrer');
+					}
 				}
-			}
-		}, timeoutMs);
+			}, timeoutMs);
+		} else {
+			// On desktop, open web link in new tab
+			window.open(webUrl, '_blank', 'noopener,noreferrer');
+		}
 	} catch {
 		// If parsing fails, just open the web URL
 		window.open(webUrl, '_blank', 'noopener,noreferrer');
+	}
+}
+
+// Attempt to open PayPal app with mobile app deep links and fallbacks
+export function openPayPalLinkWithFallback(webUrl: string, timeoutMs: number = 1600): void {
+	try {
+		const url = new URL(webUrl);
+		const platform = getMobilePlatform();
+		const isMobile = isMobileDevice();
+
+		// Extract PayPal email from the URL
+		const businessParam = url.searchParams.get('business');
+		const amount = url.searchParams.get('amount') || '';
+		const itemName = url.searchParams.get('item_name') || '';
+
+		// Build PayPal app deep link
+		// PayPal deep link format: paypal://sendmoney?recipient=email&amount=amount&note=note
+		const appLink = `paypal://sendmoney?recipient=${encodeURIComponent(businessParam || '')}&amount=${encodeURIComponent(amount)}&note=${encodeURIComponent(itemName)}`;
+
+		const appStoreUrl = 'https://apps.apple.com/app/id283646709'; // PayPal iOS app
+		const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.paypal.android.p2pmobile'; // PayPal Android app
+
+		// On mobile, try app deep link first
+		if (isMobile) {
+			let didHide = false;
+			const onVisibilityChange = () => { if (document.hidden) didHide = true; };
+			document.addEventListener('visibilitychange', onVisibilityChange);
+
+			// Attempt to open the PayPal app
+			(window as any).location.href = appLink;
+
+			// If the app doesn't open, fall back to app store
+			setTimeout(() => {
+				document.removeEventListener('visibilitychange', onVisibilityChange);
+				if (!didHide) {
+					if (platform === 'ios') {
+						(window as any).location.href = appStoreUrl;
+					} else if (platform === 'android') {
+						(window as any).location.href = playStoreUrl;
+					} else {
+						// Fallback to web on desktop
+						window.open(webUrl, '_blank', 'noopener,noreferrer');
+					}
+				}
+			}, timeoutMs);
+		} else {
+			// On desktop, open web link in new tab
+			window.open(webUrl, '_blank', 'noopener,noreferrer');
+		}
+	} catch {
+		// If parsing fails, just open the web URL
+		window.open(webUrl, '_blank', 'noopener,noreferrer');
+	}
+}
+
+// Universal payment link opener that detects payment method and uses appropriate mobile app
+export function openPaymentLinkWithMobileFallback(paymentLink: string, paymentMethod: 'venmo' | 'paypal'): void {
+	if (paymentMethod === 'venmo') {
+		openVenmoLinkWithFallback(paymentLink);
+	} else if (paymentMethod === 'paypal') {
+		openPayPalLinkWithFallback(paymentLink);
+	} else {
+		// Fallback for unknown payment methods
+		window.open(paymentLink, '_blank', 'noopener,noreferrer');
 	}
 }
