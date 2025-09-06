@@ -4925,14 +4925,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`🔐 Sending password reset email to: ${user.email}`);
       console.log(`🔐 Reset URL: ${resetUrl}`);
       
+      const emailStartTime = Date.now(); // Move outside try block for scope
+      console.log(`📧 [ROUTES] Starting email send at ${new Date().toISOString()}`);
+      
       try {
         console.log(`🔐 About to send email to: ${user.email}`);
         console.log(`🔐 Email function:`, typeof sendEmail);
         console.log(`🔐 Reset URL: ${resetUrl}`);
         console.log(`🔐 User details:`, { id: user.id, name: user.name, email: user.email });
-        
-        const emailStartTime = Date.now();
-        console.log(`📧 [ROUTES] Starting email send at ${new Date().toISOString()}`);
         
        await sendEmail(
         user.email,

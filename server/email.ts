@@ -182,9 +182,10 @@ export async function sendEmail(to: string, subject: string, html: string) {
     const maxRetries = 1; // Only 1 retry for speed
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      const attemptStartTime = Date.now(); // Move outside try block for scope
+      
       try {
         console.log(`📧 [EMAIL] Attempt ${attempt}/${maxRetries} - Starting sendMail...`);
-        const attemptStartTime = Date.now();
         
         const info = await transporter!.sendMail(mailOptions);
         
