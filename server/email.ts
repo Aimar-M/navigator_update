@@ -6,25 +6,21 @@ console.log('📧 Email module loaded successfully');
 let transporter: nodemailer.Transporter | null = null;
 
 try {
-  // Simple, reliable Gmail configuration
+  // Fast, simple Gmail configuration
   transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
       user: 'info@navigatortrips.com',
       pass: 'tpmp jfoc emgr nbgm',
     },
-    // Reasonable timeouts for reliable connection
-    connectionTimeout: 30000,  // 30 seconds - give Gmail time to connect
-    greetingTimeout: 15000,    // 15 seconds - reasonable greeting time
-    socketTimeout: 60000,      // 60 seconds - allow time for email sending
-    // Connection pooling for better performance
-    pool: true,
-    maxConnections: 5,
-    maxMessages: 100,
-    rateLimit: 10, // max 10 messages per second
-    // Retry settings
-    retryDelay: 2000, // 2 seconds between retries
-    retryAttempts: 3, // 3 attempts for reliability
+    // Fast timeouts for quick response
+    connectionTimeout: 10000,  // 10 seconds - fail fast if can't connect
+    greetingTimeout: 5000,     // 5 seconds - fail fast if no greeting
+    socketTimeout: 15000,      // 15 seconds - fail fast if sending hangs
+    // No pooling for single sends
+    pool: false,
+    // No retries at transport level - handle in sendEmail function
+    retryAttempts: 0,
     // Additional reliability settings
     tls: {
       rejectUnauthorized: false
@@ -103,18 +99,14 @@ export async function sendEmail(to: string, subject: string, html: string) {
           user: 'info@navigatortrips.com',
           pass: 'tpmp jfoc emgr nbgm',
         },
-        // Reasonable timeouts for reliable connection
-        connectionTimeout: 30000,  // 30 seconds - give Gmail time to connect
-        greetingTimeout: 15000,    // 15 seconds - reasonable greeting time
-        socketTimeout: 60000,      // 60 seconds - allow time for email sending
-        // Connection pooling for better performance
-        pool: true,
-        maxConnections: 5,
-        maxMessages: 100,
-        rateLimit: 10, // max 10 messages per second
-        // Retry settings
-        retryDelay: 2000, // 2 seconds between retries
-        retryAttempts: 3, // 3 attempts for reliability
+        // Fast timeouts for quick response
+        connectionTimeout: 10000,  // 10 seconds - fail fast if can't connect
+        greetingTimeout: 5000,     // 5 seconds - fail fast if no greeting
+        socketTimeout: 15000,      // 15 seconds - fail fast if sending hangs
+        // No pooling for single sends
+        pool: false,
+        // No retries at transport level - handle in sendEmail function
+        retryAttempts: 0,
         // Additional reliability settings
         tls: {
           rejectUnauthorized: false
@@ -157,13 +149,13 @@ export async function sendEmail(to: string, subject: string, html: string) {
       text: html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim(),
     };
 
-    // Send email with proper retry logic
+    // Send email with minimal retry for speed
     let lastError: any;
-    const maxRetries = 3; // 3 attempts for reliability
+    const maxRetries = 1; // Only 1 retry for speed
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        console.log(`📧 Sending email (attempt ${attempt}/${maxRetries})...`);
+        console.log(`📧 Sending email (attempt ${attempt})...`);
         const info = await transporter!.sendMail(mailOptions);
         console.log('✅ Email sent successfully:', info.messageId);
         console.log(`📧 Email sent to: ${to}`);
@@ -172,11 +164,11 @@ export async function sendEmail(to: string, subject: string, html: string) {
         return info;
       } catch (error: any) {
         lastError = error;
-        console.warn(`⚠️ Attempt ${attempt}/${maxRetries} failed:`, error.message);
+        console.warn(`⚠️ Attempt ${attempt} failed:`, error.message);
         
-        // If it's a timeout error and we have retries left, wait before retrying
+        // If it's a timeout error and we have retries left, wait briefly before retrying
         if (attempt < maxRetries && (error.code === 'ETIMEDOUT' || error.code === 'ECONNRESET')) {
-          const delay = 2000; // 2 second delay between retries
+          const delay = 1000; // 1 second delay for speed
           console.log(`⏳ Waiting ${delay}ms before retry...`);
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
