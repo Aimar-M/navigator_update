@@ -183,6 +183,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       emailModule: 'loaded'
     });
   });
+
+  // Google Places API routes
+  router.get('/places/autocomplete', async (req: Request, res: Response) => {
+    try {
+      const { input, sessionToken } = req.query;
+      
+      if (!input || typeof input !== 'string') {
+        return res.status(400).json({ message: 'Input parameter is required' });
+      }
+
+      const { getPlaceAutocomplete } = await import('./google-places');
+      const result = await getPlaceAutocomplete(input, sessionToken as string);
+      
+      res.json(result);
+    } catch (error: any) {
+      console.error('❌ Places autocomplete error:', error);
+      res.status(500).json({ message: 'Failed to get place autocomplete', error: error.message });
+    }
+  });
+
+  router.get('/places/details', async (req: Request, res: Response) => {
+    try {
+      const { placeId, sessionToken } = req.query;
+      
+      if (!placeId || typeof placeId !== 'string') {
+        return res.status(400).json({ message: 'Place ID parameter is required' });
+      }
+
+      const { getPlaceDetails } = await import('./google-places');
+      const result = await getPlaceDetails(placeId, sessionToken as string);
+      
+      res.json(result);
+    } catch (error: any) {
+      console.error('❌ Place details error:', error);
+      res.status(500).json({ message: 'Failed to get place details', error: error.message });
+    }
+  });
+
   
   // Username validation endpoint
   router.get('/users/validate', async (req: Request, res: Response) => {

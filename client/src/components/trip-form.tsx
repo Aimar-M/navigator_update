@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import CityAutocomplete from "@/components/city-autocomplete";
+import GooglePlacesAutocomplete from "@/components/google-places-autocomplete";
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -151,12 +151,20 @@ export default function TripForm({ onComplete }: TripFormProps) {
               <label htmlFor="destination" className="block text-sm font-medium text-gray-700 mb-1">
                 Destination
               </label>
-              <CityAutocomplete
+              <GooglePlacesAutocomplete
                 id="destination"
                 name="destination"
                 value={formData.destination}
                 onChange={(value) => setFormData(prev => ({ ...prev, destination: value }))}
+                onPlaceSelect={(place) => {
+                  console.log('Selected destination:', place);
+                  // Store coordinates for future use
+                  if (place.geometry?.location) {
+                    console.log('Coordinates:', place.geometry.location);
+                  }
+                }}
                 placeholder="Where are you going?"
+                types="(cities)"
                 required
               />
             </div>

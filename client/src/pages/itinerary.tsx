@@ -16,6 +16,7 @@ import ActivityCard from "@/components/activity-card";
 import TripDetailLayout from "@/components/trip-detail-layout";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import GooglePlacesAutocomplete from "@/components/google-places-autocomplete";
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -839,11 +840,19 @@ function Itinerary() {
 
                 <div>
                   <Label htmlFor="activity-location">Location</Label>
-                  <Input
+                  <GooglePlacesAutocomplete
                     id="activity-location"
                     value={activityFormData.location}
-                    onChange={(e) => setActivityFormData(prev => ({ ...prev, location: e.target.value }))}
+                    onChange={(value) => setActivityFormData(prev => ({ ...prev, location: value }))}
+                    onPlaceSelect={(place) => {
+                      console.log('Selected activity location:', place);
+                      // Store coordinates for future use
+                      if (place.geometry?.location) {
+                        console.log('Activity coordinates:', place.geometry.location);
+                      }
+                    }}
                     placeholder="Where is this activity?"
+                    types="establishment"
                   />
                 </div>
               </div>
