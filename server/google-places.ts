@@ -1,29 +1,10 @@
-import { google } from 'googleapis';
-
 console.log('🗺️ Google Places API module loaded successfully');
 
-// Create auth client using existing Google credentials
-const authClient = new google.auth.GoogleAuth({
-  credentials: {
-    client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-    private_key: process.env.GOOGLE_SERVICE_ACCOUNT_KEY?.replace(/\\n/g, '\n'),
-  },
-  scopes: [
-    'https://www.googleapis.com/auth/maps.places',
-    'https://www.googleapis.com/auth/maps.places.autocomplete',
-    'https://www.googleapis.com/auth/maps.places.details',
-  ],
-});
+// Check if we have the required API key
+const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 
-// Get access token for API requests
-async function getAccessToken() {
-  try {
-    const auth = await authClient.getAccessToken();
-    return auth.token;
-  } catch (error) {
-    console.error('❌ Error getting access token:', error);
-    throw error;
-  }
+if (!GOOGLE_PLACES_API_KEY) {
+  console.error('❌ GOOGLE_PLACES_API_KEY environment variable is not set');
 }
 
 // Place Autocomplete function
@@ -31,31 +12,21 @@ export async function getPlaceAutocomplete(input: string, sessionToken?: string)
   try {
     console.log('🔍 [PLACES-API] Getting place autocomplete for:', input);
     
-    const accessToken = await getAccessToken();
+    if (!GOOGLE_PLACES_API_KEY) {
+      throw new Error('Google Places API key not configured');
+    }
     
-    const url = new URL('https://places.googleapis.com/v1/places:autocomplete');
+    const url = new URL('https://maps.googleapis.com/maps/api/place/autocomplete/json');
     url.searchParams.append('input', input);
-    url.searchParams.append('languageCode', 'en');
-    url.searchParams.append('regionCode', 'us');
+    url.searchParams.append('key', GOOGLE_PLACES_API_KEY);
+    url.searchParams.append('language', 'en');
+    url.searchParams.append('region', 'us');
     
     if (sessionToken) {
-      url.searchParams.append('sessionToken', sessionToken);
+      url.searchParams.append('sessiontoken', sessionToken);
     }
 
-    const response = await fetch(url.toString(), {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-        'X-Goog-FieldMask': 'suggestions.placePrediction.placeId,suggestions.placePrediction.text,suggestions.placePrediction.structuredFormat'
-      },
-      body: JSON.stringify({
-        input: input,
-        languageCode: 'en',
-        regionCode: 'us',
-        sessionToken: sessionToken
-      })
-    });
+    const response = await fetch(url.toString());
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -65,15 +36,20 @@ export async function getPlaceAutocomplete(input: string, sessionToken?: string)
 
     const data = await response.json();
     
+    if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+      console.error('❌ Places API status error:', data.status, data.error_message);
+      throw new Error(`Places API error: ${data.status} - ${data.error_message}`);
+    }
+
     // Transform the response to match expected format
-    const predictions = data.suggestions?.map((suggestion: any) => ({
-      place_id: suggestion.placePrediction?.placeId,
-      description: suggestion.placePrediction?.text?.text,
+    const predictions = data.predictions?.map((prediction: any) => ({
+      place_id: prediction.place_id,
+      description: prediction.description,
       structured_formatting: {
-        main_text: suggestion.placePrediction?.structuredFormat?.mainText?.text,
-        secondary_text: suggestion.placePrediction?.structuredFormat?.secondaryText?.text
+        main_text: prediction.structured_formatting?.main_text,
+        secondary_text: prediction.structured_formatting?.secondary_text
       },
-      types: suggestion.placePrediction?.types || []
+      types: prediction.types || []
     })) || [];
 
     return { predictions };
@@ -88,18 +64,21 @@ export async function getPlaceDetails(placeId: string, sessionToken?: string) {
   try {
     console.log('📍 [PLACES-API] Getting place details for:', placeId);
     
-    const accessToken = await getAccessToken();
+    if (!GOOGLE_PLACES_API_KEY) {
+      throw new Error('Google Places API key not configured');
+    }
     
-    const url = `https://places.googleapis.com/v1/places/${placeId}`;
+    const url = new URL('https://maps.googleapis.com/maps/api/place/details/json');
+    url.searchParams.append('place_id', placeId);
+    url.searchParams.append('key', GOOGLE_PLACES_API_KEY);
+    url.searchParams.append('language', 'en');
+    url.searchParams.append('fields', 'place_id,name,formatted_address,geometry,rating,types');
     
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-        'X-Goog-FieldMask': 'id,displayName,formattedAddress,location,rating,types'
-      }
-    });
+    if (sessionToken) {
+      url.searchParams.append('sessiontoken', sessionToken);
+    }
+
+    const response = await fetch(url.toString());
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -109,19 +88,24 @@ export async function getPlaceDetails(placeId: string, sessionToken?: string) {
 
     const data = await response.json();
     
+    if (data.status !== 'OK') {
+      console.error('❌ Places Details API status error:', data.status, data.error_message);
+      throw new Error(`Places Details API error: ${data.status} - ${data.error_message}`);
+    }
+
     // Transform the response to match expected format
     const result = {
-      place_id: data.id,
-      name: data.displayName?.text,
-      formatted_address: data.formattedAddress,
+      place_id: data.result.place_id,
+      name: data.result.name,
+      formatted_address: data.result.formatted_address,
       geometry: {
         location: {
-          lat: data.location?.latitude,
-          lng: data.location?.longitude
+          lat: data.result.geometry?.location?.lat,
+          lng: data.result.geometry?.location?.lng
         }
       },
-      rating: data.rating,
-      types: data.types || []
+      rating: data.result.rating,
+      types: data.result.types || []
     };
 
     return { result };
@@ -134,22 +118,19 @@ export async function getPlaceDetails(placeId: string, sessionToken?: string) {
 
 // Health check function
 export function getGooglePlacesStatus() {
-  const hasServiceAccountEmail = !!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  const hasServiceAccountKey = !!process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-  const configured = hasServiceAccountEmail && hasServiceAccountKey;
+  const hasApiKey = !!GOOGLE_PLACES_API_KEY;
+  const configured = hasApiKey;
   
   console.log('🔍 [PLACES-API] Status check:', {
     configured,
-    hasServiceAccountEmail,
-    hasServiceAccountKey,
+    hasApiKey,
     timestamp: new Date().toISOString()
   });
   
   return {
     configured,
     ready: configured,
-    hasServiceAccountEmail,
-    hasServiceAccountKey,
+    hasApiKey,
     timestamp: new Date().toISOString()
   };
 }
