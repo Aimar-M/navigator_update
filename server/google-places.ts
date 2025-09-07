@@ -2,9 +2,6 @@ import { google } from 'googleapis';
 
 console.log('🗺️ Google Places API module loaded successfully');
 
-// Google Places API configuration
-const places = google.maps({ version: 'v1' });
-
 // Create auth client using existing Google credentials
 const authClient = new google.auth.GoogleAuth({
   credentials: {
@@ -18,15 +15,15 @@ const authClient = new google.auth.GoogleAuth({
   ],
 });
 
-// Set the auth client
-places.context._options.auth = authClient;
+// Google Places API configuration
+const places = google.places({ version: 'v1', auth: authClient });
 
 // Place Autocomplete function
 export async function getPlaceAutocomplete(input: string, sessionToken?: string) {
   try {
     console.log('🔍 [PLACES-API] Getting place autocomplete for:', input);
     
-    const response = await places.places.autocomplete({
+    const response = await places.autocomplete({
       input: input,
       sessionToken: sessionToken,
       language: 'en',
@@ -45,7 +42,7 @@ export async function getPlaceDetails(placeId: string, sessionToken?: string) {
   try {
     console.log('📍 [PLACES-API] Getting place details for:', placeId);
     
-    const response = await places.places.details({
+    const response = await places.details({
       placeId: placeId,
       sessionToken: sessionToken,
       language: 'en',
@@ -54,19 +51,8 @@ export async function getPlaceDetails(placeId: string, sessionToken?: string) {
         'name',
         'formatted_address',
         'geometry',
-        'photos',
         'rating',
-        'user_ratings_total',
-        'types',
-        'opening_hours',
-        'website',
-        'formatted_phone_number',
-        'international_phone_number',
-        'price_level',
-        'reviews',
-        'url',
-        'vicinity',
-        'address_components'
+        'types'
       ].join(','),
     });
 
