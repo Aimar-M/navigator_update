@@ -90,7 +90,8 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
       if (types) params.append('types', types);
       if (country) params.append('region', country);
 
-      const response = await fetch(`/api/places/autocomplete?${params}`);
+      const API_BASE = import.meta.env.VITE_API_URL || 'https://api.navigatortrips.com';
+      const response = await fetch(`${API_BASE}/api/places/autocomplete?${params}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch suggestions');
@@ -137,7 +138,8 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
     // Fetch place details if callback provided
     if (onPlaceSelect) {
       try {
-        const response = await fetch(`/api/places/details?placeId=${suggestion.place_id}&sessionToken=${sessionToken}`);
+        const API_BASE = import.meta.env.VITE_API_URL || 'https://api.navigatortrips.com';
+        const response = await fetch(`${API_BASE}/api/places/details?placeId=${suggestion.place_id}&sessionToken=${sessionToken}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch place details');
