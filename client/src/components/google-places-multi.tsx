@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState, memo } from "react";
 import GooglePlacesAutocomplete from "@/components/google-places-autocomplete";
 
 interface PlaceChip {
@@ -16,7 +16,7 @@ interface GooglePlacesMultiProps {
   types?: string;
 }
 
-export default function GooglePlacesMulti({
+function GooglePlacesMultiImpl({
   value,
   onChange,
   placeholder = "Where are you going?",
@@ -51,7 +51,7 @@ export default function GooglePlacesMulti({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chips]);
 
-  const handleAdd = (label: string, placeId?: string) => {
+  const handleAdd = useCallback((label: string, placeId?: string) => {
     const normalized = label.trim();
     if (!normalized) return;
     // Avoid duplicates (case-insensitive)
@@ -64,11 +64,11 @@ export default function GooglePlacesMulti({
       { id: placeId || `${Date.now()}`, label: normalized },
     ]);
     setInputValue("");
-  };
+  }, [chips]);
 
-  const removeChip = (id: string) => {
+  const removeChip = useCallback((id: string) => {
     setChips((prev) => prev.filter((c) => c.id !== id));
-  };
+  }, []);
 
   return (
     <div className={className}>
@@ -111,3 +111,7 @@ export default function GooglePlacesMulti({
     </div>
   );
 }
+
+const GooglePlacesMulti = memo(GooglePlacesMultiImpl);
+
+export default GooglePlacesMulti;
