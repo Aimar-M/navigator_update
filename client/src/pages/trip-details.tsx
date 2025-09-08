@@ -24,6 +24,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { invalidateAllUserQueries } from '@/lib/profile-update-utils';
+import GooglePlacesAutocomplete from "@/components/google-places-autocomplete";
+import GooglePlacesMulti from "@/components/google-places-multi";
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -546,10 +548,12 @@ export default function TripDetails() {
                 <div className="flex-1">
                   <h3 className="font-medium">Destination</h3>
                   {isEditing ? (
-                    <Input
+                    <GooglePlacesMulti
+                      id="edit-destination"
                       value={editForm.destination}
-                      onChange={(e) => setEditForm(prev => ({ ...prev, destination: e.target.value }))}
+                      onChange={(value) => setEditForm(prev => ({ ...prev, destination: value }))}
                       placeholder="Enter destination"
+                      types="(cities)"
                       className="mt-1"
                     />
                   ) : (
