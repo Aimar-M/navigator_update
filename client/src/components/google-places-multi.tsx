@@ -29,27 +29,48 @@ function GooglePlacesMultiImpl({
   const [chips, setChips] = useState<PlaceChip[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const normalizeListString = useCallback((s: string) => {
+    const items = (s || "")
+      .split(",") // accept both "," and ", " forms
+      .map((p) => p.trim())
+      .filter(Boolean);
+    // de-duplicate case-insensitively, preserve order
+    const seen = new Set<string>();
+    const result: string[] = [];
+    for (const item of items) {
+      const key = item.toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push(item);
+      }
+    }
+    return result.join(", ");
+  }, []);
+
   // Initialize/sync from comma-separated value, but avoid feedback loop
   useEffect(() => {
-    const currentJoined = chips.map((c) => c.label).join(", ");
-    const external = (value || "").trim();
+    const currentJoined = normalizeListString(chips.map((c) => c.label).join(", "));
+    const external = normalizeListString(value || "");
     if (external === currentJoined) return; // no change needed
 
-    const parsed = external
-      .split(", ") // split on comma + space between destinations
+    const parsed = (external ? external.split(", ") : [])
       .map((s) => s.trim())
       .filter(Boolean);
     setChips(
       parsed.map((label, idx) => ({ id: `${idx}-${label.toLowerCase()}`, label }))
     );
-  }, [value]);
+  }, [value, normalizeListString]);
 
-  // Emit changes on chips update
+  // Emit changes on chips update (light debounce to avoid rapid parent re-renders)
   useEffect(() => {
-    const joined = chips.map((c) => c.label).join(", ");
-    if (joined !== value) onChange(joined);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chips]);
+    const joined = normalizeListString(chips.map((c) => c.label).join(", "));
+    const external = normalizeListString(value);
+    if (joined === external) return;
+    const t = setTimeout(() => {
+      onChange(joined);
+    }, 120);
+    return () => clearTimeout(t);
+  }, [chips, value, onChange, normalizeListString]);
 
   const handleAdd = useCallback((label: string, placeId?: string) => {
     const normalized = label.trim();
