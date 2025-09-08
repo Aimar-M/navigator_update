@@ -183,7 +183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       emailModule: 'loaded'
     });
   });
-
+  
   // Google Places API routes
   router.get('/places/autocomplete', async (req: Request, res: Response) => {
     try {

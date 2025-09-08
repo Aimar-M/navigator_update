@@ -29,10 +29,14 @@ export default function GooglePlacesMulti({
   const [chips, setChips] = useState<PlaceChip[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Initialize from comma-separated value
+  // Initialize/sync from comma-separated value, but avoid feedback loop
   useEffect(() => {
-    const parsed = (value || "")
-      .split(",")
+    const currentJoined = chips.map((c) => c.label).join(", ");
+    const external = (value || "").trim();
+    if (external === currentJoined) return; // no change needed
+
+    const parsed = external
+      .split(", ") // split on comma + space between destinations
       .map((s) => s.trim())
       .filter(Boolean);
     setChips(
@@ -97,7 +101,8 @@ export default function GooglePlacesMulti({
         value={inputValue}
         onChange={setInputValue}
         onPlaceSelect={(place) => {
-          const label = place.formatted_address || place.name;
+          // Prefer a concise label (city name) to avoid internal commas splitting
+          const label = place.name || place.formatted_address || "";
           handleAdd(label, place.place_id);
         }}
         placeholder={placeholder}
