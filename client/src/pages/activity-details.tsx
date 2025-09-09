@@ -341,7 +341,7 @@ export default function ActivityDetails() {
               <div className="flex items-center gap-2">
                 <ExternalLink className="h-4 w-4 text-gray-500" />
                 <a 
-                  href={activity.activityLink}
+                  href={activity.activityLink.startsWith('http') ? activity.activityLink : `https://${activity.activityLink}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-blue-600 hover:text-blue-800 underline"
