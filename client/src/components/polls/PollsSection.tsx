@@ -161,7 +161,7 @@ const PollCard = ({ poll, tripId }: { poll: any; tripId: number }) => {
                         size="sm" 
                         onClick={() => handleVote(index)} 
                         disabled={voteMutation.isPending}
-                        className="text-primary-600 border-primary-400 hover:text-primary-700 hover:bg-primary-50 hover:border-primary-500 py-0 h-6"
+                        className="text-primary-700 border-primary-400 hover:text-primary-800 hover:bg-primary-50 hover:border-primary-500 py-0 h-6"
                       >
                         Vote {poll.multipleChoice && userVoteIndices.length > 0 ? "(Multiple allowed)" : ""}
                       </Button>
