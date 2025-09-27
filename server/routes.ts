@@ -327,7 +327,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // ... existing code ...
         await sendEmail(
           user.email,
-          'Welcome to Navigator – Confirm Your Email',
+          'Welcome to Navigator - Confirm Your Email',
           `
           <!DOCTYPE html>
           <html>
