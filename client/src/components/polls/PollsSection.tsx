@@ -147,7 +147,7 @@ const PollCard = ({ poll, tripId }: { poll: any; tripId: number }) => {
                       size="sm" 
                       onClick={() => handleRemoveVote(userVoteId)} 
                       disabled={removeVoteMutation.isPending}
-                      className="text-red-600 border-red-300 hover:text-red-700 hover:bg-red-50 hover:border-red-400 py-0 h-6"
+                      className="text-red-600 border-red-400 hover:text-red-700 hover:bg-red-50 hover:border-red-500 py-0 h-6"
                     >
                       Remove vote
                     </Button>
@@ -161,7 +161,7 @@ const PollCard = ({ poll, tripId }: { poll: any; tripId: number }) => {
                         size="sm" 
                         onClick={() => handleVote(index)} 
                         disabled={voteMutation.isPending}
-                        className="text-primary-600 border-primary-300 hover:text-primary-700 hover:bg-primary-50 hover:border-primary-400 py-0 h-6"
+                        className="text-primary-600 border-primary-400 hover:text-primary-700 hover:bg-primary-50 hover:border-primary-500 py-0 h-6"
                       >
                         Vote {poll.multipleChoice && userVoteIndices.length > 0 ? "(Multiple allowed)" : ""}
                       </Button>
