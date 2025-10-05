@@ -10,7 +10,7 @@ import {
   messages, surveyQuestions, surveyResponses, expenses, expenseSplits, settlements,
   polls, pollVotes, invitationLinks, userTripSettings
 } from "@shared/schema";
-import { eq, and, desc, sql, ilike, inArray, isNotNull, lt } from "drizzle-orm";
+import { eq, and, or, desc, sql, ilike, inArray, isNotNull, lt } from "drizzle-orm";
 export class DatabaseStorage {
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -932,21 +932,24 @@ export class DatabaseStorage {
       })
     );
 
-    // Add confirmed settlements as settlement transactions
-    const confirmedSettlements = await db
+    // Add confirmed and rejected settlements as settlement transactions
+    const processedSettlements = await db
       .select()
       .from(settlements)
       .where(
         and(
           eq(settlements.tripId, tripId),
-          eq(settlements.status, 'confirmed')
+          or(
+            eq(settlements.status, 'confirmed'),
+            eq(settlements.status, 'rejected')
+          )
         )
       )
-      .orderBy(desc(settlements.confirmedAt));
+      .orderBy(desc(settlements.updatedAt));
 
     // Convert settlements to expense-like format with user details
     const settlementTransactions = await Promise.all(
-      confirmedSettlements.map(async (settlement) => {
+      processedSettlements.map(async (settlement) => {
         const payer = await this.getUser(settlement.payerId);
         const payee = await this.getUser(settlement.payeeId);
         
@@ -955,7 +958,7 @@ export class DatabaseStorage {
           title: `Payment: ${payer?.name || payer?.username || 'Unknown'} → ${payee?.name || payee?.username || 'Unknown'}`,
           amount: parseFloat(settlement.amount),
           category: 'settlement',
-          date: settlement.confirmedAt?.toISOString() || new Date().toISOString(),
+          date: settlement.status === 'confirmed' ? (settlement.confirmedAt?.toISOString() || new Date().toISOString()) : (settlement.rejectedAt?.toISOString() || new Date().toISOString()),
           description: settlement.notes || `${settlement.paymentMethod ? settlement.paymentMethod.charAt(0).toUpperCase() + settlement.paymentMethod.slice(1) : 'Cash'} payment settlement`,
           paidBy: settlement.payerId,
           paidByUser: {
@@ -965,6 +968,7 @@ export class DatabaseStorage {
           },
           activityId: null,
           isSettlement: true,
+          status: settlement.status,
           paymentMethod: settlement.paymentMethod,
           shares: []
         };
