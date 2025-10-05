@@ -5472,7 +5472,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Add a small delay to ensure session is fully established
         console.log('⏳ Waiting for session to be fully established...');
         
-        // Successful authentication, redirect to frontend homepage with user ID
+        // Successful authentication, redirect to frontend dashboard with user ID
         const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://navigator-update.vercel.app';
         console.log('🔐 Frontend URL:', frontendUrl);
         console.log('🔍 Environment variables check:', {
@@ -5490,8 +5490,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email: req.user.email
         });
         
-        // Redirect to frontend with temporary token
-        const redirectUrl = `${frontendUrl}/?oauth_token=${tempToken}&user_id=${req.user.id}`;
+        // Redirect to frontend dashboard with temporary token
+        const redirectUrl = `${frontendUrl}/dashboard?oauth_token=${tempToken}&user_id=${req.user.id}`;
         console.log('🚀 Final redirect URL:', redirectUrl);
         console.log('🔍 OAuth flow summary:', {
           step: 'callback_complete',
