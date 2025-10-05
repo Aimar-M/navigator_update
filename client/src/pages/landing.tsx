@@ -2,8 +2,8 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect } from "react";
-import backgroundVideo from "@assets/IMG_4795_1758657014573.mov";
-import navigatorLogo from "@assets/navigator-logo.svg";
+import backgroundVideo from "@/assets/IMG_4795_1758657014573.mov";
+import navigatorLogo from "@/assets/navigator-logo.svg";
 
 export default function Landing() {
   const { user, isLoading } = useAuth();
