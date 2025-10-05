@@ -300,6 +300,8 @@ export default function Chat() {
       
       <main className={`flex-1 flex flex-col overflow-hidden ${isFromChatsPage ? '' : ''}`}>
         {/* Trip Header - More compact on mobile */}
+        {/* Commented out as it's unnecessary - users already know what chat they're in */}
+        {/*
         <div className="bg-white border-b border-gray-200 p-3 md:p-4">
           <div className="flex items-center justify-between relative">
             {isFromChatsPage && (
@@ -326,6 +328,7 @@ export default function Chat() {
             {isFromChatsPage && <div className="w-8"></div>}
           </div>
         </div>
+        */}
 
         {/* Tab Navigation - only show when not coming from chats page */}
         {!isFromChatsPage && <TripTabs tripId={tripId} />}
