@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Bell, CheckCircle, Clock, HandHeart } from "lucide-react";
+import { Bell, CheckCircle, Clock, HandHeart, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -84,8 +84,41 @@ export function NotificationBell() {
     },
   });
 
+  const rejectMutation = useMutation({
+    mutationFn: async (settlementId: number) => {
+      return await apiRequest('POST', `${API_BASE}/api/settlements/${settlementId}/reject`, {});
+    },
+    onSuccess: () => {
+      toast({
+        title: "Payment Rejected",
+        description: "Payment has been marked as not received.",
+      });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/settlements/pending`] });
+      // Also invalidate trip expenses, balances, and settlements list to update visuals
+      pendingSettlements.forEach(settlement => {
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${settlement.tripId}/settlements`] });
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${settlement.tripId}/expenses/balances`] });
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${settlement.tripId}/expenses`] });
+        // Force refetch instead of using cache
+        queryClient.refetchQueries({ queryKey: [`${API_BASE}/api/trips/${settlement.tripId}/expenses/balances`] });
+        queryClient.refetchQueries({ queryKey: [`${API_BASE}/api/trips/${settlement.tripId}/expenses`] });
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Rejection Failed",
+        description: error.message || "Failed to reject settlement.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleConfirmSettlement = (settlementId: number) => {
     confirmMutation.mutate(settlementId);
+  };
+
+  const handleRejectSettlement = (settlementId: number) => {
+    rejectMutation.mutate(settlementId);
   };
 
   const formatCurrency = (amount: string) => {
@@ -177,7 +210,7 @@ export function NotificationBell() {
                         <Button
                           size="sm"
                           onClick={() => handleConfirmSettlement(settlement.id)}
-                          disabled={confirmMutation.isPending}
+                          disabled={confirmMutation.isPending || rejectMutation.isPending}
                           className="flex-1"
                         >
                           {confirmMutation.isPending ? (
@@ -189,6 +222,25 @@ export function NotificationBell() {
                             <>
                               <CheckCircle className="h-3 w-3 mr-2" />
                               Confirm Receipt
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleRejectSettlement(settlement.id)}
+                          disabled={confirmMutation.isPending || rejectMutation.isPending}
+                          className="flex-1"
+                        >
+                          {rejectMutation.isPending ? (
+                            <>
+                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-600 mr-2"></div>
+                              Rejecting...
+                            </>
+                          ) : (
+                            <>
+                              <X className="h-3 w-3 mr-2" />
+                              Reject Payment
                             </>
                           )}
                         </Button>
