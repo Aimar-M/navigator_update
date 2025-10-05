@@ -3,6 +3,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
+import Landing from "@/pages/landing";
+import About from "@/pages/about";
+import Contact from "@/pages/contact";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import TripDetails from "@/pages/trip-details";
@@ -29,9 +32,12 @@ import ConfirmEmail from "@/pages/confirm-email";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Home} />
+      <Route path="/" component={Landing} />
+      <Route path="/about" component={About} />
+      <Route path="/contact" component={Contact} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/dashboard" component={Home} />
       <Route path="/create-trip" component={CreateTrip} />
       <Route path="/trips/:id" component={TripDetails} />
       <Route path="/trips/:id/chat" component={Chat} />
