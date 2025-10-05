@@ -43,11 +43,11 @@ function parseAccommodationLink(link: string): { name: string; url: string } {
       const domain = new URL(link).hostname.replace('www.', '');
       return { name: domain, url: link };
     } catch {
-      return { name: 'Accommodation Link', url: link };
+      return { name: '', url: link };
     }
   }
   
-  return { name: 'Accommodation Link', url: link };
+  return { name: '', url: link };
 }
 
 function formatAccommodationLink(name: string, url: string): string {
@@ -83,7 +83,7 @@ export default function TripDetails() {
     description: '',
     startDate: '',
     endDate: '',
-    accommodationLinks: ['||'],
+    accommodationLinks: [''],
     airportGateway: ''
   });
   const [memberToRemove, setMemberToRemove] = useState<TripMember | null>(null);
@@ -306,7 +306,7 @@ export default function TripDetails() {
         description: trip.description || '',
         startDate: trip.startDate.split('T')[0], // Convert to YYYY-MM-DD format
         endDate: trip.endDate.split('T')[0],
-        accommodationLinks: trip.accommodationLinks && trip.accommodationLinks.length > 0 ? trip.accommodationLinks : ['||'],
+        accommodationLinks: trip.accommodationLinks && trip.accommodationLinks.length > 0 ? trip.accommodationLinks : [''],
         airportGateway: trip.airportGateway || ''
       });
     }
@@ -655,7 +655,7 @@ export default function TripDetails() {
                         onClick={() => {
                           setEditForm(prev => ({ 
                             ...prev, 
-                            accommodationLinks: [...prev.accommodationLinks, '||'] 
+                            accommodationLinks: [...prev.accommodationLinks, ''] 
                           }));
                         }}
                         className="text-blue-600 border-blue-200 hover:bg-blue-50"
