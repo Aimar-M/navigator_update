@@ -306,7 +306,15 @@ export default function TripDetails() {
         description: trip.description || '',
         startDate: trip.startDate.split('T')[0], // Convert to YYYY-MM-DD format
         endDate: trip.endDate.split('T')[0],
-        accommodationLinks: trip.accommodationLinks && trip.accommodationLinks.length > 0 ? trip.accommodationLinks : ['Accommodation Name||'],
+        accommodationLinks: trip.accommodationLinks && trip.accommodationLinks.length > 0 ? 
+          trip.accommodationLinks.map(link => {
+            const linkData = parseAccommodationLink(link);
+            // If link exists but has no name, provide default
+            if (linkData.url && !linkData.name.trim()) {
+              return formatAccommodationLink('Accommodation Name', linkData.url);
+            }
+            return link;
+          }) : ['Accommodation Name||'],
         airportGateway: trip.airportGateway || ''
       });
     }
