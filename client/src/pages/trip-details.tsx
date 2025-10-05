@@ -83,7 +83,7 @@ export default function TripDetails() {
     description: '',
     startDate: '',
     endDate: '',
-    accommodationLinks: ['Accommodation Name||'],
+    accommodationLinks: ['||'],
     airportGateway: ''
   });
   const [memberToRemove, setMemberToRemove] = useState<TripMember | null>(null);
@@ -306,15 +306,7 @@ export default function TripDetails() {
         description: trip.description || '',
         startDate: trip.startDate.split('T')[0], // Convert to YYYY-MM-DD format
         endDate: trip.endDate.split('T')[0],
-        accommodationLinks: trip.accommodationLinks && trip.accommodationLinks.length > 0 ? 
-          trip.accommodationLinks.map(link => {
-            const linkData = parseAccommodationLink(link);
-            // If link exists but has no name, provide default
-            if (linkData.url && !linkData.name.trim()) {
-              return formatAccommodationLink('Accommodation Name', linkData.url);
-            }
-            return link;
-          }) : ['Accommodation Name||'],
+        accommodationLinks: trip.accommodationLinks && trip.accommodationLinks.length > 0 ? trip.accommodationLinks : ['||'],
         airportGateway: trip.airportGateway || ''
       });
     }
@@ -663,7 +655,7 @@ export default function TripDetails() {
                         onClick={() => {
                           setEditForm(prev => ({ 
                             ...prev, 
-                            accommodationLinks: [...prev.accommodationLinks, 'Accommodation Name||'] 
+                            accommodationLinks: [...prev.accommodationLinks, '||'] 
                           }));
                         }}
                         className="text-blue-600 border-blue-200 hover:bg-blue-50"
