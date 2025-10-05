@@ -236,14 +236,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      console.log('Logout: Starting logout process');
       await logoutUser();
       // Remove the token from localStorage
       removeAuthToken();
       setUser(null);
       queryClient.clear(); // Clear all cached queries after logout
       wsClient.disconnect();
-      console.log('Logout: Redirecting to landing page');
+      
+      // Clear any remaining auth state
+      localStorage.removeItem('auth_token');
+      sessionStorage.clear();
+      
       // Use window.location for a hard redirect to avoid race conditions
       window.location.href = "/";
     } catch (error) {
