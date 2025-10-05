@@ -299,9 +299,8 @@ export default function Chat() {
       {!isFromChatsPage && <Header />}
       
       <main className={`flex-1 flex flex-col overflow-hidden ${isFromChatsPage ? '' : ''}`}>
-        {/* Trip Header - More compact on mobile */}
-        {/* Commented out as it's unnecessary - users already know what chat they're in */}
-        {/*
+        {/* Trip Header - Commented out as it's unnecessary - users already know what chat they're in */}
+        {/* 
         <div className="bg-white border-b border-gray-200 p-3 md:p-4">
           <div className="flex items-center justify-between relative">
             {isFromChatsPage && (
@@ -324,7 +323,6 @@ export default function Chat() {
                 {isFromChatsPage ? "Tap to see trip details" : "Group Chat"}
               </p>
             </div>
-            {/* Empty div to balance the header when back button is shown */}
             {isFromChatsPage && <div className="w-8"></div>}
           </div>
         </div>
