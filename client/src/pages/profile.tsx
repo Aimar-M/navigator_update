@@ -34,6 +34,12 @@ export default function Profile() {
     paypalEmail: "",
   });
 
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+
   // Fetch user profile data
   const { data: profile, isLoading: isProfileLoading } = useQuery({
     queryKey: [`${API_BASE}/api/auth/me`],
@@ -99,6 +105,31 @@ export default function Profile() {
     onSettled: () => {
       // Always refetch to ensure sync
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/auth/me`] });
+    },
+  });
+
+  // Password change mutation
+  const changePasswordMutation = useMutation({
+    mutationFn: async (passwordData: { currentPassword: string; newPassword: string }) => {
+      return await apiRequest('PUT', `${API_BASE}/api/users/password`, passwordData);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Password Updated",
+        description: "Your password has been successfully changed.",
+      });
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Password Change Failed",
+        description: error.message || "There was a problem changing your password. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -213,6 +244,42 @@ export default function Profile() {
     }
     
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setPasswordData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast({
+        title: "Password Mismatch",
+        description: "New password and confirm password do not match.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      toast({
+        title: "Password Too Short",
+        description: "New password must be at least 6 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await changePasswordMutation.mutateAsync({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
+    } catch (error) {
+      // Error handling is done in the mutation's onError
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -606,6 +673,81 @@ export default function Profile() {
                     </div>
                   </div>
 
+                  {/* Password Change Section */}
+                  <div className="border-t pt-6 mt-6">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Change Password</h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Update your password to keep your account secure.
+                    </p>
+                    
+                    <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                      <div>
+                        <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                          Current Password
+                        </label>
+                        <Input
+                          id="currentPassword"
+                          name="currentPassword"
+                          type="password"
+                          value={passwordData.currentPassword}
+                          onChange={handlePasswordChange}
+                          placeholder="Enter your current password"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                          New Password
+                        </label>
+                        <Input
+                          id="newPassword"
+                          name="newPassword"
+                          type="password"
+                          value={passwordData.newPassword}
+                          onChange={handlePasswordChange}
+                          placeholder="Enter your new password"
+                          required
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Password must be at least 6 characters long
+                        </p>
+                      </div>
+
+                      <div>
+                        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                          Confirm New Password
+                        </label>
+                        <Input
+                          id="confirmPassword"
+                          name="confirmPassword"
+                          type="password"
+                          value={passwordData.confirmPassword}
+                          onChange={handlePasswordChange}
+                          placeholder="Confirm your new password"
+                          required
+                        />
+                      </div>
+
+                      <div className="flex justify-end">
+                        <Button 
+                          type="submit" 
+                          variant="outline"
+                          disabled={changePasswordMutation.isPending}
+                        >
+                          {changePasswordMutation.isPending ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+                              Changing Password...
+                            </>
+                          ) : (
+                            "Change Password"
+                          )}
+                        </Button>
+                      </div>
+                    </form>
+                  </div>
+
                   <div className="flex justify-end space-x-3 pt-4">
                     <Button type="button" variant="outline" onClick={cancelEdit}>
                       Cancel
@@ -645,8 +787,15 @@ function ProfileCompletionBar({ formData }: { formData: any }) {
     { key: 'location', label: 'Location' },
     { key: 'venmoUsername', label: 'Venmo Username' },
     { key: 'paypalEmail', label: 'PayPal Email' },
+    { key: 'password', label: 'Password Set' },
   ];
-  const completed = fields.filter(f => formData[f.key] && formData[f.key].trim() !== '').length;
+  const completed = fields.filter(f => {
+    if (f.key === 'password') {
+      // All users have passwords (required for login), so this is always completed
+      return true;
+    }
+    return formData[f.key] && formData[f.key].trim() !== '';
+  }).length;
   const percent = Math.round((completed / fields.length) * 100);
 
   return (
