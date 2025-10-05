@@ -6,11 +6,26 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Send } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
+
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export default function Contact() {
   const { user, isLoading } = useAuth();
   const [, navigate] = useLocation();
+  const { toast } = useToast();
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    subject: '',
+    message: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Redirect authenticated users to dashboard
   useEffect(() => {
@@ -18,6 +33,86 @@ export default function Contact() {
       navigate("/dashboard");
     }
   }, [user, isLoading, navigate]);
+
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate required fields
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.subject || !formData.message) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all fields.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast({
+        title: "Invalid Email",
+        description: "Please provide a valid email address.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(`${API_BASE}/api/contact`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "Message Sent!",
+          description: result.message,
+        });
+        
+        // Reset form
+        setFormData({
+          firstName: '',
+          lastName: '',
+          email: '',
+          subject: '',
+          message: ''
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: result.message || "Failed to send message. Please try again.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Contact form error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please check your connection and try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   // Show loading while checking authentication
   if (isLoading) {
@@ -70,26 +165,34 @@ export default function Contact() {
 
           <Card className="border-gray-200 shadow-lg">
             <CardContent className="p-8">
-              <form className="space-y-6" data-testid="contact-form">
+              <form onSubmit={handleSubmit} className="space-y-6" data-testid="contact-form">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <Label htmlFor="firstName">First Name</Label>
                     <Input 
                       id="firstName" 
+                      name="firstName"
                       type="text" 
                       placeholder="Enter your first name"
                       className="mt-2"
+                      value={formData.firstName}
+                      onChange={handleInputChange}
                       data-testid="input-first-name"
+                      required
                     />
                   </div>
                   <div>
                     <Label htmlFor="lastName">Last Name</Label>
                     <Input 
                       id="lastName" 
+                      name="lastName"
                       type="text" 
                       placeholder="Enter your last name"
                       className="mt-2"
+                      value={formData.lastName}
+                      onChange={handleInputChange}
                       data-testid="input-last-name"
+                      required
                     />
                   </div>
                 </div>
@@ -98,10 +201,14 @@ export default function Contact() {
                   <Label htmlFor="email">Email Address</Label>
                   <Input 
                     id="email" 
+                    name="email"
                     type="email" 
                     placeholder="Enter your email address"
                     className="mt-2"
+                    value={formData.email}
+                    onChange={handleInputChange}
                     data-testid="input-email"
+                    required
                   />
                 </div>
 
@@ -109,10 +216,14 @@ export default function Contact() {
                   <Label htmlFor="subject">Subject</Label>
                   <Input 
                     id="subject" 
+                    name="subject"
                     type="text" 
                     placeholder="What's this about?"
                     className="mt-2"
+                    value={formData.subject}
+                    onChange={handleInputChange}
                     data-testid="input-subject"
+                    required
                   />
                 </div>
 
@@ -120,9 +231,13 @@ export default function Contact() {
                   <Label htmlFor="message">Message</Label>
                   <Textarea 
                     id="message" 
+                    name="message"
                     placeholder="Tell us more about how we can help you..."
                     className="mt-2 min-h-[120px]"
+                    value={formData.message}
+                    onChange={handleInputChange}
                     data-testid="textarea-message"
+                    required
                   />
                 </div>
 
@@ -130,9 +245,19 @@ export default function Contact() {
                   type="submit" 
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg font-semibold"
                   data-testid="button-send-message"
+                  disabled={isSubmitting}
                 >
-                  <Send className="mr-2 h-5 w-5" />
-                  Send Message
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="mr-2 h-5 w-5" />
+                      Send Message
+                    </>
+                  )}
                 </Button>
               </form>
             </CardContent>

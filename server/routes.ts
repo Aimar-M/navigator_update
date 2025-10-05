@@ -168,6 +168,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Contact form endpoint
+  router.post('/contact', async (req: Request, res: Response) => {
+    try {
+      const { firstName, lastName, email, subject, message } = req.body;
+
+      // Validate required fields
+      if (!firstName || !lastName || !email || !subject || !message) {
+        return res.status(400).json({ 
+          message: 'All fields are required' 
+        });
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ 
+          message: 'Please provide a valid email address' 
+        });
+      }
+
+      // Create email content
+      const emailSubject = `Contact Form: ${subject}`;
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px;">
+            New Contact Form Submission
+          </h2>
+          
+          <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #374151; margin-top: 0;">Contact Details</h3>
+            <p><strong>Name:</strong> ${firstName} ${lastName}</p>
+            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Subject:</strong> ${subject}</p>
+          </div>
+          
+          <div style="background-color: #ffffff; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
+            <h3 style="color: #374151; margin-top: 0;">Message</h3>
+            <p style="white-space: pre-wrap; line-height: 1.6;">${message}</p>
+          </div>
+          
+          <div style="margin-top: 20px; padding: 15px; background-color: #f3f4f6; border-radius: 8px; font-size: 14px; color: #6b7280;">
+            <p><strong>Submitted:</strong> ${new Date().toLocaleString()}</p>
+            <p><strong>From:</strong> Navigator Contact Form</p>
+          </div>
+        </div>
+      `;
+
+      // Send email using existing email system
+      await sendEmail('info@navigatortrips.com', emailSubject, emailHtml);
+
+      console.log('✅ Contact form email sent successfully:', {
+        from: email,
+        subject: subject,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json({ 
+        message: 'Thank you for your message! We\'ll get back to you within 24 hours.' 
+      });
+
+    } catch (error) {
+      console.error('❌ Contact form error:', error);
+      res.status(500).json({ 
+        message: 'Failed to send message. Please try again later.' 
+      });
+    }
+  });
+
   // Simple ping endpoint for basic connectivity testing
   router.get('/ping', (req: Request, res: Response) => {
     console.log('🏓 Ping requested');
