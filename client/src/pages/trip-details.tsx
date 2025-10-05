@@ -344,6 +344,22 @@ export default function TripDetails() {
       return;
     }
 
+    // Validate accommodation links - each link must have a name
+    const invalidAccommodationLinks = editForm.accommodationLinks.filter(link => {
+      if (link.trim() === '') return false; // Empty links are allowed
+      const linkData = parseAccommodationLink(link);
+      return !linkData.name.trim(); // Link exists but no name
+    });
+
+    if (invalidAccommodationLinks.length > 0) {
+      toast({
+        title: "Validation error",
+        description: "All accommodation links must have a name. Please provide names for all accommodation entries.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const updatedData = {
       name: editForm.name.trim(),
       destination: editForm.destination.trim(),
@@ -600,8 +616,9 @@ export default function TripDetails() {
                                 newLinks[index] = formatAccommodationLink(e.target.value, linkData.url);
                                 setEditForm(prev => ({ ...prev, accommodationLinks: newLinks }));
                               }}
-                              placeholder="Accommodation Name"
+                              placeholder="Accommodation Name *"
                               className="flex-1"
+                              required
                             />
                             <Input
                               value={linkData.url}
@@ -610,7 +627,7 @@ export default function TripDetails() {
                                 newLinks[index] = formatAccommodationLink(linkData.name, e.target.value);
                                 setEditForm(prev => ({ ...prev, accommodationLinks: newLinks }));
                               }}
-                              placeholder="Enter accommodation booking link (optional)"
+                              placeholder="Enter accommodation booking link"
                               type="url"
                               className="flex-1"
                             />
