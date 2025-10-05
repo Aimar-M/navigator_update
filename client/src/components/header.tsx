@@ -132,7 +132,7 @@ export default function Header() {
       title: "Logged out",
       description: "You have been logged out successfully.",
     });
-    navigate("/login");
+    navigate("/");
   };
 
   return (
