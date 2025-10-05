@@ -11,7 +11,9 @@ export default function Landing() {
 
   // Redirect authenticated users to dashboard
   useEffect(() => {
+    console.log('Landing page - user:', user, 'isLoading:', isLoading);
     if (!isLoading && user) {
+      console.log('Landing page - redirecting to dashboard');
       navigate("/dashboard");
     }
   }, [user, isLoading, navigate]);

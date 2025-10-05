@@ -132,7 +132,8 @@ export default function Header() {
       title: "Logged out",
       description: "You have been logged out successfully.",
     });
-    navigate("/");
+    // Use window.location for a hard redirect to avoid race conditions
+    window.location.href = "/";
   };
 
   return (
