@@ -1894,11 +1894,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const confirmedCount = rsvps.filter(rsvp => rsvp.status === 'going').length;
           const totalCount = members.length; // Total trip members
           
+          // Get creator information
+          let creator = null;
+          if (activity.createdBy) {
+            const creatorUser = await storage.getUser(activity.createdBy);
+            if (creatorUser) {
+              creator = {
+                id: creatorUser.id,
+                name: creatorUser.name || creatorUser.username || 'Unknown User',
+                avatar: creatorUser.avatar
+              };
+            }
+          }
+          
           return {
             ...activity,
             rsvps,
             confirmedCount,
-            totalCount
+            totalCount,
+            creator
           };
         })
       );

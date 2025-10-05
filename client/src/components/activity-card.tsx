@@ -28,6 +28,11 @@ interface ActivityCardProps {
   totalCount: number;
   rsvps?: any[];
   createdBy?: number;
+  creator?: {
+    id: number;
+    name: string;
+    avatar?: string;
+  };
   isAccommodationEntry?: boolean;
 }
 
@@ -48,6 +53,7 @@ export default function ActivityCard({
   totalCount,
   rsvps = [],
   createdBy,
+  creator,
   isAccommodationEntry = false,
 }: ActivityCardProps) {
   const { user } = useAuth();
@@ -224,8 +230,8 @@ export default function ActivityCard({
 
             {/* Bottom row: Payment type, RSVP info, and RSVP toggles */}
             <div className="flex items-center justify-between">
-              {/* Left side: Payment type */}
-              <div>
+              {/* Left side: Payment type and creator */}
+              <div className="flex items-center gap-2">
                 {paymentType && (
                   <Badge 
                     variant={paymentType === 'free' ? 'secondary' : paymentType === 'prepaid' ? 'default' : 'outline'}
@@ -235,6 +241,11 @@ export default function ActivityCard({
                      paymentType === 'payment_onsite' ? 'Pay Onsite' : 
                      'Prepaid'}
                   </Badge>
+                )}
+                {creator && (
+                  <span className="text-xs text-gray-500">
+                    by {creator.name}
+                  </span>
                 )}
               </div>
 

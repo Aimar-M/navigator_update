@@ -575,6 +575,7 @@ function Itinerary() {
                               totalCount={activity.totalCount || 0}
                               rsvps={activity.rsvps || []}
                               createdBy={activity.createdBy}
+                              creator={activity.creator}
                               isAccommodationEntry={activity.isAccommodationEntry}
                             />
                           );
@@ -624,6 +625,7 @@ function Itinerary() {
                         totalCount={activity.totalCount || 0}
                         rsvps={activity.rsvps || []}
                         createdBy={activity.createdBy}
+                        creator={activity.creator}
                         isAccommodationEntry={activity.isAccommodationEntry}
                       />
                     );
