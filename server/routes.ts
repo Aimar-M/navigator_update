@@ -4722,6 +4722,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  router.post('/settlements/:id/reject', isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = ensureUser(req, res);
+      if (!user) return;
+
+      const settlementId = parseInt(req.params.id);
+      const settlement = await storage.getSettlement(settlementId);
+
+      if (!settlement) {
+        return res.status(404).json({ message: "Settlement not found" });
+      }
+
+      // Only the payee can reject payment
+      if (settlement.payeeId !== user.id) {
+        return res.status(403).json({ message: "Only the payee can reject payment" });
+      }
+
+      if (settlement.status === 'confirmed') {
+        return res.status(400).json({ message: "Settlement already confirmed" });
+      }
+
+      if (settlement.status === 'rejected') {
+        return res.status(400).json({ message: "Settlement already rejected" });
+      }
+
+      const rejectedSettlement = await storage.rejectSettlement(settlementId, user.id);
+      res.json(rejectedSettlement);
+    } catch (error) {
+      console.error("Error rejecting settlement:", error);
+      res.status(500).json({ message: "Failed to reject settlement" });
+    }
+  });
+
   router.get('/settlements/pending', isAuthenticated, async (req: Request, res: Response) => {
     try {
       const user = ensureUser(req, res);

@@ -23,7 +23,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, DollarSign, Users, Receipt, Activity, CheckCircle, XCircle, BarChart3, Grid3X3, HandHeart } from "lucide-react";
+import { Plus, DollarSign, Users, Receipt, Activity, CheckCircle, XCircle, BarChart3, Grid3X3, HandHeart, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, ReferenceLine, Tooltip, LabelList } from "recharts";
 import { SettlementWorkflow } from "@/components/SettlementWorkflow";
@@ -636,7 +636,11 @@ export default function ExpensesPage() {
                     <div className="flex-1 min-w-0">
                       <CardTitle className="flex items-center gap-2 text-base">
                         {expense.isSettlement ? (
-                          <HandHeart className="h-4 w-4 text-green-600 flex-shrink-0" />
+                          expense.status === 'rejected' ? (
+                            <X className="h-4 w-4 text-red-600 flex-shrink-0" />
+                          ) : (
+                            <HandHeart className="h-4 w-4 text-green-600 flex-shrink-0" />
+                          )
                         ) : (
                           getCategoryIcon(expense.category)
                         )}
@@ -646,17 +650,20 @@ export default function ExpensesPage() {
                       </CardTitle>
                       <p className="text-sm text-gray-500 mt-1">
                         {expense.isSettlement ? 
-                          `Payment confirmed • ${new Date(expense.date).toLocaleDateString()}` :
+                          (expense.status === 'rejected' ? 
+                            `Payment rejected • ${new Date(expense.date).toLocaleDateString()}` :
+                            `Payment confirmed • ${new Date(expense.date).toLocaleDateString()}`
+                          ) :
                           `Paid by ${expense.paidByUser.name || expense.paidByUser.username || 'Unknown User'} • ${new Date(expense.date).toLocaleDateString()}`
                         }
                       </p>
                     </div>
                     <div className="text-right flex-shrink-0 ml-4">
-                      <div className={`text-lg font-bold ${expense.isSettlement ? 'text-green-600' : ''}`}>
+                      <div className={`text-lg font-bold ${expense.isSettlement ? (expense.status === 'rejected' ? 'text-red-600' : 'text-green-600') : ''}`}>
                         {expense.isSettlement ? '+' : ''}{formatCurrency(expense.amount, isMobile)}
                       </div>
-                      <Badge className={`text-xs ${expense.isSettlement ? 'bg-green-100 text-green-800' : getCategoryColor(expense.category)}`}>
-                        {expense.isSettlement ? 'Settlement' : expense.category}
+                      <Badge className={`text-xs ${expense.isSettlement ? (expense.status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800') : getCategoryColor(expense.category)}`}>
+                        {expense.isSettlement ? (expense.status === 'rejected' ? 'Rejected' : 'Settlement') : expense.category}
                       </Badge>
                     </div>
                   </div>

@@ -1437,6 +1437,20 @@ export class DatabaseStorage {
     return confirmed || undefined;
   }
 
+  async rejectSettlement(settlementId: number, rejectedBy: number): Promise<Settlement | undefined> {
+    const [rejected] = await db
+      .update(settlements)
+      .set({
+        status: 'rejected',
+        rejectedAt: new Date(),
+        rejectedBy: rejectedBy,
+        updatedAt: new Date()
+      })
+      .where(eq(settlements.id, settlementId))
+      .returning();
+    return rejected || undefined;
+  }
+
   async getPendingSettlementsForUser(userId: number): Promise<Settlement[]> {
     console.log("Getting pending settlements for user:", userId);
     

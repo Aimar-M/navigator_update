@@ -155,7 +155,7 @@ export function NotificationBell() {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
+      <PopoverContent className="w-96 p-0" align="end">
         <Card className="border-0 shadow-lg">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
@@ -175,7 +175,7 @@ export function NotificationBell() {
                 <p className="text-sm">No pending settlements</p>
               </div>
             ) : (
-              <div className="max-h-96 overflow-y-auto">
+              <div className="max-h-[28rem] overflow-y-auto">
                 {pendingSettlements.map((settlement) => (
                   <div key={settlement.id} className="p-4 border-b last:border-b-0">
                     <div className="space-y-3">
@@ -206,12 +206,12 @@ export function NotificationBell() {
                         </div>
                       </div>
                       
-                      <div className="flex gap-2">
+                      <div className="flex gap-3 mt-3">
                         <Button
                           size="sm"
                           onClick={() => handleConfirmSettlement(settlement.id)}
                           disabled={confirmMutation.isPending || rejectMutation.isPending}
-                          className="flex-1"
+                          className="flex-1 text-xs"
                         >
                           {confirmMutation.isPending ? (
                             <>
@@ -230,7 +230,7 @@ export function NotificationBell() {
                           variant="outline"
                           onClick={() => handleRejectSettlement(settlement.id)}
                           disabled={confirmMutation.isPending || rejectMutation.isPending}
-                          className="flex-1"
+                          className="flex-1 text-xs"
                         >
                           {rejectMutation.isPending ? (
                             <>

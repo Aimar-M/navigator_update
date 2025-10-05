@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, DollarSign, Receipt, Users, Activity, CheckCircle, XCircle, HandHeart, Calendar, MapPin, User, Trash2 } from "lucide-react";
+import { ArrowLeft, DollarSign, Receipt, Users, Activity, CheckCircle, XCircle, HandHeart, Calendar, MapPin, User, Trash2, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -368,22 +368,28 @@ export default function ExpenseDetails() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <HandHeart className="h-5 w-5 text-green-600" />
+              {displayExpense.status === 'rejected' ? (
+                <X className="h-5 w-5 text-red-600" />
+              ) : (
+                <HandHeart className="h-5 w-5 text-green-600" />
+              )}
               Payment Settlement Details
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="bg-green-50 p-6 rounded-lg">
+            <div className={`p-6 rounded-lg ${displayExpense.status === 'rejected' ? 'bg-red-50' : 'bg-green-50'}`}>
               <div className="text-center">
-                <div className="text-3xl font-bold text-green-600 mb-2">
+                <div className={`text-3xl font-bold mb-2 ${displayExpense.status === 'rejected' ? 'text-red-600' : 'text-green-600'}`}>
                   {formatCurrency(displayExpense.amount)}
                 </div>
-                <p className="text-green-800 mb-4">
-                  Payment confirmed and processed
+                <p className={`mb-4 ${displayExpense.status === 'rejected' ? 'text-red-800' : 'text-green-800'}`}>
+                  {displayExpense.status === 'rejected' ? 'Payment rejected' : 'Payment confirmed and processed'}
                 </p>
-                <p className="text-sm text-green-700">
-                  This payment was made to settle outstanding balances between trip members.
-                  The transaction has been verified and all balances have been updated accordingly.
+                <p className={`text-sm ${displayExpense.status === 'rejected' ? 'text-red-700' : 'text-green-700'}`}>
+                  {displayExpense.status === 'rejected' 
+                    ? 'This payment was rejected by the recipient. The settlement has been cancelled and balances remain unchanged.'
+                    : 'This payment was made to settle outstanding balances between trip members. The transaction has been verified and all balances have been updated accordingly.'
+                  }
                 </p>
               </div>
             </div>
