@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { useFullStory } from "@/hooks/use-fullstory";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { getRandomDestinationImage } from "@/lib/utils";
@@ -21,6 +22,7 @@ interface TripFormProps {
 
 export default function TripForm({ onComplete }: TripFormProps) {
   const { user } = useAuth();
+  const { trackTripCreation } = useFullStory();
   const token = user ? localStorage.getItem('auth_token') : null;
   const [, navigate] = useLocation();
   const { toast } = useToast();
@@ -102,6 +104,9 @@ export default function TripForm({ onComplete }: TripFormProps) {
       }
       
       const trip = await response.json();
+      
+      // Track trip creation with FullStory
+      trackTripCreation(trip.id.toString(), trip.name, user.id.toString());
       
       toast({
         title: "Trip created",

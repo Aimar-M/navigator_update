@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
+import { useFullStory } from "@/hooks/use-fullstory";
 import { Link, useLocation } from "wouter";
 import { Search, Plus } from "lucide-react";
 import TripCard from "@/components/trip-card";
@@ -27,6 +28,7 @@ const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export default function Home() {
   const { user, isLoading: authLoading } = useAuth();
+  const { trackPage, trackEvent } = useFullStory();
   const [, navigate] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [hasNewNotifications, setHasNewNotifications] = useState(false);
@@ -141,6 +143,16 @@ export default function Home() {
       testOAuth();
     }
   }, [user]);
+
+  // Track page view with FullStory
+  useEffect(() => {
+    if (user) {
+      trackPage('Dashboard', {
+        userId: user.id,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }, [user, trackPage]);
 
   console.log("user:", user, "token:", token);
   

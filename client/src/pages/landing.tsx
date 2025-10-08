@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { useFullStory } from "@/hooks/use-fullstory";
 import { useEffect } from "react";
 import backgroundVideo from "@/assets/IMG_4795_1758657014573.mov";
 import navigatorLogo from "@/assets/navigator-logo.svg";
@@ -8,6 +9,15 @@ import navigatorLogo from "@/assets/navigator-logo.svg";
 export default function Landing() {
   const { user, isLoading } = useAuth();
   const [, navigate] = useLocation();
+  const { trackPage } = useFullStory();
+
+  // Track page view
+  useEffect(() => {
+    trackPage('Landing Page', {
+      isAuthenticated: !!user,
+      timestamp: new Date().toISOString(),
+    });
+  }, [trackPage, user]);
 
   // Redirect authenticated users to dashboard
   useEffect(() => {

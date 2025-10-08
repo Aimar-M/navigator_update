@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { loginUser, registerUser, logoutUser, getAuthToken, setAuthToken, removeAuthToken, getPendingInvitation, removePendingInvitation } from "@/lib/auth";
 import { wsClient } from "@/lib/websocket";
 import { useQueryClient } from "@tanstack/react-query";
+import { fullstory, trackUserLogin, trackUserLogout } from "@/lib/fullstory";
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -111,7 +112,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.log("Auth check: userData from /api/auth/me:", userData);
             setUser(userData);
             
+            // Track user identification with FullStory for existing sessions
             if (userData) {
+              fullstory.identifyUser(userData.id.toString(), {
+                email: userData.email,
+                name: userData.name,
+                username: userData.username,
+              });
               wsClient.connect(userData.id, []);
             }
             setIsLoading(false);
@@ -136,7 +143,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.log("Auth check: userData from session /api/auth/me:", userData);
             setUser(userData);
             
+            // Track user identification with FullStory for session-based auth
             if (userData) {
+              fullstory.identifyUser(userData.id.toString(), {
+                email: userData.email,
+                name: userData.name,
+                username: userData.username,
+              });
               wsClient.connect(userData.id, []);
             }
           }
@@ -170,6 +183,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       setUser(userData);
       queryClient.clear(); // Clear all cached queries after login
+      
+      // Track user login with FullStory
+      trackUserLogin(userData.id.toString(), userData.email);
       
       // Invalidate trips and pending invitations after login
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
@@ -213,6 +229,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(newUser);
       queryClient.clear(); // Clear all cached queries after registration
       
+      // Track user registration with FullStory
+      trackUserLogin(newUser.id.toString(), newUser.email);
+      fullstory.trackEvent('User Registration', {
+        userId: newUser.id,
+        email: newUser.email,
+        username: newUser.username,
+        timestamp: new Date().toISOString(),
+      });
+      
       // Invalidate trips and pending invitations after registration
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/memberships/pending`] });
@@ -236,6 +261,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
+      // Track user logout with FullStory before clearing user data
+      if (user) {
+        trackUserLogout(user.id.toString());
+      }
+      
       await logoutUser();
       // Remove the token from localStorage
       removeAuthToken();

@@ -1,5 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
+import { useFullStory } from "@/hooks/use-fullstory";
 import { useLocation } from "wouter";
+import { useEffect } from "react";
 import Header from "@/components/header";
 import MobileNavigation from "@/components/mobile-navigation";
 import TripForm from "@/components/trip-form";
@@ -7,7 +9,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CreateTrip() {
   const { user, isLoading } = useAuth();
+  const { trackPage } = useFullStory();
   const [, navigate] = useLocation();
+
+  // Track page view
+  useEffect(() => {
+    if (user) {
+      trackPage('Create Trip Page', {
+        userId: user.id,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }, [user, trackPage]);
 
   if (isLoading) {
     return (
