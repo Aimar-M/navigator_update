@@ -2,9 +2,11 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useFullStory } from "@/hooks/use-fullstory";
+import { fullstory } from "@/lib/fullstory";
 import { useEffect } from "react";
 import backgroundVideo from "@/assets/IMG_4795_1758657014573.mov";
 import navigatorLogo from "@/assets/navigator-logo.svg";
+import FullStoryDebug from "@/components/FullStoryDebug";
 
 export default function Landing() {
   const { user, isLoading } = useAuth();
@@ -17,6 +19,11 @@ export default function Landing() {
       isAuthenticated: !!user,
       timestamp: new Date().toISOString(),
     });
+    
+    // Test FullStory connection
+    setTimeout(() => {
+      fullstory.testConnection();
+    }, 2000);
   }, [trackPage, user]);
 
   // Redirect authenticated users to dashboard
@@ -44,6 +51,7 @@ export default function Landing() {
   }
   return (
     <div className="min-h-screen bg-black text-white relative overflow-hidden">
+      <FullStoryDebug />
       {/* Background Video */}
       <div className="absolute inset-0 z-0">
         <video

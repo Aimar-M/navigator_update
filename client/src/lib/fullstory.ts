@@ -34,7 +34,9 @@ export class FullStoryService {
       if (window.FS) {
         this.isInitialized = true;
         console.log('FullStory initialized successfully');
+        console.log('FullStory object:', window.FS);
       } else {
+        console.log('Waiting for FullStory to load...');
         setTimeout(checkFullStory, 100);
       }
     };
@@ -43,7 +45,14 @@ export class FullStoryService {
 
   public identifyUser(userId: string, userVars?: Record<string, any>): void {
     if (!this.isInitialized || !window.FS) {
-      console.warn('FullStory not initialized yet');
+      console.warn('FullStory not initialized yet, will retry...');
+      // Retry after a short delay
+      setTimeout(() => {
+        if (window.FS) {
+          this.isInitialized = true;
+          this.identifyUser(userId, userVars);
+        }
+      }, 1000);
       return;
     }
 
@@ -121,6 +130,24 @@ export class FullStoryService {
       window.FS.log(level, message);
     } catch (error) {
       console.error('FullStory: Error logging', error);
+    }
+  }
+
+  public testConnection(): void {
+    console.log('FullStory: Testing connection...');
+    console.log('FullStory: window.FS available:', !!window.FS);
+    console.log('FullStory: isInitialized:', this.isInitialized);
+    
+    if (window.FS) {
+      try {
+        window.FS.event('FullStory Test', { 
+          timestamp: new Date().toISOString(),
+          test: true 
+        });
+        console.log('FullStory: Test event sent successfully');
+      } catch (error) {
+        console.error('FullStory: Error sending test event:', error);
+      }
     }
   }
 }
