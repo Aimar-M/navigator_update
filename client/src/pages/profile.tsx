@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Camera, Edit, Save, X, Calendar, MapPin } from "lucide-react";
+import { Camera, Edit, Save, X, Calendar, MapPin, Trash2, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -39,6 +39,11 @@ export default function Profile() {
     newPassword: "",
     confirmPassword: "",
   });
+
+  // Hidden delete profile functionality
+  const [avatarClickCount, setAvatarClickCount] = useState(0);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
 
   // Fetch user profile data
   const { data: profile, isLoading: isProfileLoading } = useQuery({
@@ -128,6 +133,29 @@ export default function Profile() {
       toast({
         title: "Password Change Failed",
         description: error.message || "There was a problem changing your password. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete account mutation
+  const deleteAccountMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('DELETE', `${API_BASE}/api/auth/delete-account`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Account Deleted",
+        description: "Your account has been permanently deleted.",
+      });
+      // Clear all data and redirect to landing page
+      queryClient.clear();
+      navigate("/");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Account Deletion Failed",
+        description: error.message || "There was a problem deleting your account. Please try again.",
         variant: "destructive",
       });
     },
@@ -367,6 +395,25 @@ export default function Profile() {
     return name.split(" ").map((n: string) => n[0]).join("").toUpperCase();
   };
 
+  // Handle avatar clicks for hidden delete functionality
+  const handleAvatarClick = () => {
+    setAvatarClickCount(prev => {
+      const newCount = prev + 1;
+      if (newCount >= 7) {
+        setShowDeleteModal(true);
+        return 0; // Reset counter
+      }
+      return newCount;
+    });
+  };
+
+  // Handle delete account confirmation
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmation.toLowerCase() === "delete") {
+      await deleteAccountMutation.mutateAsync();
+    }
+  };
+
   if (!user) {
     navigate("/login");
     return null;
@@ -404,7 +451,7 @@ export default function Profile() {
               <div className="flex items-start justify-between mb-6">
                 <div className="flex items-center space-x-4">
                   <div className="relative">
-                    <Avatar className="h-20 w-20">
+                    <Avatar className="h-20 w-20 cursor-pointer" onClick={handleAvatarClick}>
                       <AvatarImage 
                         src={profileData?.avatar 
                           ? (profileData.avatar.startsWith('data:')
@@ -772,6 +819,58 @@ export default function Profile() {
           )}
         </div>
       </main>
+
+      {/* Hidden Delete Account Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center mb-4">
+              <AlertTriangle className="h-6 w-6 text-red-500 mr-2" />
+              <h3 className="text-lg font-semibold text-gray-900">Delete Account</h3>
+            </div>
+            <p className="text-gray-600 mb-4">
+              This action cannot be undone. This will permanently delete your account and remove all your data from our servers.
+            </p>
+            <p className="text-sm text-gray-500 mb-4">
+              Type <strong>DELETE</strong> to confirm:
+            </p>
+            <Input
+              value={deleteConfirmation}
+              onChange={(e) => setDeleteConfirmation(e.target.value)}
+              placeholder="Type DELETE to confirm"
+              className="mb-4"
+            />
+            <div className="flex justify-end space-x-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeleteConfirmation("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteAccount}
+                disabled={deleteConfirmation.toLowerCase() !== "delete" || deleteAccountMutation.isPending}
+              >
+                {deleteAccountMutation.isPending ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Account
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <MobileNavigation />
     </div>

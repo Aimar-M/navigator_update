@@ -146,6 +146,13 @@ export class DatabaseStorage {
     return user || undefined;
   }
 
+  async deleteUser(id: number): Promise<boolean> {
+    const result = await db
+      .delete(users)
+      .where(eq(users.id, id));
+    return result.rowCount > 0;
+  }
+
   async createTrip(insertTrip: InsertTrip): Promise<Trip> {
     const [trip] = await db
       .insert(trips)
