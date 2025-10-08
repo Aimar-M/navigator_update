@@ -658,33 +658,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Delete user account endpoint
-  router.delete('/auth/delete-account', isAuthenticated, async (req: Request, res: Response) => {
-    try {
-      const userId = req.session?.userId;
-      if (!userId) {
-        return res.status(401).json({ message: 'Not authenticated' });
-      }
-
-      const success = await storage.deleteUser(userId);
-      if (success) {
-        // Destroy the session
-        req.session.destroy((err) => {
-          if (err) {
-            console.error('Error destroying session:', err);
-          }
-        });
-        
-        return res.json({ message: 'Account deleted successfully' });
-      } else {
-        return res.status(404).json({ message: 'User not found' });
-      }
-    } catch (error) {
-      console.error('Error deleting user account:', error);
-      res.status(500).json({ message: 'Server error' });
-    }
-  });
-  
   // Middleware to check if user is authenticated
   const isAuthenticated = async (req: Request, res: Response, next: Function) => {
     try {
@@ -805,6 +778,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'Server error' });
     }
   };
+  
+  // Delete user account endpoint
+  router.delete('/auth/delete-account', isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+
+      const success = await storage.deleteUser(userId);
+      if (success) {
+        // Destroy the session
+        req.session.destroy((err) => {
+          if (err) {
+            console.error('Error destroying session:', err);
+          }
+        });
+        
+        return res.json({ message: 'Account deleted successfully' });
+      } else {
+        return res.status(404).json({ message: 'User not found' });
+      }
+    } catch (error) {
+      console.error('Error deleting user account:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
   
   // Trip Routes
   router.post('/trips', isAuthenticated, async (req: Request, res: Response) => {
