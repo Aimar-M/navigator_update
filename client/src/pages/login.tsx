@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useFullStory } from "@/hooks/use-fullstory";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,6 +19,15 @@ import companyLogo from "@assets/ab_Navigator2-09_1749674413735.png";
 import { Eye, EyeOff } from "lucide-react";
 
 export default function Login() {
+  const { trackPage } = useFullStory();
+  
+  // Track page view
+  useEffect(() => {
+    trackPage('Login Page', {
+      timestamp: new Date().toISOString(),
+    });
+  }, [trackPage]);
+
   // Debug: Log environment variables
   console.log('🔍 Current environment variables:', {
     VITE_BACKEND_URL: import.meta.env.VITE_BACKEND_URL,

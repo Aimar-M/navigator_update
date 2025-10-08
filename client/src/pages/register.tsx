@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useFullStory } from "@/hooks/use-fullstory";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,6 +17,15 @@ import navigatorLogo from "@/assets/navigator-logo.svg";
 import { Eye, EyeOff } from "lucide-react";
 
 export default function Register() {
+  const { trackPage } = useFullStory();
+  
+  // Track page view
+  useEffect(() => {
+    trackPage('Register Page', {
+      timestamp: new Date().toISOString(),
+    });
+  }, [trackPage]);
+
   const [formData, setFormData] = useState({
     username: "",
     email: "",

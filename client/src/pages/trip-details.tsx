@@ -1,6 +1,7 @@
 import { useParams, useLocation } from "wouter";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { useFullStory } from "@/hooks/use-fullstory";
 import { MapPin, Calendar, Users, Info, UserPlus, Edit2, Save, X, Home, Plane, UserMinus, Trash2, Plus } from "lucide-react";
 import TripDetailLayout from "@/components/trip-detail-layout";
 import UserAvatar from "@/components/user-avatar";
@@ -16,7 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import InviteModal from "@/components/invite-modal";
 import TripImageUpload from "@/components/trip-image-upload";
 import { EnhancedMemberRemovalDialog } from "@/components/EnhancedMemberRemovalDialog";
@@ -72,6 +73,7 @@ function getDisplayName(linkData: { name: string; url: string }, index: number):
 
 export default function TripDetails() {
   const { id } = useParams<{ id: string }>();
+  const { trackPage } = useFullStory();
   const tripId = parseInt(id);
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
@@ -142,6 +144,18 @@ export default function TripDetails() {
   const { data: trip, isLoading } = useQuery<Trip>({
     queryKey: [`${API_BASE}/api/trips/${tripId}`],
   });
+
+  // Track page view when trip data is loaded
+  useEffect(() => {
+    if (trip) {
+      trackPage('Trip Details', {
+        tripId: trip.id,
+        tripName: trip.name,
+        destination: trip.destination,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }, [trip, trackPage]);
 
   // Fetch trip members
   const { data: members = [], isLoading: isMembersLoading } = useQuery<TripMember[]>({
