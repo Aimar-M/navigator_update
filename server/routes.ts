@@ -431,7 +431,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               </div>
               
               <div style="text-align: center;">
-                <a href="${confirmUrl}" class="button">Confirm My Email</a>
+                <a href="${confirmUrl}" class="button" style="color: white;">Confirm My Email</a>
               </div>
               
               <p>If the button above doesn't work, copy and paste this link into your browser:</p>
@@ -5369,7 +5369,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               </div>
               
               <div style="text-align: center;">
-                <a href="${confirmUrl}" class="button">Confirm My Email</a>
+                <a href="${confirmUrl}" class="button" style="color: white;">Confirm My Email</a>
               </div>
               
               <p>If the button above doesn't work, copy and paste this link into your browser:</p>
