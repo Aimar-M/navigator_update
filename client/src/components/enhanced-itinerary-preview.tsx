@@ -212,6 +212,7 @@ export default function EnhancedItineraryPreview({ activities, tripName, classNa
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-blue-600 hover:text-blue-800 underline"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     View Activity Website
                   </a>
