@@ -394,11 +394,14 @@ export default function InvitationPage() {
         {/* Enhanced Trip Itinerary Preview with Day View */}
         {invitationData.activities && invitationData.activities.length > 0 && (
           <EnhancedItineraryPreview 
-            activities={invitationData.activities.map(activity => ({
-              ...activity,
-              name: activity.title, // Map title to name for component compatibility
-              date: new Date(activity.date).toISOString() // Convert date string back to ISO format
-            })) as any[]}
+            activities={invitationData.activities.map(activity => {
+              console.log('Activity data:', activity);
+              return {
+                ...activity,
+                name: activity.title, // Map title to name for component compatibility
+                date: new Date(activity.date).toISOString() // Convert date string back to ISO format
+              };
+            }) as any[]}
             tripName={trip.name}
             className="mb-8"
           />

@@ -208,11 +208,14 @@ export default function EnhancedItineraryPreview({ activities, tripName, classNa
                 <div className="flex items-center gap-2">
                   <ExternalLink className="h-4 w-4 text-gray-500" />
                   <a 
-                    href={activity.activityLink}
+                    href={activity.activityLink.startsWith('http') ? activity.activityLink : `https://${activity.activityLink}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-blue-600 hover:text-blue-800 underline"
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log('Activity link clicked:', activity.activityLink);
+                    }}
                   >
                     View Activity Website
                   </a>
@@ -389,6 +392,61 @@ export default function EnhancedItineraryPreview({ activities, tripName, classNa
               .filter(activity => !isAccommodationEntry(activity))
               .map((activity) => (
                 <div key={activity.id} className="rounded-xl border" style={{ backgroundColor: '#F5F9FF', borderColor: '#CED6E0' }}>
+                  <div className="p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      {/* Left side: Title, location, and accommodation icon */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-medium text-sm truncate" style={{ color: '#1A1A1A' }}>{activity.name}</h4>
+                        </div>
+                        {activity.location && (
+                          <div className="flex items-center text-xs" style={{ color: '#4B5A6A' }}>
+                            <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
+                            <span className="truncate">{activity.location}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Right side: Time, payment info, and external link */}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {activity.startTime && (
+                          <span className="text-xs font-medium whitespace-nowrap" style={{ color: '#4B5A6A' }}>
+                            {formatTime(activity.startTime)}
+                          </span>
+                        )}
+                        {activity.paymentType && (
+                          <Badge 
+                            variant="outline"
+                            className="text-xs px-2 py-1"
+                            style={{
+                              backgroundColor: activity.paymentType === 'free' ? '#28A745' : activity.paymentType === 'prepaid' ? '#3A8DFF' : '#FF9F43',
+                              color: 'white',
+                              borderColor: 'transparent'
+                            }}
+                          >
+                            {activity.paymentType === 'free' ? 'Free' : 
+                             activity.paymentType === 'payment_onsite' ? 'Pay Onsite' : 
+                             'Prepaid'}
+                          </Badge>
+                        )}
+                        {activity.activityLink && (
+                          <a 
+                            href={activity.activityLink.startsWith('http') ? activity.activityLink : `https://${activity.activityLink}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              console.log('Activity link clicked:', activity.activityLink);
+                            }}
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                            Website
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                   <ActivityDetailsDialog activity={activity} />
                 </div>
               ))}
@@ -398,6 +456,62 @@ export default function EnhancedItineraryPreview({ activities, tripName, classNa
               .filter(activity => isAccommodationEntry(activity))
               .map((activity) => (
                 <div key={`accommodation-${activity.id}-${uniqueDays[selectedDay]}`} className="rounded-xl border" style={{ backgroundColor: '#FFF7E6', borderColor: '#FF9F43' }}>
+                  <div className="p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      {/* Left side: Title, location, and accommodation icon */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Building className="h-4 w-4 flex-shrink-0" style={{ color: '#FF9F43' }} />
+                          <h4 className="font-medium text-sm truncate" style={{ color: '#1A1A1A' }}>{activity.name}</h4>
+                        </div>
+                        {activity.location && (
+                          <div className="flex items-center text-xs" style={{ color: '#4B5A6A' }}>
+                            <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
+                            <span className="truncate">{activity.location}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Right side: Time, payment info, and external link */}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {activity.startTime && (
+                          <span className="text-xs font-medium whitespace-nowrap" style={{ color: '#4B5A6A' }}>
+                            {formatTime(activity.startTime)}
+                          </span>
+                        )}
+                        {activity.paymentType && (
+                          <Badge 
+                            variant="outline"
+                            className="text-xs px-2 py-1"
+                            style={{
+                              backgroundColor: activity.paymentType === 'free' ? '#28A745' : activity.paymentType === 'prepaid' ? '#3A8DFF' : '#FF9F43',
+                              color: 'white',
+                              borderColor: 'transparent'
+                            }}
+                          >
+                            {activity.paymentType === 'free' ? 'Free' : 
+                             activity.paymentType === 'payment_onsite' ? 'Pay Onsite' : 
+                             'Prepaid'}
+                          </Badge>
+                        )}
+                        {activity.activityLink && (
+                          <a 
+                            href={activity.activityLink.startsWith('http') ? activity.activityLink : `https://${activity.activityLink}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              console.log('Activity link clicked:', activity.activityLink);
+                            }}
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                            Website
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                   <ActivityDetailsDialog activity={activity} />
                 </div>
               ))}
