@@ -106,6 +106,15 @@ interface InvitationData {
     date: string;
     time: string;
     location: string;
+    activityLink?: string;
+    activityType?: string;
+    startTime?: string;
+    duration?: string;
+    cost?: string;
+    paymentType?: string;
+    maxParticipants?: number;
+    checkInDate?: string;
+    checkOutDate?: string;
   }>;
   members: Array<{
     userId: number;
@@ -383,9 +392,13 @@ export default function InvitationPage() {
         )}
 
         {/* Enhanced Trip Itinerary Preview with Day View */}
-        {activityPreview && activityPreview.length > 0 && (
+        {invitationData.activities && invitationData.activities.length > 0 && (
           <EnhancedItineraryPreview 
-            activities={activityPreview as any[]}
+            activities={invitationData.activities.map(activity => ({
+              ...activity,
+              name: activity.title, // Map title to name for component compatibility
+              date: new Date(activity.date).toISOString() // Convert date string back to ISO format
+            })) as any[]}
             tripName={trip.name}
             className="mb-8"
           />

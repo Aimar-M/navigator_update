@@ -3148,7 +3148,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           description: activity.description || '',
           date: activity.date.toISOString().split('T')[0],
           time: activity.date.toISOString().split('T')[1].substring(0, 5),
-          location: activity.location || ''
+          location: activity.location || '',
+          activityLink: activity.activityLink || '',
+          activityType: activity.activityType || '',
+          startTime: activity.startTime || '',
+          duration: activity.duration || '',
+          cost: activity.cost || '',
+          paymentType: activity.paymentType || 'free',
+          maxParticipants: activity.maxParticipants || null,
+          checkInDate: activity.checkInDate || null,
+          checkOutDate: activity.checkOutDate || null
         })),
         members: membersWithUser.filter(member => member.user !== null)
       });
