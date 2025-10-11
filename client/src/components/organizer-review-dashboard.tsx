@@ -63,6 +63,12 @@ export default function OrganizerReviewDashboard({
     !rejectedUserIds.has(member.userId)
   );
 
+  // Filter rejected members
+  const rejectedMembers = members.filter(member => 
+    !member.isOrganizer && 
+    member.paymentStatus === 'rejected'
+  );
+
   const confirmPaymentMutation = useMutation({
     mutationFn: async (userId: number) => {
       return apiRequest('POST', `${API_BASE}/api/trips/${tripId}/members/${userId}/confirm-payment`);
@@ -124,7 +130,7 @@ export default function OrganizerReviewDashboard({
       const member = members.find(m => m.userId === userId);
       toast({
         title: "Payment rejected",
-        description: `${member?.user.name || member?.user.username}'s RSVP has been declined and they will be notified.`,
+        description: `${member?.user.name || member?.user.username}'s RSVP has been declined.`,
         duration: 5000,
       });
       setProcessingUserId(null);
@@ -154,6 +160,31 @@ export default function OrganizerReviewDashboard({
   const handleRejectPayment = (userId: number) => {
     setProcessingUserId(userId);
     rejectPaymentMutation.mutate(userId);
+  };
+
+  const notifyUserMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      return apiRequest('POST', `${API_BASE}/api/trips/${tripId}/members/${userId}/notify-rejection`);
+    },
+    onSuccess: (_, userId) => {
+      const member = members.find(m => m.userId === userId);
+      toast({
+        title: "Notification sent",
+        description: `${member?.user.name || member?.user.username} has been notified of their payment rejection.`,
+        duration: 5000,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to send notification",
+        description: error.message || "Something went wrong",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleNotifyUser = (userId: number) => {
+    notifyUserMutation.mutate(userId);
   };
 
   const getPaymentMethodIcon = (method: string) => {
@@ -310,9 +341,10 @@ export default function OrganizerReviewDashboard({
                             This will:
                             <ul className="list-disc ml-4 mt-2">
                               <li>Remove them from the trip</li>
-                              <li>Send them a rejection notification</li>
                               <li>They will need to resubmit if they want to join</li>
                             </ul>
+                            <br />
+                            You can choose to notify them separately if needed.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -333,6 +365,66 @@ export default function OrganizerReviewDashboard({
           </CardContent>
         </CollapsibleContent>
       </Collapsible>
+
+      {/* Rejected Members Section */}
+      {rejectedMembers.length > 0 && (
+        <Card className="mt-6">
+          <Collapsible>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-gray-50">
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <X className="h-5 w-5 text-red-600" />
+                    Rejected Payments ({rejectedMembers.length})
+                  </div>
+                  <ChevronDown className="h-4 w-4" />
+                </CardTitle>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent>
+                <p className="text-sm text-gray-600 mb-4">
+                  These users had their payments rejected. You can choose to notify them or let them resubmit.
+                </p>
+                
+                {rejectedMembers.map((member) => (
+                  <div
+                    key={member.userId}
+                    className="flex items-center justify-between p-4 border border-red-200 bg-red-50 rounded-lg mb-3"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <UserAvatar 
+                        user={member.user}
+                        className="h-10 w-10"
+                      />
+                      <div>
+                        <div className="font-medium text-gray-900">
+                          {member.user?.name || member.user?.username}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          Payment rejected • ${member.paymentAmount} via {member.paymentMethod}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleNotifyUser(member.userId)}
+                        disabled={notifyUserMutation.isPending}
+                        className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                      >
+                        {notifyUserMutation.isPending ? "Sending..." : "Notify User"}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </Card>
+      )}
     </Card>
   );
 }

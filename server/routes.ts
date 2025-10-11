@@ -1743,6 +1743,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  router.post('/trips/:tripId/members/:userId/notify-rejection', isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = ensureUser(req, res);
+      if (!user) return;
+      
+      const tripId = parseInt(req.params.tripId);
+      const userId = parseInt(req.params.userId);
+      
+      if (isNaN(tripId) || isNaN(userId)) {
+        return res.status(400).json({ message: 'Invalid trip ID or user ID' });
+      }
+      
+      // Only trip organizer can send notifications
+      const trip = await storage.getTrip(tripId);
+      if (!trip) {
+        return res.status(404).json({ message: 'Trip not found' });
+      }
+      
+      if (trip.organizer !== user.id) {
+        return res.status(403).json({ message: 'Only trip organizer can send notifications' });
+      }
+      
+      // Get the member details
+      const member = await storage.getTripMember(tripId, userId);
+      if (!member) {
+        return res.status(404).json({ message: 'Member not found' });
+      }
+      
+      // Get user details for email
+      const userDetails = await storage.getUser(userId);
+      if (!userDetails || !userDetails.email) {
+        return res.status(404).json({ message: 'User email not found' });
+      }
+      
+      // Send rejection notification email
+      const { sendEmail } = await import('./email');
+      
+      const emailHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Payment Rejected - ${trip.name}</title>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #000000; max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #044674; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; color: #000000; }
+            .button { display: inline-block; background: #044674; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; margin: 20px 0; }
+            .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+            .notice { background: #fff8e1; border: 1px solid #ffe082; padding: 15px; border-radius: 5px; margin: 20px 0; color: #000000; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+              <div>
+                <h1 style="margin: 0;">Navigator</h1>
+                <p style="margin: 0;">The world is Waiting</p>
+              </div>
+            </div>
+          </div>
+      
+          <div class="content">
+            <h2>Hello ${userDetails.name || userDetails.username},</h2>
+            <p>We wanted to let you know that your payment for <strong>${trip.name}</strong> has been rejected by the trip organizer.</p>
+            
+            <div class="notice">
+              <strong>What this means:</strong>
+              <ul>
+                <li>Your payment was not accepted for this trip</li>
+                <li>You are no longer confirmed to attend</li>
+                <li>You can resubmit a payment if you'd like to try again</li>
+              </ul>
+            </div>
+            
+            <p>If you have any questions about this decision, please contact the trip organizer directly.</p>
+            
+            <div style="text-align: center;">
+              <a href="${process.env.FRONTEND_URL || 'https://navigatortrips.com'}/trips/${tripId}" class="button">
+                View Trip Details
+              </a>
+            </div>
+          </div>
+          
+          <div class="footer">
+            <p>This is an automated message from Navigator. Please do not reply to this email.</p>
+          </div>
+        </body>
+        </html>
+      `;
+      
+      await sendEmail(
+        userDetails.email,
+        `Payment Rejected - ${trip.name}`,
+        emailHtml
+      );
+      
+      res.json({ message: 'Rejection notification sent successfully' });
+    } catch (error) {
+      console.error('Error sending rejection notification:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
   router.delete('/trips/:tripId/members/:userId', isAuthenticated, async (req: Request, res: Response) => {
     try {
       const user = ensureUser(req, res);
