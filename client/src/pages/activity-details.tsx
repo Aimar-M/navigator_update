@@ -302,7 +302,7 @@ export default function ActivityDetails() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    {activity.paymentType === 'prepaid' && (
+                    {currentUser && activity.createdBy === currentUser.id && (
                       <DropdownMenuItem onSelect={() => setTransferDialogOpen(true)}>
                         <UserCheck className="mr-2 h-4 w-4" />
                         Transfer Ownership
@@ -431,19 +431,6 @@ export default function ActivityDetails() {
             </div>
           )}
           
-          {/* Transfer Ownership Button - Available for all activities created by current user */}
-          {currentUser && activity.createdBy === currentUser.id && (
-            <div className="mt-4">
-              <Button
-                variant="outline"
-                onClick={() => setTransferDialogOpen(true)}
-                className="w-full"
-              >
-                <Users className="h-4 w-4 mr-2" />
-                Transfer Ownership
-              </Button>
-            </div>
-          )}
         </CardContent>
       </Card>
 
