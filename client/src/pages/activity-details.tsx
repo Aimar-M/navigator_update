@@ -430,6 +430,20 @@ export default function ActivityDetails() {
               <span>As the creator of this prepaid activity, you must attend.</span>
             </div>
           )}
+          
+          {/* Transfer Ownership Button - Available for all activities created by current user */}
+          {currentUser && activity.createdBy === currentUser.id && (
+            <div className="mt-4">
+              <Button
+                variant="outline"
+                onClick={() => setTransferDialogOpen(true)}
+                className="w-full"
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Transfer Ownership
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -439,7 +453,7 @@ export default function ActivityDetails() {
           <DialogHeader>
             <DialogTitle>Transfer Activity Ownership</DialogTitle>
             <DialogDescription>
-              Select a new owner for this prepaid activity. This will transfer any financial obligations associated with this activity to the new owner.
+              Select a new owner for this activity. This will transfer ownership and any associated responsibilities to the new owner.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">

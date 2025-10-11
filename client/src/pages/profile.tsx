@@ -40,8 +40,7 @@ export default function Profile() {
     confirmPassword: "",
   });
 
-  // Hidden delete profile functionality
-  const [avatarClickCount, setAvatarClickCount] = useState(0);
+  // Delete profile functionality
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
 
@@ -395,16 +394,9 @@ export default function Profile() {
     return name.split(" ").map((n: string) => n[0]).join("").toUpperCase();
   };
 
-  // Handle avatar clicks for hidden delete functionality
-  const handleAvatarClick = () => {
-    setAvatarClickCount(prev => {
-      const newCount = prev + 1;
-      if (newCount >= 7) {
-        setShowDeleteModal(true);
-        return 0; // Reset counter
-      }
-      return newCount;
-    });
+  // Handle delete account button click
+  const handleDeleteAccountClick = () => {
+    setShowDeleteModal(true);
   };
 
   // Handle delete account confirmation
@@ -451,7 +443,7 @@ export default function Profile() {
               <div className="flex items-start justify-between mb-6">
                 <div className="flex items-center space-x-4">
                   <div className="relative">
-                    <Avatar className="h-20 w-20 cursor-pointer" onClick={handleAvatarClick}>
+                    <Avatar className="h-20 w-20">
                       <AvatarImage 
                         src={profileData?.avatar 
                           ? (profileData.avatar.startsWith('data:')
@@ -793,6 +785,23 @@ export default function Profile() {
                         </Button>
                       </div>
                     </form>
+                  </div>
+
+                  {/* Delete Account Section */}
+                  <div className="border-t pt-6 mt-6">
+                    <h3 className="text-lg font-medium text-red-600 mb-4">Delete Account</h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Permanently delete your account and all associated data. This action cannot be undone.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={handleDeleteAccountClick}
+                      className="bg-red-600 hover:bg-red-700"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Account
+                    </Button>
                   </div>
 
                   <div className="flex justify-end space-x-3 pt-4">
