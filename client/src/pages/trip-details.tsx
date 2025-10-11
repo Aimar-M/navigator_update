@@ -790,7 +790,22 @@ export default function TripDetails() {
               </div>
             ) : (
               <div className="space-y-3">
-                {members.map((member) => (
+                {members
+                  .filter((member) => {
+                    // Always show the organizer
+                    if (member.userId === trip.organizer) {
+                      return true;
+                    }
+                    
+                    // For trips requiring down payment, only show confirmed participants
+                    if (trip.requiresDownPayment) {
+                      return member.paymentStatus === 'confirmed';
+                    }
+                    
+                    // For trips without payment requirements, show all confirmed members
+                    return member.status === 'confirmed';
+                  })
+                  .map((member) => (
                   <div key={member.userId} className="flex justify-between items-center">
                     <div className="flex items-center space-x-2">
                       <UserAvatar 

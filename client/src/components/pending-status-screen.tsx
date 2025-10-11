@@ -626,7 +626,20 @@ export default function PendingStatusScreen({ trip, member }: PendingStatusScree
             {Array.isArray(members) && members.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {(members as any[])
-                  .filter((member: any) => member.status === 'confirmed' || member.userId === trip.organizer)
+                  .filter((member: any) => {
+                    // Always show the organizer
+                    if (member.userId === trip.organizer) {
+                      return true;
+                    }
+                    
+                    // For trips requiring down payment, only show confirmed participants
+                    if (trip.requiresDownPayment) {
+                      return member.paymentStatus === 'confirmed';
+                    }
+                    
+                    // For trips without payment requirements, show all confirmed members
+                    return member.status === 'confirmed';
+                  })
                   .map((member: any) => (
                     <div key={member.userId} className="inline-flex items-center gap-2 rounded-full px-3 py-2 border" style={{ backgroundColor: '#F5F9FF', borderColor: '#CED6E0' }}>
                       <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: '#3A8DFF' }}>

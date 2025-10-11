@@ -352,7 +352,22 @@ export default function TripExpenses() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {members.map((member: any) => (
+                            {members
+                              .filter((member: any) => {
+                                // Always show the organizer
+                                if (member.userId === trip.organizer) {
+                                  return true;
+                                }
+                                
+                                // For trips requiring down payment, only show confirmed participants
+                                if (trip.requiresDownPayment) {
+                                  return member.paymentStatus === 'confirmed';
+                                }
+                                
+                                // For trips without payment requirements, show all confirmed members
+                                return member.status === 'confirmed';
+                              })
+                              .map((member: any) => (
                               <SelectItem key={member.userId} value={member.userId.toString()}>
                                 {member.user?.name || member.user?.username}
                               </SelectItem>
@@ -371,7 +386,22 @@ export default function TripExpenses() {
                       <FormItem>
                         <FormLabel>Split with (select multiple)</FormLabel>
                         <div className="space-y-2">
-                          {members.map((member: any) => (
+                          {members
+                            .filter((member: any) => {
+                              // Always show the organizer
+                              if (member.userId === trip.organizer) {
+                                return true;
+                              }
+                              
+                              // For trips requiring down payment, only show confirmed participants
+                              if (trip.requiresDownPayment) {
+                                return member.paymentStatus === 'confirmed';
+                              }
+                              
+                              // For trips without payment requirements, show all confirmed members
+                              return member.status === 'confirmed';
+                            })
+                            .map((member: any) => (
                             <div key={member.userId} className="flex items-center space-x-2">
                               <input
                                 type="checkbox"

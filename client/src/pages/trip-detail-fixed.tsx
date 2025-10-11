@@ -163,7 +163,22 @@ export default function TripDetailFixed() {
               </div>
             ) : members && members.length > 0 ? (
               <div className="flex flex-col space-y-3">
-                {members.map((member: any) => (
+                {members
+                  .filter((member: any) => {
+                    // Always show the organizer
+                    if (member.userId === trip.organizer) {
+                      return true;
+                    }
+                    
+                    // For trips requiring down payment, only show confirmed participants
+                    if (trip.requiresDownPayment) {
+                      return member.paymentStatus === 'confirmed';
+                    }
+                    
+                    // For trips without payment requirements, show all confirmed members
+                    return member.status === 'confirmed';
+                  })
+                  .map((member: any) => (
                   <div key={member.userId} className="flex items-center justify-between">
                     <div className="flex items-center">
                       <UserAvatar
