@@ -37,6 +37,7 @@ export interface IStorage {
   addTripMember(member: InsertTripMember): Promise<TripMember>;
   getTripMembers(tripId: number): Promise<TripMember[]>;
   getTripMembershipsByUser(userId: number): Promise<TripMember[]>;
+  getTripMemberWithPaymentInfo(tripId: number, userId: number): Promise<TripMember | undefined>;
   updateTripMemberStatus(tripId: number, userId: number, status: string): Promise<TripMember | undefined>;
   updateTripMemberAdminStatus(tripId: number, userId: number, isAdmin: boolean): Promise<TripMember | undefined>;
   removeTripMember(tripId: number, userId: number): Promise<boolean>;
@@ -532,6 +533,20 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(tripMembers)
       .where(eq(tripMembers.userId, userId));
+  }
+
+  async getTripMemberWithPaymentInfo(tripId: number, userId: number): Promise<TripMember | undefined> {
+    const [member] = await db
+      .select()
+      .from(tripMembers)
+      .where(
+        and(
+          eq(tripMembers.tripId, tripId),
+          eq(tripMembers.userId, userId)
+        )
+      );
+    
+    return member || undefined;
   }
 
   async updateTripMemberStatus(tripId: number, userId: number, status: string): Promise<TripMember | undefined> {

@@ -1848,6 +1848,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  router.post('/trips/:tripId/members/:userId/allow-rejoin', isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = ensureUser(req, res);
+      if (!user) return;
+      
+      const tripId = parseInt(req.params.tripId);
+      const userId = parseInt(req.params.userId);
+      
+      if (isNaN(tripId) || isNaN(userId)) {
+        return res.status(400).json({ message: 'Invalid trip ID or user ID' });
+      }
+      
+      // Only trip organizer can allow rejoin
+      const trip = await storage.getTrip(tripId);
+      if (!trip) {
+        return res.status(404).json({ message: 'Trip not found' });
+      }
+      
+      if (trip.organizer !== user.id) {
+        return res.status(403).json({ message: 'Only trip organizer can allow rejoin' });
+      }
+      
+      // Get the member details
+      const member = await storage.getTripMemberWithPaymentInfo(tripId, userId);
+      if (!member) {
+        return res.status(404).json({ message: 'Member not found' });
+      }
+      
+      // Reset their status to allow rejoining
+      await storage.updateTripMemberStatus(tripId, userId, 'pending');
+      await storage.updateTripMemberRSVPStatus(tripId, userId, 'pending');
+      
+      // Reset payment status
+      await storage.updateTripMemberPaymentInfo(tripId, userId, {
+        paymentStatus: trip.requiresDownPayment ? 'not_required' : 'not_required',
+        paymentMethod: null,
+        paymentAmount: trip.requiresDownPayment ? trip.downPaymentAmount?.toString() : null,
+        paymentSubmittedAt: null,
+        paymentConfirmedAt: null
+      });
+      
+      res.json({ message: 'User can now rejoin the trip' });
+    } catch (error) {
+      console.error('Error allowing rejoin:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
   router.delete('/trips/:tripId/members/:userId', isAuthenticated, async (req: Request, res: Response) => {
     try {
       const user = ensureUser(req, res);
@@ -3301,23 +3349,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Trip not found' });
       }
       
-      // Determine status based on whether trip requires down payment
-      let memberStatus = "confirmed";
-      let rsvpStatus = "pending";
+      // Check if user is already a member (including declined members)
+      const existingMember = await storage.getTripMemberWithPaymentInfo(invitation.tripId, user.id);
       
-      if (!trip.requiresDownPayment) {
-        // No down payment required - can auto-confirm
-        rsvpStatus = "confirmed";
+      let tripMember;
+      if (existingMember) {
+        // User already exists - reset their status to allow rejoining
+        const memberStatus = "confirmed";
+        const rsvpStatus = trip.requiresDownPayment ? "pending" : "confirmed";
+        
+        // Update existing member to reset their status
+        await storage.updateTripMemberStatus(invitation.tripId, user.id, memberStatus);
+        await storage.updateTripMemberRSVPStatus(invitation.tripId, user.id, rsvpStatus);
+        
+        // Reset payment status if they were previously rejected
+        if (existingMember.paymentStatus === 'rejected') {
+          await storage.updateTripMemberPaymentInfo(invitation.tripId, user.id, {
+            paymentStatus: trip.requiresDownPayment ? 'not_required' : 'not_required',
+            paymentMethod: null,
+            paymentAmount: trip.requiresDownPayment ? trip.downPaymentAmount?.toString() : null,
+            paymentSubmittedAt: null,
+            paymentConfirmedAt: null
+          });
+        }
+        
+        // Get the updated member
+        tripMember = await storage.getTripMemberWithPaymentInfo(invitation.tripId, user.id);
+      } else {
+        // New member - add them normally
+        const memberStatus = "confirmed";
+        const rsvpStatus = trip.requiresDownPayment ? "pending" : "confirmed";
+        
+        tripMember = await storage.addTripMember({
+          tripId: invitation.tripId,
+          userId: user.id,
+          status: memberStatus,
+          rsvpStatus: rsvpStatus,
+          rsvpDate: rsvpStatus === "confirmed" ? new Date() : undefined
+        });
       }
-      // If down payment is required, keep rsvpStatus as "pending" to trigger payment flow
-      
-      const tripMember = await storage.addTripMember({
-        tripId: invitation.tripId,
-        userId: user.id,
-        status: memberStatus,
-        rsvpStatus: rsvpStatus,
-        rsvpDate: rsvpStatus === "confirmed" ? new Date() : undefined
-      });
       
       res.status(201).json({ 
         message: 'Successfully joined the trip',

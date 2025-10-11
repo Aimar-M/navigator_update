@@ -187,6 +187,37 @@ export default function OrganizerReviewDashboard({
     notifyUserMutation.mutate(userId);
   };
 
+  const allowRejoinMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      return apiRequest('POST', `${API_BASE}/api/trips/${tripId}/members/${userId}/allow-rejoin`);
+    },
+    onSuccess: (_, userId) => {
+      const member = members.find(m => m.userId === userId);
+      toast({
+        title: "Rejoin allowed",
+        description: `${member?.user.name || member?.user.username} can now rejoin the trip with a fresh invitation.`,
+        duration: 5000,
+      });
+      // Remove from rejected list
+      setRejectedUserIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        return newSet;
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to allow rejoin",
+        description: error.message || "Something went wrong",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleAllowRejoin = (userId: number) => {
+    allowRejoinMutation.mutate(userId);
+  };
+
   const getPaymentMethodIcon = (method: string) => {
     switch (method?.toLowerCase()) {
       case 'venmo':
@@ -416,6 +447,15 @@ export default function OrganizerReviewDashboard({
                         className="text-blue-600 border-blue-200 hover:bg-blue-50"
                       >
                         {notifyUserMutation.isPending ? "Sending..." : "Notify User"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleAllowRejoin(member.userId)}
+                        disabled={allowRejoinMutation.isPending}
+                        className="text-green-600 border-green-200 hover:bg-green-50"
+                      >
+                        {allowRejoinMutation.isPending ? "Processing..." : "Allow Rejoin"}
                       </Button>
                     </div>
                   </div>
