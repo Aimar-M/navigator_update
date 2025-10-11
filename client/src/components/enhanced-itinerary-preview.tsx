@@ -447,7 +447,6 @@ export default function EnhancedItineraryPreview({ activities, tripName, classNa
                       </div>
                     </div>
                   </div>
-                  <ActivityDetailsDialog activity={activity} />
                 </div>
               ))}
 
@@ -512,7 +511,6 @@ export default function EnhancedItineraryPreview({ activities, tripName, classNa
                       </div>
                     </div>
                   </div>
-                  <ActivityDetailsDialog activity={activity} />
                 </div>
               ))}
           </div>
