@@ -175,6 +175,47 @@ export default function InvitationPage() {
                   <span>Organized by {trip.organizer.name}</span>
                 </div>
               )}
+
+              {/* Trip Description */}
+              {trip.description && (
+                <div className="mt-4 p-3 bg-gray-50 rounded-md">
+                  <h3 className="font-semibold text-sm text-gray-700 mb-2">About This Trip</h3>
+                  <p className="text-sm text-gray-600 leading-relaxed">{trip.description}</p>
+                </div>
+              )}
+
+              {/* Accommodation Links */}
+              {trip.accommodationLinks && trip.accommodationLinks.length > 0 && (
+                <div className="mt-4 p-3 bg-gray-50 rounded-md">
+                  <h3 className="font-semibold text-sm text-gray-700 mb-2">Accommodation</h3>
+                  <div className="space-y-2">
+                    {trip.accommodationLinks.map((link, index) => (
+                      <div key={index} className="flex items-center">
+                        <MapPin className="h-3 w-3 mr-2 text-gray-500" />
+                        <a 
+                          href={link} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                        >
+                          Accommodation Option {index + 1}
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Airport Gateway */}
+              {trip.airportGateway && (
+                <div className="mt-4 p-3 bg-gray-50 rounded-md">
+                  <h3 className="font-semibold text-sm text-gray-700 mb-1">Recommended Airport</h3>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <MapPin className="h-3 w-3 mr-2" />
+                    <span>{trip.airportGateway}</span>
+                  </div>
+                </div>
+              )}
               
               {isExpired && (
                 <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">

@@ -286,6 +286,25 @@ export default function InvitationPage() {
           </div>
         </div>
 
+        {/* Trip Description */}
+        {trip.description && (
+          <Card className="mb-8 bg-white rounded-2xl shadow-lg border-0">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-2xl font-bold flex items-center gap-3" style={{ color: '#1A1A1A' }}>
+                <Heart className="h-7 w-7" style={{ color: '#3A8DFF' }} />
+                About This Trip
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-xl p-4 border" style={{ backgroundColor: '#F5F9FF', borderColor: '#CED6E0' }}>
+                <p className="text-base leading-relaxed" style={{ color: '#1A1A1A' }}>
+                  {trip.description}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Trip Organizer */}
         <Card className="mb-8 bg-white rounded-2xl shadow-lg border-0">
           <CardHeader className="pb-4">
@@ -308,6 +327,60 @@ export default function InvitationPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Accommodation Information */}
+        {trip.accommodationLinks && trip.accommodationLinks.length > 0 && (
+          <Card className="mb-8 bg-white rounded-2xl shadow-lg border-0">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-2xl font-bold flex items-center gap-3" style={{ color: '#1A1A1A' }}>
+                <MapPin className="h-7 w-7" style={{ color: '#3A8DFF' }} />
+                Accommodation
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {trip.accommodationLinks.map((link, index) => (
+                  <div key={index} className="rounded-xl p-4 border" style={{ backgroundColor: '#F5F9FF', borderColor: '#CED6E0' }}>
+                    <a 
+                      href={link} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 text-blue-600 hover:text-blue-800 transition-colors"
+                    >
+                      <MapPin className="h-4 w-4" />
+                      <span className="font-medium">Accommodation Option {index + 1}</span>
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Airport Gateway */}
+        {trip.airportGateway && (
+          <Card className="mb-8 bg-white rounded-2xl shadow-lg border-0">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-2xl font-bold flex items-center gap-3" style={{ color: '#1A1A1A' }}>
+                <Plane className="h-7 w-7" style={{ color: '#3A8DFF' }} />
+                Airport Gateway
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-xl p-4 border" style={{ backgroundColor: '#F5F9FF', borderColor: '#CED6E0' }}>
+                <div className="flex items-center gap-3">
+                  <Plane className="h-5 w-5" style={{ color: '#3A8DFF' }} />
+                  <span className="font-semibold text-lg" style={{ color: '#1A1A1A' }}>
+                    {trip.airportGateway}
+                  </span>
+                </div>
+                <p className="text-sm mt-2" style={{ color: '#4B5A6A' }}>
+                  Recommended airport for this trip
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Enhanced Trip Itinerary Preview with Day View */}
         {activityPreview && activityPreview.length > 0 && (
