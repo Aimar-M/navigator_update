@@ -43,6 +43,11 @@ interface ActivityDetail {
   paymentType: string;
   maxParticipants?: number;
   createdBy: number;
+  creator?: {
+    id: number;
+    name: string;
+    avatar?: string;
+  };
   rsvps: ActivityRSVP[];
 }
 
@@ -264,6 +269,29 @@ export default function ActivityDetails() {
           <div className="flex justify-between items-start">
             <div>
               <CardTitle className="text-2xl font-bold text-gray-900">{activity.name}</CardTitle>
+              
+              {/* Creator/Owner Information */}
+              {activity.creator && (
+                <div className="flex items-center gap-2 mt-2 mb-1">
+                  <span className="text-sm text-gray-500">Created by</span>
+                  <div className="flex items-center gap-2">
+                    {activity.creator.avatar ? (
+                      <Avatar className="h-5 w-5">
+                        <AvatarImage src={activity.creator.avatar} />
+                        <AvatarFallback className="text-xs">{activity.creator.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                    ) : (
+                      <div className="h-5 w-5 rounded-full bg-gray-200 flex items-center justify-center">
+                        <span className="text-xs font-medium text-gray-600">
+                          {activity.creator.name.charAt(0)}
+                        </span>
+                      </div>
+                    )}
+                    <span className="text-sm font-medium text-gray-900">{activity.creator.name}</span>
+                  </div>
+                </div>
+              )}
+              
               <div className="text-gray-500 mt-1">
                 {formatDate(activity.date)}
                 {activity.startTime && (

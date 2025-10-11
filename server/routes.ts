@@ -2952,9 +2952,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
       );
 
+      // Get creator information
+      const creator = await storage.getUser(activity.createdBy);
+      const creatorInfo = creator ? {
+        id: creator.id,
+        name: creator.name || creator.username || 'Unknown User',
+        avatar: creator.avatar
+      } : null;
+
       const activityWithRSVPs = {
         ...activity,
-        rsvps: rsvpsWithUsers
+        rsvps: rsvpsWithUsers,
+        creator: creatorInfo
       };
 
       res.json(activityWithRSVPs);
