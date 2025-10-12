@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useMutation } from "@tanstack/react-query";
-import { Trash2, AlertTriangle, Lock, Shield } from "lucide-react";
+import { Trash2, AlertTriangle, Lock, Shield, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -137,6 +137,17 @@ export default function AccountSettings() {
       <main className="flex-1 p-4 pb-20 md:pb-4">
         <div className="max-w-2xl mx-auto space-y-6">
           {/* Page Header */}
+          <div className="flex items-center space-x-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(-1)}
+              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back</span>
+            </Button>
+          </div>
           <div className="flex items-center space-x-3">
             <Shield className="h-6 w-6 text-gray-600" />
             <h1 className="text-2xl font-bold text-gray-900">Account Settings</h1>
