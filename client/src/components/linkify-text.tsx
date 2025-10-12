@@ -6,11 +6,11 @@ interface LinkifyTextProps {
 }
 
 export default function LinkifyText({ text, className = "" }: LinkifyTextProps) {
+  // Debug: Always log when component is called
+  console.log('LinkifyText component called with text:', text);
+  
   // Simple and reliable URL regex
   const urlRegex = /(https?:\/\/[^\s]+)/g;
-  
-  // Debug: log the input
-  console.log('LinkifyText - Input text:', text);
   
   // Split the text by URLs
   const parts = text.split(urlRegex);
