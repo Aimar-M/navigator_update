@@ -7,8 +7,11 @@ interface LinkifyTextProps {
 }
 
 export default function LinkifyText({ text, className = "", variant = 'other-user' }: LinkifyTextProps) {
-  // Simple and reliable URL regex
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  // Enhanced URL regex that matches:
+  // 1. URLs with protocol (http://, https://)
+  // 2. Domain names (example.com, subdomain.example.com)
+  // 3. URLs with paths (example.com/path, subdomain.example.com/path)
+  const urlRegex = /(https?:\/\/[^\s]+|(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(?:\/[^\s]*)?)/g;
   
   // Split the text by URLs
   const parts = text.split(urlRegex);
@@ -21,14 +24,18 @@ export default function LinkifyText({ text, className = "", variant = 'other-use
   return (
     <span className={className}>
       {parts.map((part, index) => {
-        // Simple check: does this part start with http:// or https://?
-        const isUrl = part.startsWith('http://') || part.startsWith('https://');
+        // Check if this part is a URL (with or without protocol)
+        const isUrl = part.startsWith('http://') || part.startsWith('https://') || 
+                     /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(?:\/[^\s]*)?$/.test(part);
         
         if (isUrl) {
+          // Add protocol if missing
+          const href = part.startsWith('http') ? part : `https://${part}`;
+          
           return (
             <a
               key={index}
-              href={part}
+              href={href}
               target="_blank"
               rel="noopener noreferrer"
               className={linkClasses}
