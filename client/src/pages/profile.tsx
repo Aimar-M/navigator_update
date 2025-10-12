@@ -410,14 +410,6 @@ export default function Profile() {
                 </div>
                 <div className="flex items-center space-x-2">
                   <Button
-                    variant="outline"
-                    onClick={() => navigate("/account-settings")}
-                    className="flex items-center space-x-2"
-                  >
-                    <Settings className="h-4 w-4" />
-                    <span>More</span>
-                  </Button>
-                  <Button
                     variant={isEditing ? "outline" : "default"}
                     onClick={() => isEditing ? cancelEdit() : setIsEditing(true)}
                     className="flex items-center space-x-2"
