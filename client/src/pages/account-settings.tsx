@@ -226,12 +226,12 @@ export default function AccountSettings() {
             </CardContent>
           </Card>
 
-          {/* Delete Account Section */}
+          {/* Account Actions Section */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2 text-red-600">
-                <Trash2 className="h-5 w-5" />
-                <span>Delete Account</span>
+                <AlertTriangle className="h-5 w-5" />
+                <span>Account Actions</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -242,7 +242,7 @@ export default function AccountSettings() {
                     <div>
                       <h4 className="text-sm font-medium text-red-800">Warning</h4>
                       <p className="text-sm text-red-700 mt-1">
-                        This action cannot be undone. This will permanently delete your account and remove all your data from our servers.
+                        Deleting your account is permanent and cannot be undone. This will remove all your data from our servers.
                       </p>
                     </div>
                   </div>
@@ -260,7 +260,7 @@ export default function AccountSettings() {
                   </ul>
                 </div>
 
-                <div className="pt-4">
+                <div className="flex justify-start pt-4">
                   <Button
                     type="button"
                     variant="destructive"
