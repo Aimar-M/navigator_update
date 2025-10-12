@@ -13,7 +13,7 @@ export default function LinkifyText({ text, className = "", variant = 'other-use
     : "text-blue-500 hover:text-blue-700 underline break-all";
   
   // Simple and reliable URL detection
-  const urlRegex = /(https?:\/\/[^\s]+|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]*\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/g;
+  const urlRegex = /(https?:\/\/[^\s]+|[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.(?:[a-zA-Z]{2,})(?:\/[^\s]*)?)/g;
   
   // Split the text by URLs while preserving the URLs
   const parts = text.split(urlRegex);
