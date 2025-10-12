@@ -137,20 +137,20 @@ export default function AccountSettings() {
       <main className="flex-1 p-4 pb-20 md:pb-4">
         <div className="max-w-2xl mx-auto space-y-6">
           {/* Page Header */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Shield className="h-6 w-6 text-gray-600" />
+              <h1 className="text-2xl font-bold text-gray-900">Account Settings</h1>
+            </div>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate('/profile')}
               className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
             >
               <ArrowLeft className="h-4 w-4" />
-              <span>Back</span>
+              <span>Back to Profile</span>
             </Button>
-          </div>
-          <div className="flex items-center space-x-3">
-            <Shield className="h-6 w-6 text-gray-600" />
-            <h1 className="text-2xl font-bold text-gray-900">Account Settings</h1>
           </div>
           <p className="text-gray-600">
             Manage your account security and privacy settings.
