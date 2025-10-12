@@ -2365,6 +2365,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const rsvps = await storage.getActivityRSVPs(activityId);
       const existingRsvp = rsvps.find(rsvp => rsvp.userId === user.id);
       
+      // Check registration cap if user is trying to RSVP as "going"
+      if (status === 'going' && activity.maxParticipants) {
+        const currentGoingCount = rsvps.filter(rsvp => rsvp.status === 'going').length;
+        
+        // If user is already going, they can stay going (no cap check needed)
+        // If user is not going or new, check if there's space
+        if (!existingRsvp || existingRsvp.status !== 'going') {
+          if (currentGoingCount >= activity.maxParticipants) {
+            return res.status(400).json({ 
+              message: `Activity is full. Maximum ${activity.maxParticipants} participants allowed.` 
+            });
+          }
+        }
+      }
+      
       let rsvp;
       if (existingRsvp) {
         // Update existing RSVP

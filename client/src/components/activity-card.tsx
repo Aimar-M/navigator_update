@@ -64,6 +64,10 @@ export default function ActivityCard({
   const userRsvp = rsvps?.find(rsvp => rsvp.userId === user?.id);
   const userStatus = userRsvp?.status || "none";
   
+  // Check if activity is full
+  const isFull = maxParticipants && confirmedCount >= maxParticipants;
+  const canRSVPGoing = !isFull || userRsvp?.status === "going";
+  
   const handleRsvp = async (status: string) => {
     if (!user) return;
     
@@ -87,11 +91,12 @@ export default function ActivityCard({
           ? "You've been added to the attendee list" 
           : "You've been removed from the attendee list",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("RSVP error:", error);
+      const errorMessage = error?.response?.data?.message || "There was a problem with your RSVP. Please try again.";
       toast({
         title: "RSVP Failed",
-        description: "There was a problem with your RSVP. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -272,8 +277,9 @@ export default function ActivityCard({
                       e.stopPropagation();
                       handleRsvp("going");
                     }}
-                    disabled={isSubmitting}
-                    className="h-7 w-7 p-0"
+                    disabled={isSubmitting || !canRSVPGoing}
+                    className={`h-7 w-7 p-0 ${!canRSVPGoing ? "opacity-50 cursor-not-allowed" : ""}`}
+                    title={!canRSVPGoing ? "Activity is full" : ""}
                   >
                     <CheckIcon className="h-3 w-3" />
                   </Button>

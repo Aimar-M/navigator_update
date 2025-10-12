@@ -207,6 +207,10 @@ export default function ActivityDetails() {
   const notGoingRSVPs = activity.rsvps?.filter(rsvp => rsvp.status === "not going") || [];
   const userRSVP = activity.rsvps?.find(rsvp => rsvp.userId === currentUser?.id);
   const spotsLeft = activity.maxParticipants ? activity.maxParticipants - goingRSVPs.length : null;
+  
+  // Check if activity is full and user can RSVP as going
+  const isFull = activity.maxParticipants && goingRSVPs.length >= activity.maxParticipants;
+  const canRSVPGoing = !isFull || userRSVP?.status === "going";
 
   const handleRSVP = async (status: string) => {
     if (isSubmitting) return;
@@ -220,11 +224,12 @@ export default function ActivityDetails() {
           ? "You've been added to the attendee list" 
           : "You've been removed from the attendee list",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("RSVP error:", error);
+      const errorMessage = error?.response?.data?.message || "There was a problem with your RSVP. Please try again.";
       toast({
         title: "RSVP Failed",
-        description: "There was a problem with your RSVP. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -418,8 +423,9 @@ export default function ActivityDetails() {
             <Button
               variant={userRSVP?.status === "going" ? "default" : "outline"}
               onClick={() => handleRSVP("going")}
-              disabled={isSubmitting}
-              className={`flex items-center gap-2 ${userRSVP?.status === "going" ? "bg-green-600 hover:bg-green-700" : ""}`}
+              disabled={isSubmitting || !canRSVPGoing}
+              className={`flex items-center gap-2 ${userRSVP?.status === "going" ? "bg-green-600 hover:bg-green-700" : ""} ${!canRSVPGoing ? "opacity-50 cursor-not-allowed" : ""}`}
+              title={!canRSVPGoing ? "Activity is full" : ""}
             >
               <CheckIcon className="h-4 w-4" />
               {userRSVP?.status === "going" ? "You're Going" : "Going"}
