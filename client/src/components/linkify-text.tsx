@@ -6,25 +6,29 @@ interface LinkifyTextProps {
 }
 
 export default function LinkifyText({ text, className = "" }: LinkifyTextProps) {
-  // Enhanced URL regex that matches both http/https URLs and www. URLs
-  const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
+  // Simple and reliable URL regex
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
   
+  // Debug: log the input
+  console.log('LinkifyText - Input text:', text);
+  
+  // Split the text by URLs
   const parts = text.split(urlRegex);
+  console.log('LinkifyText - Parts after split:', parts);
   
   return (
     <span className={className}>
       {parts.map((part, index) => {
-        // Check if the part is a URL by testing if it matches the pattern
-        const isUrl = /^(https?:\/\/[^\s]+|www\.[^\s]+)$/.test(part);
+        // Simple check: does this part start with http:// or https://?
+        const isUrl = part.startsWith('http://') || part.startsWith('https://');
+        
+        console.log(`LinkifyText - Part ${index}: "${part}", isUrl: ${isUrl}`);
         
         if (isUrl) {
-          // Add protocol if missing
-          const href = part.startsWith('http') ? part : `https://${part}`;
-          
           return (
             <a
               key={index}
-              href={href}
+              href={part}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-500 hover:text-blue-700 underline break-all"
