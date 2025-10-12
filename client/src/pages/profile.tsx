@@ -620,7 +620,7 @@ export default function Profile() {
                       onClick={() => navigate("/account-settings")}
                       className="flex items-center space-x-2"
                     >
-                      <Settings className="h-4 w-4" />
+                      <Shield className="h-4 w-4" />
                       <span>More</span>
                     </Button>
                     <div className="flex space-x-3">
