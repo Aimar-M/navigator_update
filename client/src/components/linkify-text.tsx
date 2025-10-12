@@ -19,8 +19,8 @@ export default function LinkifyText({ text, className = "", variant = 'other-use
       return true;
     }
     
-    // Check for domain pattern: word.word (like example.com)
-    const domainPattern = /^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]*\.[a-zA-Z]{2,}(?:\/[^\s]*)?$/;
+    // Check for domain pattern: supports subdomains like subdomain.example.com
+    const domainPattern = /^[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}(?:\/[^\s]*)?$/;
     return domainPattern.test(str);
   };
   
