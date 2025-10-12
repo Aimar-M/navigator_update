@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
+import React from "react"
  
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -260,4 +261,30 @@ export function openPaymentLinkWithMobileFallback(paymentLink: string, paymentMe
 		// Fallback for unknown payment methods
 		window.open(paymentLink, '_blank', 'noopener,noreferrer');
 	}
+}
+
+// Convert URLs in text to clickable links
+export function linkifyText(text: string): React.ReactNode {
+	// URL regex pattern that matches http/https URLs
+	const urlRegex = /(https?:\/\/[^\s]+)/g;
+	
+	const parts = text.split(urlRegex);
+	
+	return parts.map((part, index) => {
+		if (urlRegex.test(part)) {
+			return (
+				<a
+					key={index}
+					href={part}
+					target="_blank"
+					rel="noopener noreferrer"
+					className="text-blue-500 hover:text-blue-700 underline break-all"
+					onClick={(e) => e.stopPropagation()}
+				>
+					{part}
+				</a>
+			);
+		}
+		return part;
+	});
 }

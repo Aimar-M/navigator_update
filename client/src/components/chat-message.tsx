@@ -1,4 +1,4 @@
-import { formatTime } from "@/lib/utils";
+import { formatTime, linkifyText } from "@/lib/utils";
 import UserAvatar from "@/components/user-avatar";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -46,7 +46,7 @@ export default function ChatMessage({ id, content, timestamp, user }: MessagePro
               : "bg-gray-100 text-gray-800 rounded-tl-sm"
           }`}
         >
-          <p className="text-sm whitespace-pre-wrap">{content}</p>
+          <div className="text-sm whitespace-pre-wrap">{linkifyText(content)}</div>
         </div>
         <span
           className={`text-xs mt-1 block ${
