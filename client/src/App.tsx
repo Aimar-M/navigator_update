@@ -20,6 +20,7 @@ import TripExpenses from "@/pages/expenses";
 import Polls from "@/pages/polls";
 import InvitationPage from "@/pages/invitation";
 import Profile from "@/pages/profile";
+import AccountSettings from "@/pages/account-settings";
 import UserProfile from "@/pages/user-profile";
 import BudgetDashboard from "@/pages/budget-dashboard";
 import ActivityDetails from "@/pages/activity-details";
@@ -56,6 +57,7 @@ function Router() {
       <Route path="/trips/:tripId/activities/:activityId" component={ActivityDetails} />
       <Route path="/trips/:tripId/expenses/:expenseId" component={ExpenseDetails} />
       <Route path="/profile" component={Profile} />
+      <Route path="/account-settings" component={AccountSettings} />
       <Route path="/user/:userId" component={UserProfile} />
       <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/reset-password" component={ResetPassword} />
