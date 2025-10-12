@@ -47,7 +47,6 @@ export default function ChatMessage({ id, content, timestamp, user }: MessagePro
               : "bg-gray-100 text-gray-800 rounded-tl-sm"
           }`}
         >
-          {console.log('ChatMessage rendering with content:', content)}
           <LinkifyText text={content} className="text-sm whitespace-pre-wrap" />
         </div>
         <span

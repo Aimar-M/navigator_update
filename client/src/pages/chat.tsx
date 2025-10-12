@@ -9,6 +9,7 @@ import ChatPoll from "@/components/chat-poll";
 import Header from "@/components/header";
 import MobileNavigation from "@/components/mobile-navigation";
 import TripTabs from "@/components/trip-tabs";
+import LinkifyText from "@/components/linkify-text";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -384,7 +385,7 @@ export default function Chat() {
                               <img src={item.image as string} alt="shared" className="max-w-full md:max-w-sm rounded mb-1" loading="lazy" />
                             )}
                             {item.content && (
-                              <p className="text-sm whitespace-pre-wrap break-words">{item.content}</p>
+                              <LinkifyText text={item.content} className="text-sm whitespace-pre-wrap break-words" />
                             )}
                           </div>
                           <span
