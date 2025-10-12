@@ -3,14 +3,20 @@ import React from "react";
 interface LinkifyTextProps {
   text: string;
   className?: string;
+  variant?: 'current-user' | 'other-user';
 }
 
-export default function LinkifyText({ text, className = "" }: LinkifyTextProps) {
+export default function LinkifyText({ text, className = "", variant = 'other-user' }: LinkifyTextProps) {
   // Simple and reliable URL regex
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   
   // Split the text by URLs
   const parts = text.split(urlRegex);
+  
+  // Choose link styling based on variant
+  const linkClasses = variant === 'current-user' 
+    ? "text-white hover:text-gray-200 underline break-all"
+    : "text-blue-500 hover:text-blue-700 underline break-all";
   
   return (
     <span className={className}>
@@ -25,7 +31,7 @@ export default function LinkifyText({ text, className = "" }: LinkifyTextProps) 
               href={part}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-500 hover:text-blue-700 underline break-all"
+              className={linkClasses}
               onClick={(e) => e.stopPropagation()}
             >
               {part}

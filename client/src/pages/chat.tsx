@@ -385,7 +385,11 @@ export default function Chat() {
                               <img src={item.image as string} alt="shared" className="max-w-full md:max-w-sm rounded mb-1" loading="lazy" />
                             )}
                             {item.content && (
-                              <LinkifyText text={item.content} className="text-sm whitespace-pre-wrap break-words" />
+                              <LinkifyText 
+                                text={item.content} 
+                                className="text-sm whitespace-pre-wrap break-words"
+                                variant={item.user?.id === user?.id ? 'current-user' : 'other-user'}
+                              />
                             )}
                           </div>
                           <span
