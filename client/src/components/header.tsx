@@ -73,7 +73,10 @@ export default function Header() {
     // Add trip invitation notifications
     if (pendingInvitations.length > 0) {
       pendingInvitations.forEach((invitation: any) => {
-        const notifId = `invite-${invitation.membership.tripId}`;
+        // Create unique notification ID that includes user ID, trip ID, and timestamp
+        // This ensures re-invitations after payment rejection trigger new notifications
+        const timestamp = new Date(invitation.membership.joinedAt).getTime();
+        const notifId = `invite-${invitation.membership.userId}-${invitation.membership.tripId}-${timestamp}`;
         newNotifications.push({
           id: notifId,
           type: 'invite',
