@@ -12,24 +12,27 @@ export default function LinkifyText({ text, className = "", variant = 'other-use
     ? "text-white hover:text-gray-200 underline break-all"
     : "text-blue-500 hover:text-blue-700 underline break-all";
   
-  // Simple and reliable URL detection
-  const urlRegex = /(https?:\/\/[^\s]+|[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.(?:[a-zA-Z]{2,})(?:\/[^\s]*)?)/g;
+  // Function to check if a string is a URL
+  const isUrl = (str: string) => {
+    // Check for protocol URLs
+    if (str.startsWith('http://') || str.startsWith('https://')) {
+      return true;
+    }
+    
+    // Check for domain pattern: word.word (like example.com)
+    const domainPattern = /^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]*\.[a-zA-Z]{2,}(?:\/[^\s]*)?$/;
+    return domainPattern.test(str);
+  };
   
-  // Split the text by URLs while preserving the URLs
-  const parts = text.split(urlRegex);
+  // Split by whitespace and process each word
+  const words = text.split(/(\s+)/);
   
   return (
     <span className={className}>
-      {parts.map((part, index) => {
-        // Check if this part is a URL
-        const isUrl = urlRegex.test(part);
-        
-        if (isUrl) {
-          // Reset regex lastIndex for next test
-          urlRegex.lastIndex = 0;
-          
+      {words.map((word, index) => {
+        if (isUrl(word)) {
           // Add protocol if missing
-          const href = part.startsWith('http') ? part : `https://${part}`;
+          const href = word.startsWith('http') ? word : `https://${word}`;
           
           return (
             <a
@@ -40,11 +43,11 @@ export default function LinkifyText({ text, className = "", variant = 'other-use
               className={linkClasses}
               onClick={(e) => e.stopPropagation()}
             >
-              {part}
+              {word}
             </a>
           );
         }
-        return part;
+        return word;
       })}
     </span>
   );
