@@ -409,23 +409,45 @@ export default function Profile() {
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Button
-                    variant={isEditing ? "outline" : "default"}
-                    onClick={() => isEditing ? cancelEdit() : setIsEditing(true)}
-                    className="flex items-center space-x-2"
-                  >
-                    {isEditing ? (
-                      <>
+                  {isEditing ? (
+                    <>
+                      <Button
+                        variant="outline"
+                        onClick={cancelEdit}
+                        className="flex items-center space-x-2"
+                      >
                         <X className="h-4 w-4" />
                         <span>Cancel</span>
-                      </>
-                    ) : (
-                      <>
-                        <Edit className="h-4 w-4" />
-                        <span>Edit Profile</span>
-                      </>
-                    )}
-                  </Button>
+                      </Button>
+                      <Button
+                        type="submit"
+                        form="profile-edit-form"
+                        disabled={updateProfileMutation.isPending}
+                        className="flex items-center space-x-2"
+                      >
+                        {updateProfileMutation.isPending ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="h-4 w-4" />
+                            <span>Save Changes</span>
+                          </>
+                        )}
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      variant="default"
+                      onClick={() => setIsEditing(true)}
+                      className="flex items-center space-x-2"
+                    >
+                      <Edit className="h-4 w-4" />
+                      <span>Edit Profile</span>
+                    </Button>
+                  )}
                 </div>
               </div>
 
@@ -486,7 +508,7 @@ export default function Profile() {
                 <CardTitle>Edit Profile</CardTitle>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form id="profile-edit-form" onSubmit={handleSubmit} className="space-y-4">
                   <div>
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                       Display Name
