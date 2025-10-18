@@ -783,12 +783,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   router.delete('/auth/delete-account', isAuthenticated, async (req: Request, res: Response) => {
     try {
       const userId = req.user?.id;
+      console.log('🔍 Delete account request - userId:', userId);
+      console.log('🔍 Delete account request - user object:', req.user);
+      
       if (!userId) {
+        console.log('❌ Delete account - No userId found');
         return res.status(401).json({ message: 'Not authenticated' });
       }
 
+      // Check if user exists before attempting deletion
+      const userExists = await storage.getUser(userId);
+      console.log('🔍 Delete account - User exists check:', !!userExists);
+      
+      if (!userExists) {
+        console.log('❌ Delete account - User not found in database');
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      console.log('🔍 Delete account - Starting user deletion process...');
       const success = await storage.deleteUser(userId);
+      console.log('🔍 Delete account - Deletion result:', success);
+      
       if (success) {
+        console.log('✅ Delete account - User deleted successfully');
         // Destroy the session
         req.session.destroy((err) => {
           if (err) {
@@ -798,10 +815,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         return res.json({ message: 'Account deleted successfully' });
       } else {
-        return res.status(404).json({ message: 'User not found' });
+        console.log('❌ Delete account - Deletion failed');
+        return res.status(500).json({ message: 'Failed to delete user' });
       }
     } catch (error) {
-      console.error('Error deleting user account:', error);
+      console.error('❌ Delete account - Error:', error);
       res.status(500).json({ message: 'Server error' });
     }
   });

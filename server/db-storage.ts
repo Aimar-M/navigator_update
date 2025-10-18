@@ -148,29 +148,39 @@ export class DatabaseStorage {
 
   async deleteUser(id: number): Promise<boolean> {
     try {
+      console.log('🔍 deleteUser - Starting deletion for user ID:', id);
+      
       // Delete all related records first to avoid foreign key constraints
       // Delete user trip settings
+      console.log('🔍 deleteUser - Deleting user trip settings...');
       await db.delete(userTripSettings).where(eq(userTripSettings.userId, id));
       
       // Delete trip memberships
+      console.log('🔍 deleteUser - Deleting trip memberships...');
       await db.delete(tripMembers).where(eq(tripMembers.userId, id));
       
       // Delete activity RSVPs
+      console.log('🔍 deleteUser - Deleting activity RSVPs...');
       await db.delete(activityRsvp).where(eq(activityRsvp.userId, id));
       
       // Delete survey responses
+      console.log('🔍 deleteUser - Deleting survey responses...');
       await db.delete(surveyResponses).where(eq(surveyResponses.userId, id));
       
       // Delete poll votes
+      console.log('🔍 deleteUser - Deleting poll votes...');
       await db.delete(pollVotes).where(eq(pollVotes.userId, id));
       
       // Delete messages
+      console.log('🔍 deleteUser - Deleting messages...');
       await db.delete(messages).where(eq(messages.userId, id));
       
       // Delete flight info
+      console.log('🔍 deleteUser - Deleting flight info...');
       await db.delete(flightInfo).where(eq(flightInfo.userId, id));
       
       // Delete expenses where user is involved (either as creator or payer)
+      console.log('🔍 deleteUser - Deleting expenses...');
       await db.delete(expenses).where(
         or(
           eq(expenses.userId, id),
@@ -179,13 +189,18 @@ export class DatabaseStorage {
       );
       
       // Delete invitation links created by user
+      console.log('🔍 deleteUser - Deleting invitation links...');
       await db.delete(invitationLinks).where(eq(invitationLinks.createdBy, id));
       
       // Delete polls created by user
+      console.log('🔍 deleteUser - Deleting polls...');
       await db.delete(polls).where(eq(polls.createdBy, id));
       
       // Handle trips where user is organizer - transfer ownership or delete
+      console.log('🔍 deleteUser - Handling trips where user is organizer...');
       const userTrips = await db.select().from(trips).where(eq(trips.organizer, id));
+      console.log('🔍 deleteUser - Found trips where user is organizer:', userTrips.length);
+      
       for (const trip of userTrips) {
         // Get other members of the trip
         const otherMembers = await db.select()
@@ -197,20 +212,24 @@ export class DatabaseStorage {
         
         if (otherMembers.length > 0) {
           // Transfer ownership to the first other member
+          console.log('🔍 deleteUser - Transferring trip ownership to user:', otherMembers[0].userId);
           await db.update(trips)
             .set({ organizer: otherMembers[0].userId })
             .where(eq(trips.id, trip.id));
         } else {
           // No other members, delete the trip
+          console.log('🔍 deleteUser - Deleting trip with no other members:', trip.id);
           await db.delete(trips).where(eq(trips.id, trip.id));
         }
       }
       
       // Finally delete the user
+      console.log('🔍 deleteUser - Deleting user from database...');
       const result = await db
         .delete(users)
         .where(eq(users.id, id));
       
+      console.log('🔍 deleteUser - User deletion result:', result.rowCount > 0);
       return result.rowCount > 0;
     } catch (error) {
       console.error('Error deleting user and related records:', error);
