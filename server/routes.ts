@@ -548,8 +548,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.session) {
         req.session.userId = user.id;
       }
-      // Generate token (in this simple implementation, just use the user ID)
-      const token = `${user.id}`;
+      // Generate token (format: userId_token for compatibility with middleware)
+      const token = `${user.id}_${generateToken()}`;
       const loginIdentifier = username || email;
       console.log('Login successful for:', loginIdentifier);
       // Return user data with token
