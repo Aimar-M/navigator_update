@@ -8,9 +8,9 @@ import {
   InvitationLink, InsertInvitationLink,
   users, trips, tripMembers, activities, activityRsvp, 
   messages, surveyQuestions, surveyResponses, expenses, expenseSplits, settlements,
-  polls, pollVotes, invitationLinks, userTripSettings
+  polls, pollVotes, invitationLinks, userTripSettings, flightInfo
 } from "@shared/schema";
-import { eq, and, or, desc, sql, ilike, inArray, isNotNull, lt } from "drizzle-orm";
+import { eq, and, or, desc, sql, ilike, inArray, isNotNull, lt, ne } from "drizzle-orm";
 export class DatabaseStorage {
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -147,10 +147,75 @@ export class DatabaseStorage {
   }
 
   async deleteUser(id: number): Promise<boolean> {
-    const result = await db
-      .delete(users)
-      .where(eq(users.id, id));
-    return result.rowCount > 0;
+    try {
+      // Delete all related records first to avoid foreign key constraints
+      // Delete user trip settings
+      await db.delete(userTripSettings).where(eq(userTripSettings.userId, id));
+      
+      // Delete trip memberships
+      await db.delete(tripMembers).where(eq(tripMembers.userId, id));
+      
+      // Delete activity RSVPs
+      await db.delete(activityRsvp).where(eq(activityRsvp.userId, id));
+      
+      // Delete survey responses
+      await db.delete(surveyResponses).where(eq(surveyResponses.userId, id));
+      
+      // Delete poll votes
+      await db.delete(pollVotes).where(eq(pollVotes.userId, id));
+      
+      // Delete messages
+      await db.delete(messages).where(eq(messages.userId, id));
+      
+      // Delete flight info
+      await db.delete(flightInfo).where(eq(flightInfo.userId, id));
+      
+      // Delete expenses where user is involved (either as creator or payer)
+      await db.delete(expenses).where(
+        or(
+          eq(expenses.userId, id),
+          eq(expenses.paidBy, id)
+        )
+      );
+      
+      // Delete invitation links created by user
+      await db.delete(invitationLinks).where(eq(invitationLinks.createdBy, id));
+      
+      // Delete polls created by user
+      await db.delete(polls).where(eq(polls.createdBy, id));
+      
+      // Handle trips where user is organizer - transfer ownership or delete
+      const userTrips = await db.select().from(trips).where(eq(trips.organizer, id));
+      for (const trip of userTrips) {
+        // Get other members of the trip
+        const otherMembers = await db.select()
+          .from(tripMembers)
+          .where(and(
+            eq(tripMembers.tripId, trip.id),
+            ne(tripMembers.userId, id)
+          ));
+        
+        if (otherMembers.length > 0) {
+          // Transfer ownership to the first other member
+          await db.update(trips)
+            .set({ organizer: otherMembers[0].userId })
+            .where(eq(trips.id, trip.id));
+        } else {
+          // No other members, delete the trip
+          await db.delete(trips).where(eq(trips.id, trip.id));
+        }
+      }
+      
+      // Finally delete the user
+      const result = await db
+        .delete(users)
+        .where(eq(users.id, id));
+      
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Error deleting user and related records:', error);
+      return false;
+    }
   }
 
   async createTrip(insertTrip: InsertTrip): Promise<Trip> {
