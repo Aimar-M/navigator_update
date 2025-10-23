@@ -98,7 +98,7 @@ function Itinerary() {
     const options = [];
     
     // Add "No cap" option
-    options.push({ value: '', label: 'No cap (unlimited)', description: 'All trip members can join' });
+    options.push({ value: 'unlimited', label: 'No cap (unlimited)', description: 'All trip members can join' });
     
     // Add numbers from 1 to totalMembers
     for (let i = 1; i <= totalMembers; i++) {
@@ -371,7 +371,9 @@ function Itinerary() {
       let activityData: any = {
         ...activityFormData,
         cost: activityFormData.cost ? activityFormData.cost : null,
-        maxParticipants: activityFormData.maxParticipants ? parseInt(activityFormData.maxParticipants) : null,
+        maxParticipants: activityFormData.maxParticipants && activityFormData.maxParticipants !== 'unlimited' 
+          ? parseInt(activityFormData.maxParticipants) 
+          : null,
       };
 
       // For accommodation, convert check-in/check-out to proper date format and set the main date field

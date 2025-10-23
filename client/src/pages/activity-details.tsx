@@ -117,7 +117,7 @@ export default function ActivityDetails() {
     const options = [];
     
     // Add "No cap" option
-    options.push({ value: '', label: 'No cap (unlimited)', description: 'All trip members can join' });
+    options.push({ value: 'unlimited', label: 'No cap (unlimited)', description: 'All trip members can join' });
     
     // Add numbers from 1 to totalMembers
     for (let i = 1; i <= totalMembers; i++) {
@@ -194,7 +194,7 @@ export default function ActivityDetails() {
   const updateCapMutation = useMutation({
     mutationFn: async (maxParticipants: string) => {
       return await apiRequest("PUT", `${API_BASE}/api/activities/${activityId}`, {
-        maxParticipants: maxParticipants ? parseInt(maxParticipants) : null
+        maxParticipants: maxParticipants && maxParticipants !== 'unlimited' ? parseInt(maxParticipants) : null
       });
     },
     onSuccess: () => {
@@ -375,7 +375,7 @@ export default function ActivityDetails() {
                             variant="secondary" 
                             className="text-xs cursor-pointer hover:bg-blue-200 transition-colors"
                             onClick={() => {
-                              setNewMaxParticipants(activity.maxParticipants?.toString() || "");
+                              setNewMaxParticipants(activity.maxParticipants?.toString() || "unlimited");
                               setEditCapDialogOpen(true);
                             }}
                           >
@@ -451,7 +451,7 @@ export default function ActivityDetails() {
                           variant="outline" 
                           className="text-xs cursor-pointer hover:bg-blue-100 transition-colors border-dashed"
                           onClick={() => {
-                            setNewMaxParticipants("");
+                            setNewMaxParticipants("unlimited");
                             setEditCapDialogOpen(true);
                           }}
                         >
