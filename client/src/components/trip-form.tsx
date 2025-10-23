@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import GooglePlacesAutocomplete from "@/components/google-places-autocomplete";
 import GooglePlacesMulti from "@/components/google-places-multi";
+import TripAirportSelector from "@/components/trip-airport-selector";
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -28,7 +29,7 @@ export default function TripForm({ onComplete }: TripFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState(1);
-  const [totalSteps] = useState(3);
+  const [totalSteps] = useState(4);
   const [formData, setFormData] = useState({
     name: "",
     destination: "",
@@ -38,6 +39,8 @@ export default function TripForm({ onComplete }: TripFormProps) {
     requiresDownPayment: false,
     downPaymentAmount: "",
   });
+  const [selectedAirport, setSelectedAirport] = useState<any>(null);
+  const [destinationCoords, setDestinationCoords] = useState<{latitude: number, longitude: number, name: string} | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type, checked } = e.target as HTMLInputElement;
@@ -157,14 +160,20 @@ export default function TripForm({ onComplete }: TripFormProps) {
               <label htmlFor="destination" className="block text-sm font-medium text-gray-700 mb-1">
                 Destination
               </label>
-              <GooglePlacesMulti
-                id="destination"
-                name="destination"
+              <GooglePlacesAutocomplete
                 value={formData.destination}
                 onChange={(value) => setFormData(prev => ({ ...prev, destination: value }))}
+                onPlaceSelect={(place) => {
+                  if (place.geometry?.location) {
+                    setDestinationCoords({
+                      latitude: place.geometry.location.lat,
+                      longitude: place.geometry.location.lng,
+                      name: place.name || place.formatted_address
+                    });
+                  }
+                }}
                 placeholder="Where are you going?"
                 types="(cities)"
-                className=""
               />
             </div>
 
@@ -199,6 +208,27 @@ export default function TripForm({ onComplete }: TripFormProps) {
           </>
         );
       case 2:
+        return (
+          <div className="space-y-4">
+            {destinationCoords ? (
+              <TripAirportSelector
+                destination={destinationCoords}
+                onAirportSelect={setSelectedAirport}
+                selectedAirport={selectedAirport}
+              />
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-600 mb-4">
+                  Please select a destination in step 1 to see airport recommendations.
+                </p>
+                <Button type="button" onClick={prevStep}>
+                  Go Back
+                </Button>
+              </div>
+            )}
+          </div>
+        );
+      case 3:
         return (
           <div className="space-y-4">
             <div className="mb-4">
@@ -257,7 +287,7 @@ export default function TripForm({ onComplete }: TripFormProps) {
             </div>
           </div>
         );
-      case 3:
+      case 4:
         return (
           <div className="mb-4">
             <h3 className="text-lg font-medium text-gray-900 mb-2">Trip Summary</h3>
@@ -267,6 +297,13 @@ export default function TripForm({ onComplete }: TripFormProps) {
               
               <p className="text-sm font-medium text-gray-700">Destination:</p>
               <p className="text-sm text-gray-900 mb-2">{formData.destination}</p>
+              
+              {selectedAirport && (
+                <>
+                  <p className="text-sm font-medium text-gray-700">Recommended Airport:</p>
+                  <p className="text-sm text-gray-900 mb-2">{selectedAirport.name}</p>
+                </>
+              )}
               
               <p className="text-sm font-medium text-gray-700">Dates:</p>
               <p className="text-sm text-gray-900 mb-2">
@@ -311,9 +348,11 @@ export default function TripForm({ onComplete }: TripFormProps) {
           formData.endDate !== ""
         );
       case 2:
+        return selectedAirport !== null;
+      case 3:
         // Description is optional, but down payment amount is required if down payment is enabled
         return !formData.requiresDownPayment || (formData.downPaymentAmount.trim() !== "" && parseFloat(formData.downPaymentAmount) > 0);
-      case 3:
+      case 4:
         return true;
       default:
         return false;
@@ -330,8 +369,9 @@ export default function TripForm({ onComplete }: TripFormProps) {
           <div className="flex justify-between items-center mb-2">
             <h4 className="text-sm font-medium text-gray-900">
               {step === 1 && "Trip Basics"}
-              {step === 2 && "Trip Details"}
-              {step === 3 && "Review & Create"}
+              {step === 2 && "Select Airport"}
+              {step === 3 && "Trip Details"}
+              {step === 4 && "Review & Create"}
             </h4>
             <div className="flex items-center">
               <span className="text-xs text-gray-500 mr-2">

@@ -5902,6 +5902,120 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   );
 
+  // AIRPORT RECOMMENDATIONS ROUTES
+  
+  // Get airport recommendations based on user location and destination
+  router.post('/airport-recommendations', isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { userLocation, destination } = req.body;
+      
+      if (!userLocation || !destination) {
+        return res.status(400).json({ 
+          error: 'User location and destination are required' 
+        });
+      }
+
+      if (!userLocation.latitude || !userLocation.longitude) {
+        return res.status(400).json({ 
+          error: 'User location must include latitude and longitude' 
+        });
+      }
+
+      if (!destination.latitude || !destination.longitude) {
+        return res.status(400).json({ 
+          error: 'Destination must include latitude and longitude' 
+        });
+      }
+
+      const { getAirportRecommendations } = await import('./airport-recommendations');
+      const recommendations = await getAirportRecommendations(
+        userLocation,
+        destination,
+        req.body.maxResults || 5
+      );
+
+      res.json({ recommendations });
+    } catch (error: any) {
+      console.error('❌ Airport recommendations error:', error);
+      res.status(500).json({ 
+        error: 'Failed to get airport recommendations',
+        message: error.message 
+      });
+    }
+  });
+
+  // Get nearby airports for a location
+  router.get('/airports/nearby', isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { lat, lng, radius = 200 } = req.query;
+      
+      if (!lat || !lng) {
+        return res.status(400).json({ 
+          error: 'Latitude and longitude are required' 
+        });
+      }
+
+      const { findNearbyAirports } = await import('./airport-recommendations');
+      const airports = await findNearbyAirports(
+        { latitude: parseFloat(lat as string), longitude: parseFloat(lng as string) },
+        parseInt(radius as string)
+      );
+
+      res.json({ airports });
+    } catch (error: any) {
+      console.error('❌ Nearby airports error:', error);
+      res.status(500).json({ 
+        error: 'Failed to find nearby airports',
+        message: error.message 
+      });
+    }
+  });
+
+  // Get airport details
+  router.get('/airports/:placeId', isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { placeId } = req.params;
+      
+      if (!placeId) {
+        return res.status(400).json({ 
+          error: 'Place ID is required' 
+        });
+      }
+
+      const { getAirportDetails } = await import('./airport-recommendations');
+      const airport = await getAirportDetails(placeId);
+
+      if (!airport) {
+        return res.status(404).json({ 
+          error: 'Airport not found' 
+        });
+      }
+
+      res.json({ airport });
+    } catch (error: any) {
+      console.error('❌ Airport details error:', error);
+      res.status(500).json({ 
+        error: 'Failed to get airport details',
+        message: error.message 
+      });
+    }
+  });
+
+  // Health check for airport recommendations service
+  router.get('/airport-recommendations/status', async (req: Request, res: Response) => {
+    try {
+      const { getAirportRecommendationsStatus } = await import('./airport-recommendations');
+      const status = getAirportRecommendationsStatus();
+      res.json(status);
+    } catch (error: any) {
+      console.error('❌ Airport recommendations status error:', error);
+      res.status(500).json({ 
+        error: 'Failed to check airport recommendations status',
+        message: error.message 
+      });
+    }
+  });
+
   app.use('/api', router);
   
   return httpServer;

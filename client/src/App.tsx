@@ -29,6 +29,7 @@ import ExpenseDetails from "@/pages/expense-details";
 import ForgotPassword from "@/pages/forgot-password";
 import ResetPassword from "@/pages/reset-password";
 import ConfirmEmail from "@/pages/confirm-email";
+import AirportTest from "@/pages/airport-test";
 
 function Router() {
   return (
@@ -62,6 +63,7 @@ function Router() {
       <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/reset-password" component={ResetPassword} />
       <Route path="/confirm-email" component={ConfirmEmail} />
+      <Route path="/airport-test" component={AirportTest} />
       <Route component={NotFound} />
     </Switch>
   );
