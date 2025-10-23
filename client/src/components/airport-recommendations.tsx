@@ -63,7 +63,8 @@ export default function AirportRecommendations({
     if (position && destinationCoords) {
       getRecommendations(
         { latitude: position.latitude, longitude: position.longitude },
-        destinationCoords
+        destinationCoords,
+        1 // Only get the closest airport
       );
     }
   }, [position, destinationCoords, getRecommendations]);
@@ -199,7 +200,7 @@ export default function AirportRecommendations({
         <CardContent className="p-6">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Finding the best airports for you...</p>
+            <p className="text-gray-600">Finding the closest airport to you...</p>
           </div>
         </CardContent>
       </Card>
@@ -213,7 +214,7 @@ export default function AirportRecommendations({
           <div className="text-center">
             <Plane className="h-12 w-12 text-red-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Unable to Find Airports
+              Unable to Find Airport
             </h3>
             <p className="text-gray-600 mb-4">{recommendationsError}</p>
             <Button onClick={() => {
@@ -239,16 +240,17 @@ export default function AirportRecommendations({
           <div className="text-center">
             <Plane className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              No Airports Found
+              No Airport Found
             </h3>
             <p className="text-gray-600 mb-4">
-              We couldn't find any airports near your location. Try expanding your search area.
+              We couldn't find an airport near your location. Try expanding your search area.
             </p>
             <Button onClick={() => {
               if (position && destinationCoords) {
                 getRecommendations(
                   { latitude: position.latitude, longitude: position.longitude },
-                  destinationCoords
+                  destinationCoords,
+                  1 // Only get the closest airport
                 );
               }
             }}>
@@ -264,10 +266,10 @@ export default function AirportRecommendations({
     <div className={className}>
         <div className="mb-4">
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            Recommended Airports
+            Closest Airport
           </h3>
           <p className="text-sm text-gray-600">
-            Based on your location and trip to {destinationCoords?.name || destination.name}
+            The nearest airport to you for your trip to {destinationCoords?.name || destination.name}
           </p>
         </div>
 
@@ -349,7 +351,8 @@ export default function AirportRecommendations({
             if (position && destinationCoords) {
               getRecommendations(
                 { latitude: position.latitude, longitude: position.longitude },
-                destinationCoords
+                destinationCoords,
+                1 // Only get the closest airport
               );
             }
           }}

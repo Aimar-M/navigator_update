@@ -77,7 +77,7 @@ export default function AirportTest() {
           {/* Airport Recommendations */}
           <Card>
             <CardHeader>
-              <CardTitle>2. Airport Recommendations</CardTitle>
+              <CardTitle>2. Closest Airport</CardTitle>
             </CardHeader>
             <CardContent>
               {destination ? (
@@ -87,9 +87,9 @@ export default function AirportTest() {
                 />
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-gray-600">
-                    Please select a destination to see airport recommendations
-                  </p>
+              <p className="text-gray-600">
+                Please select a destination to see the closest airport
+              </p>
                 </div>
               )}
             </CardContent>
@@ -101,7 +101,7 @@ export default function AirportTest() {
           <div className="mt-8">
             <Card>
               <CardHeader>
-                <CardTitle>3. Trip Airport Selector</CardTitle>
+                <CardTitle>3. Trip Airport Selector (Multiple Options)</CardTitle>
               </CardHeader>
               <CardContent>
                 <TripAirportSelector
