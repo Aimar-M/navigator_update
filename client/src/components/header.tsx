@@ -135,8 +135,7 @@ export default function Header() {
       title: "Logged out",
       description: "You have been logged out successfully.",
     });
-    // Use window.location for a hard redirect to avoid race conditions
-    window.location.href = "/";
+    // Note: logout() already handles the redirect, so no need for additional redirect here
   };
 
   return (
