@@ -244,7 +244,14 @@ export default function AirportRecommendations({
             <p className="text-gray-600 mb-4">
               We couldn't find any airports near your location. Try expanding your search area.
             </p>
-            <Button onClick={getAirportRecommendations}>
+            <Button onClick={() => {
+              if (position && destinationCoords) {
+                getRecommendations(
+                  { latitude: position.latitude, longitude: position.longitude },
+                  destinationCoords
+                );
+              }
+            }}>
               Search Again
             </Button>
           </div>
