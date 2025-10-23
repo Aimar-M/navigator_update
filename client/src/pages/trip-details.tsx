@@ -27,6 +27,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { invalidateAllUserQueries } from '@/lib/profile-update-utils';
 import GooglePlacesAutocomplete from "@/components/google-places-autocomplete";
 import GooglePlacesMulti from "@/components/google-places-multi";
+import AirportRecommendations from "@/components/airport-recommendations";
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -711,7 +712,7 @@ export default function TripDetails() {
                 </div>
               </div>
 
-              {/* Airport Gateway */}
+              {/* Airport Recommendations */}
               <div className="flex items-start space-x-3">
                 <Plane className="h-5 w-5 text-gray-500 mt-0.5" />
                 <div className="flex-1">
@@ -724,9 +725,21 @@ export default function TripDetails() {
                       className="mt-1"
                     />
                   ) : (
-                    <p className="text-gray-600">
-                      {trip.airportGateway || 'No recommended airport specified'}
-                    </p>
+                    <div className="mt-2">
+                      {trip.airportGateway ? (
+                        <p className="text-gray-600 mb-3">
+                          Organizer recommendation: {trip.airportGateway}
+                        </p>
+                      ) : null}
+                      <AirportRecommendations
+                        destination={{
+                          latitude: 0, // Will be resolved by the component
+                          longitude: 0, // Will be resolved by the component
+                          name: trip.destination
+                        }}
+                        className="mt-2"
+                      />
+                    </div>
                   )}
                 </div>
               </div>

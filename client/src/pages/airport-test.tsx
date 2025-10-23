@@ -27,8 +27,14 @@ export default function AirportTest() {
             Airport Recommendations Test
           </h1>
           <p className="text-gray-600">
-            Test the location-based airport recommendation feature
+            Test the location-based airport recommendation feature for trip overview
           </p>
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800">
+              <strong>New Flow:</strong> Airport recommendations now appear in the trip overview after trip creation. 
+              Each member gets personalized recommendations based on their location when they visit the trip page.
+            </p>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

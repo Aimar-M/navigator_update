@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useGeolocation } from '@/hooks/use-geolocation';
+import { useAirportRecommendations } from '@/hooks/use-airport-recommendations';
 
 interface Airport {
   place_id: string;
@@ -44,23 +45,33 @@ export default function AirportRecommendations({
   className = "" 
 }: AirportRecommendationsProps) {
   const { position, error, isLoading, requestLocation } = useGeolocation();
-  const [recommendations, setRecommendations] = useState<AirportRecommendation[]>([]);
-  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { recommendations, loading: loadingRecommendations, error: recommendationsError, getRecommendations } = useAirportRecommendations();
+  const [destinationCoords, setDestinationCoords] = useState<{latitude: number, longitude: number, name: string} | null>(null);
+  const [loadingDestination, setLoadingDestination] = useState(false);
 
-  // Get recommendations when we have both user location and destination
+  // Get destination coordinates if not provided
   useEffect(() => {
-    if (position && destination) {
-      getAirportRecommendations();
+    if (destination && (destination.latitude === 0 || destination.longitude === 0)) {
+      getDestinationCoordinates();
+    } else if (destination) {
+      setDestinationCoords(destination);
     }
-  }, [position, destination]);
+  }, [destination]);
 
-  const getAirportRecommendations = async () => {
-    if (!position || !destination) return;
+  // Get recommendations when we have both user location and destination coordinates
+  useEffect(() => {
+    if (position && destinationCoords) {
+      getRecommendations(
+        { latitude: position.latitude, longitude: position.longitude },
+        destinationCoords
+      );
+    }
+  }, [position, destinationCoords, getRecommendations]);
 
-    setLoadingRecommendations(true);
-    setErrorMessage(null);
+  const getDestinationCoordinates = async () => {
+    if (!destination?.name) return;
 
+    setLoadingDestination(true);
     try {
       const token = localStorage.getItem('auth_token');
       const headers: Record<string, string> = {
@@ -71,35 +82,38 @@ export default function AirportRecommendations({
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${API_BASE}/api/airport-recommendations`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          userLocation: {
-            latitude: position.latitude,
-            longitude: position.longitude
-          },
-          destination: {
-            latitude: destination.latitude,
-            longitude: destination.longitude,
-            name: destination.name
-          },
-          maxResults: 5
-        })
+      // Use Google Places API to get coordinates for the destination
+      const response = await fetch(`${API_BASE}/api/places/autocomplete?input=${encodeURIComponent(destination.name)}`, {
+        headers
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to get airport recommendations');
+        throw new Error('Failed to get destination coordinates');
       }
 
       const data = await response.json();
-      setRecommendations(data.recommendations || []);
+      if (data.predictions && data.predictions.length > 0) {
+        // Get details for the first prediction
+        const placeId = data.predictions[0].place_id;
+        const detailsResponse = await fetch(`${API_BASE}/api/places/details?placeId=${placeId}`, {
+          headers
+        });
+
+        if (detailsResponse.ok) {
+          const detailsData = await detailsResponse.json();
+          if (detailsData.result?.geometry?.location) {
+            setDestinationCoords({
+              latitude: detailsData.result.geometry.location.lat,
+              longitude: detailsData.result.geometry.location.lng,
+              name: destination.name
+            });
+          }
+        }
+      }
     } catch (error: any) {
-      console.error('Error getting airport recommendations:', error);
-      setErrorMessage(error.message || 'Failed to get airport recommendations');
+      console.error('Error getting destination coordinates:', error);
     } finally {
-      setLoadingRecommendations(false);
+      setLoadingDestination(false);
     }
   };
 
@@ -166,6 +180,19 @@ export default function AirportRecommendations({
     );
   }
 
+  if (loadingDestination) {
+    return (
+      <Card className={className}>
+        <CardContent className="p-6">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Getting destination coordinates...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (loadingRecommendations) {
     return (
       <Card className={className}>
@@ -179,7 +206,7 @@ export default function AirportRecommendations({
     );
   }
 
-  if (errorMessage) {
+  if (recommendationsError) {
     return (
       <Card className={className}>
         <CardContent className="p-6">
@@ -188,8 +215,15 @@ export default function AirportRecommendations({
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
               Unable to Find Airports
             </h3>
-            <p className="text-gray-600 mb-4">{errorMessage}</p>
-            <Button onClick={getAirportRecommendations}>
+            <p className="text-gray-600 mb-4">{recommendationsError}</p>
+            <Button onClick={() => {
+              if (position && destinationCoords) {
+                getRecommendations(
+                  { latitude: position.latitude, longitude: position.longitude },
+                  destinationCoords
+                );
+              }
+            }}>
               Try Again
             </Button>
           </div>
@@ -221,14 +255,14 @@ export default function AirportRecommendations({
 
   return (
     <div className={className}>
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          Recommended Airports
-        </h3>
-        <p className="text-sm text-gray-600">
-          Based on your location and trip to {destination.name}
-        </p>
-      </div>
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Recommended Airports
+          </h3>
+          <p className="text-sm text-gray-600">
+            Based on your location and trip to {destinationCoords?.name || destination.name}
+          </p>
+        </div>
 
       <div className="space-y-4">
         {recommendations.map((rec, index) => (
@@ -304,7 +338,14 @@ export default function AirportRecommendations({
         <Button 
           variant="outline" 
           size="sm" 
-          onClick={getAirportRecommendations}
+          onClick={() => {
+            if (position && destinationCoords) {
+              getRecommendations(
+                { latitude: position.latitude, longitude: position.longitude },
+                destinationCoords
+              );
+            }
+          }}
         >
           Refresh Recommendations
         </Button>
