@@ -66,7 +66,11 @@ export default function AccountSettings() {
       });
       // Clear all data and redirect to landing page
       queryClient.clear();
-      navigate("/");
+      // Clear authentication state
+      localStorage.removeItem('auth_token');
+      sessionStorage.clear();
+      // Use window.location for a hard redirect to avoid race conditions
+      window.location.href = "/";
     },
     onError: (error: any) => {
       toast({
