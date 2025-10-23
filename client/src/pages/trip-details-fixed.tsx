@@ -349,7 +349,7 @@ export default function TripDetailFixed() {
                         date={activity.date}
                         location={activity.location}
                         confirmedCount={activity.rsvps?.filter((r: any) => r.status === 'going').length || 0}
-                        totalCount={members?.filter((m: any) => m.status === 'confirmed').length || 0}
+                        totalCount={members?.filter((m: any) => m.status === 'confirmed' && m.rsvpStatus === 'confirmed').length || 0}
                       />
                     ))}
 

@@ -2158,7 +2158,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         activities.map(async (activity) => {
           const rsvps = await storage.getActivityRSVPs(activity.id);
           const confirmedCount = rsvps.filter(rsvp => rsvp.status === 'going').length;
-          const totalCount = members.length; // Total trip members
+          // Count only confirmed members (people who are actually part of the trip)
+          const confirmedMembers = members.filter(member => 
+            member.status === 'confirmed' && member.rsvpStatus === 'confirmed'
+          );
+          const totalCount = confirmedMembers.length;
           
           // Get creator information
           let creator = null;
