@@ -2217,7 +2217,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if user is a confirmed member
       const members = await storage.getTripMembers(activity.tripId);
       const currentMember = members.find(member => 
-        member.userId === user.id && member.status === 'confirmed'
+        member.userId === user.id && member.status === 'confirmed' && member.rsvpStatus === 'confirmed'
       );
       
       if (!currentMember) {
@@ -2265,7 +2265,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if user is a confirmed member
       const members = await storage.getTripMembers(activity.tripId);
       const currentMember = members.find(member => 
-        member.userId === user.id && member.status === 'confirmed'
+        member.userId === user.id && member.status === 'confirmed' && member.rsvpStatus === 'confirmed'
       );
       
       if (!currentMember) {
@@ -4328,7 +4328,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if user is a member of the associated trip
       const members = await storage.getTripMembers(poll.tripId);
       const isMember = members.some(member => 
-        member.userId === user.id && member.status === 'confirmed'
+        member.userId === user.id && member.status === 'confirmed' && member.rsvpStatus === 'confirmed'
       );
       
       if (!isMember) {
