@@ -177,11 +177,16 @@ export default function TripImageUpload({
             )}
           </div>
         ) : (
-          <div className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-500">
+          <div 
+            className={`w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-500 ${
+              isOrganizer ? 'cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-colors' : ''
+            }`}
+            onClick={isOrganizer ? () => fileInputRef.current?.click() : undefined}
+          >
             <Upload className="h-12 w-12 mb-2" />
             <p className="text-sm">No photo uploaded</p>
             {isOrganizer && (
-              <p className="text-xs text-gray-400 mt-1">Click upload to add a trip photo</p>
+              <p className="text-xs text-gray-400 mt-1">Click here or use the upload button to add a trip photo</p>
             )}
           </div>
         )}
