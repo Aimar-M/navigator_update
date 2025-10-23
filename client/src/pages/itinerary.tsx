@@ -98,14 +98,13 @@ function Itinerary() {
     const options = [];
     
     // Add "No cap" option
-    options.push({ value: 'unlimited', label: 'No cap (unlimited)', description: 'All trip members can join' });
+    options.push({ value: 'unlimited', label: 'No cap' });
     
     // Add numbers from 1 to totalMembers
     for (let i = 1; i <= totalMembers; i++) {
       options.push({ 
         value: i.toString(), 
-        label: `${i} ${i === 1 ? 'person' : 'people'}`, 
-        description: `${i} out of ${totalMembers} trip members` 
+        label: i.toString()
       });
     }
     
@@ -910,9 +909,6 @@ function Itinerary() {
                 <div>
                   <Label htmlFor="activity-max-participants">
                     Registration cap (optional)
-                    <span className="text-sm text-blue-600 ml-2 font-medium">
-                      ({confirmedMembersCount} confirmed members in trip)
-                    </span>
                   </Label>
                   <Select
                     value={activityFormData.maxParticipants}
@@ -924,10 +920,7 @@ function Itinerary() {
                     <SelectContent>
                       {participantOptions.map((option, index) => (
                         <SelectItem key={index} value={option.value}>
-                          <div className="flex flex-col">
-                            <span className="font-medium">{option.label}</span>
-                            <span className="text-xs text-gray-500">{option.description}</span>
-                          </div>
+                          {option.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
