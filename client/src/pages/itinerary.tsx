@@ -88,6 +88,32 @@ function Itinerary() {
   const canAddToItinerary = !trip?.adminOnlyItinerary || isCurrentUserAdmin;
   const isConfirmedMember = currentUserMembership?.rsvpStatus === 'confirmed' || isOrganizerUser;
 
+  // Calculate confirmed members count for registration cap dropdown
+  const confirmedMembersCount = members.filter(member => 
+    member.status === 'confirmed' && member.rsvpStatus === 'confirmed'
+  ).length;
+
+  // Generate simple participant cap options
+  const generateParticipantOptions = (totalMembers: number) => {
+    const options = [];
+    
+    // Add "No cap" option
+    options.push({ value: '', label: 'No cap (unlimited)', description: 'All trip members can join' });
+    
+    // Add numbers from 1 to totalMembers
+    for (let i = 1; i <= totalMembers; i++) {
+      options.push({ 
+        value: i.toString(), 
+        label: `${i} ${i === 1 ? 'person' : 'people'}`, 
+        description: `${i} out of ${totalMembers} trip members` 
+      });
+    }
+    
+    return options;
+  };
+
+  const participantOptions = generateParticipantOptions(confirmedMembersCount);
+
   // Fetch trip activities
   const { data: activities = [], isLoading: isActivitiesLoading } = useQuery({
     queryKey: [`${API_BASE}/api/trips/${tripId}/activities`],
@@ -880,15 +906,30 @@ function Itinerary() {
                 </div>
 
                 <div>
-                  <Label htmlFor="activity-max-participants">Registration cap (optional)</Label>
-                  <Input
-                    id="activity-max-participants"
-                    type="number"
-                    min="1"
+                  <Label htmlFor="activity-max-participants">
+                    Registration cap (optional)
+                    <span className="text-sm text-blue-600 ml-2 font-medium">
+                      ({confirmedMembersCount} confirmed members in trip)
+                    </span>
+                  </Label>
+                  <Select
                     value={activityFormData.maxParticipants}
-                    onChange={(e) => setActivityFormData(prev => ({ ...prev, maxParticipants: e.target.value }))}
-                    placeholder="e.g., 10"
-                  />
+                    onValueChange={(value) => setActivityFormData(prev => ({ ...prev, maxParticipants: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose participant limit..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {participantOptions.map((option, index) => (
+                        <SelectItem key={index} value={option.value}>
+                          <div className="flex flex-col">
+                            <span className="font-medium">{option.label}</span>
+                            <span className="text-xs text-gray-500">{option.description}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
