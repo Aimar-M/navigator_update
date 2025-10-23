@@ -78,6 +78,8 @@ export default function ActivityDetails() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedNewOwner, setSelectedNewOwner] = useState<string>("");
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  const [editCapDialogOpen, setEditCapDialogOpen] = useState(false);
+  const [newMaxParticipants, setNewMaxParticipants] = useState<string>("");
 
   const { data: activity, isLoading } = useQuery<ActivityDetail>({
     queryKey: [`${API_BASE}/api/activities/${activityId}`],
@@ -104,6 +106,32 @@ export default function ActivityDetails() {
   const currentUserMembership = members.find(member => member.userId === currentUser?.id);
   const isCurrentUserAdmin = currentUserMembership?.isAdmin || isOrganizer;
   const canEditActivity = !trip?.adminOnlyItinerary || isCurrentUserAdmin || (currentUser && activity?.createdBy === currentUser.id);
+
+  // Calculate confirmed members count for registration cap dropdown
+  const confirmedMembersCount = members.filter(member => 
+    member.status === 'confirmed' && member.rsvpStatus === 'confirmed'
+  ).length;
+
+  // Generate participant cap options
+  const generateParticipantOptions = (totalMembers: number) => {
+    const options = [];
+    
+    // Add "No cap" option
+    options.push({ value: '', label: 'No cap (unlimited)', description: 'All trip members can join' });
+    
+    // Add numbers from 1 to totalMembers
+    for (let i = 1; i <= totalMembers; i++) {
+      options.push({ 
+        value: i.toString(), 
+        label: `${i} ${i === 1 ? 'person' : 'people'}`, 
+        description: `${i} out of ${totalMembers} trip members` 
+      });
+    }
+    
+    return options;
+  };
+
+  const participantOptions = generateParticipantOptions(confirmedMembersCount);
 
   const rsvpMutation = useMutation({
     mutationFn: async (status: string) => {
@@ -161,6 +189,33 @@ export default function ActivityDetails() {
         variant: "destructive",
       });
     },
+  });
+
+  const updateCapMutation = useMutation({
+    mutationFn: async (maxParticipants: string) => {
+      return await apiRequest("PUT", `${API_BASE}/api/activities/${activityId}`, {
+        maxParticipants: maxParticipants ? parseInt(maxParticipants) : null
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/activities/${activityId}`] });
+      if (activity?.tripId) {
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${activity.tripId}/activities`] });
+      }
+      toast({
+        title: "Cap Updated",
+        description: "The participant limit has been updated successfully.",
+      });
+      setEditCapDialogOpen(false);
+    },
+    onError: (error: any) => {
+      console.error("Update cap error:", error);
+      toast({
+        title: "Update Failed",
+        description: error?.response?.data?.message || "There was a problem updating the cap. Please try again.",
+        variant: "destructive"
+      });
+    }
   });
 
   if (isLoading) {
@@ -311,11 +366,76 @@ export default function ActivityDetails() {
                 <Badge variant="outline" className="bg-primary-100 text-primary-800">
                   {goingRSVPs.length} Going
                 </Badge>
-                {activity.maxParticipants && (
+                {activity.maxParticipants ? (
                   <>
-                    <Badge variant="secondary" className="text-xs">
-                      Cap: {activity.maxParticipants}
-                    </Badge>
+                    {isCurrentUserAdmin ? (
+                      <Dialog open={editCapDialogOpen} onOpenChange={setEditCapDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Badge 
+                            variant="secondary" 
+                            className="text-xs cursor-pointer hover:bg-blue-200 transition-colors"
+                            onClick={() => {
+                              setNewMaxParticipants(activity.maxParticipants?.toString() || "");
+                              setEditCapDialogOpen(true);
+                            }}
+                          >
+                            Cap: {activity.maxParticipants} (click to edit)
+                          </Badge>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Edit Participant Cap</DialogTitle>
+                            <DialogDescription>
+                              Update the maximum number of participants for this activity.
+                              <span className="text-sm text-blue-600 ml-2 font-medium">
+                                ({confirmedMembersCount} confirmed members in trip)
+                              </span>
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div>
+                              <label className="text-sm font-medium">Participant Limit</label>
+                              <Select
+                                value={newMaxParticipants}
+                                onValueChange={setNewMaxParticipants}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Choose participant limit..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {participantOptions.map((option, index) => (
+                                    <SelectItem key={index} value={option.value}>
+                                      <div className="flex flex-col">
+                                        <span className="font-medium">{option.label}</span>
+                                        <span className="text-xs text-gray-500">{option.description}</span>
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <Button
+                              variant="outline"
+                              onClick={() => setEditCapDialogOpen(false)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              onClick={() => updateCapMutation.mutate(newMaxParticipants)}
+                              disabled={updateCapMutation.isPending}
+                            >
+                              {updateCapMutation.isPending ? "Updating..." : "Update Cap"}
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    ) : (
+                      <Badge variant="secondary" className="text-xs">
+                        Cap: {activity.maxParticipants}
+                      </Badge>
+                    )}
                     <Badge 
                       variant={spotsLeft === 0 ? "destructive" : spotsLeft && spotsLeft <= 3 ? "default" : "outline"}
                       className="text-xs"
@@ -323,6 +443,71 @@ export default function ActivityDetails() {
                       {spotsLeft && spotsLeft > 0 ? `${spotsLeft} spots left` : "Full"}
                     </Badge>
                   </>
+                ) : (
+                  isCurrentUserAdmin && (
+                    <Dialog open={editCapDialogOpen} onOpenChange={setEditCapDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Badge 
+                          variant="outline" 
+                          className="text-xs cursor-pointer hover:bg-blue-100 transition-colors border-dashed"
+                          onClick={() => {
+                            setNewMaxParticipants("");
+                            setEditCapDialogOpen(true);
+                          }}
+                        >
+                          + Add cap
+                        </Badge>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Add Participant Cap</DialogTitle>
+                          <DialogDescription>
+                            Set a maximum number of participants for this activity.
+                            <span className="text-sm text-blue-600 ml-2 font-medium">
+                              ({confirmedMembersCount} confirmed members in trip)
+                            </span>
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div>
+                            <label className="text-sm font-medium">Participant Limit</label>
+                            <Select
+                              value={newMaxParticipants}
+                              onValueChange={setNewMaxParticipants}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Choose participant limit..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {participantOptions.map((option, index) => (
+                                  <SelectItem key={index} value={option.value}>
+                                    <div className="flex flex-col">
+                                      <span className="font-medium">{option.label}</span>
+                                      <span className="text-xs text-gray-500">{option.description}</span>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <Button
+                            variant="outline"
+                            onClick={() => setEditCapDialogOpen(false)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={() => updateCapMutation.mutate(newMaxParticipants)}
+                            disabled={updateCapMutation.isPending}
+                          >
+                            {updateCapMutation.isPending ? "Adding..." : "Add Cap"}
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  )
                 )}
               </div>
               
