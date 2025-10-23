@@ -150,7 +150,7 @@ export async function getAirportDetails(placeId: string): Promise<Airport | null
   }
 }
 
-// Calculate recommendation score for an airport
+// Calculate recommendation score for an airport - prioritize distance from user
 function calculateAirportScore(
   airport: Airport, 
   userLocation: UserLocation, 
@@ -159,7 +159,7 @@ function calculateAirportScore(
   const reasons: string[] = [];
   let score = 0;
 
-  // Distance from user (closer is better, max 50 points)
+  // Distance from user (closer is better, max 80 points) - PRIMARY FACTOR
   const distanceFromUser = calculateDistance(
     userLocation.latitude, 
     userLocation.longitude,
@@ -167,40 +167,24 @@ function calculateAirportScore(
     airport.geometry.location.lng
   );
   
-  if (distanceFromUser <= 50) {
-    score += 50;
+  if (distanceFromUser <= 25) {
+    score += 80;
     reasons.push('Very close to your location');
-  } else if (distanceFromUser <= 100) {
-    score += 40;
+  } else if (distanceFromUser <= 50) {
+    score += 70;
     reasons.push('Close to your location');
-  } else if (distanceFromUser <= 200) {
-    score += 25;
+  } else if (distanceFromUser <= 100) {
+    score += 60;
     reasons.push('Reasonable distance from your location');
+  } else if (distanceFromUser <= 200) {
+    score += 50;
+    reasons.push('Moderate distance from your location');
   } else {
-    score += 10;
+    score += 30;
     reasons.push('Further from your location');
   }
 
-  // Distance to destination (closer is better, max 30 points)
-  const distanceToDestination = calculateDistance(
-    airport.geometry.location.lat,
-    airport.geometry.location.lng,
-    destination.latitude,
-    destination.longitude
-  );
-  
-  if (distanceToDestination <= 500) {
-    score += 30;
-    reasons.push('Close to destination');
-  } else if (distanceToDestination <= 1000) {
-    score += 20;
-    reasons.push('Good distance to destination');
-  } else if (distanceToDestination <= 2000) {
-    score += 10;
-    reasons.push('Moderate distance to destination');
-  }
-
-  // Airport rating (max 20 points)
+  // Airport rating (max 20 points) - SECONDARY FACTOR
   if (airport.rating && airport.rating >= 4.5) {
     score += 20;
     reasons.push('Highly rated airport');
@@ -224,8 +208,8 @@ export async function getAirportRecommendations(
   try {
     console.log('🎯 [AIRPORT-RECOMMENDATIONS] Getting recommendations for:', { userLocation, destination });
     
-    // Find nearby airports
-    const airports = await findNearbyAirports(userLocation, 300); // 300km radius
+    // Find nearby airports - use larger radius to get more options for comparison
+    const airports = await findNearbyAirports(userLocation, 500); // 500km radius
     
     if (airports.length === 0) {
       console.log('⚠️ [AIRPORT-RECOMMENDATIONS] No airports found nearby');
@@ -243,6 +227,8 @@ export async function getAirportRecommendations(
       
       const { score, reasons } = calculateAirportScore(airport, userLocation, destination);
       
+      console.log(`🏢 [AIRPORT-RECOMMENDATIONS] ${airport.name}: ${distance.toFixed(1)}km away, score: ${score}`);
+      
       return {
         airport,
         distance,
@@ -256,6 +242,10 @@ export async function getAirportRecommendations(
       .sort((a, b) => b.score - a.score)
       .slice(0, maxResults);
 
+    if (sortedRecommendations.length > 0) {
+      console.log(`✅ [AIRPORT-RECOMMENDATIONS] Selected closest airport: ${sortedRecommendations[0].airport.name} (${sortedRecommendations[0].distance.toFixed(1)}km away, score: ${sortedRecommendations[0].score})`);
+    }
+    
     console.log(`✅ [AIRPORT-RECOMMENDATIONS] Generated ${sortedRecommendations.length} recommendations`);
     return sortedRecommendations;
   } catch (error: any) {
