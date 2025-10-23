@@ -746,7 +746,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = ensureUser(req, res);
       if (!user) return;
 
-      const tripId = parseInt(req.params.id || req.params.tripId);
+      let tripId = parseInt(req.params.id || req.params.tripId);
+      
+      // For activity routes, we need to get the tripId from the activity
+      if (req.path.includes('/activities/') && !isNaN(parseInt(req.params.id))) {
+        const activityId = parseInt(req.params.id);
+        const activity = await storage.getActivity(activityId);
+        if (!activity) {
+          return res.status(404).json({ message: 'Activity not found' });
+        }
+        tripId = activity.tripId;
+      }
+      
       if (isNaN(tripId)) {
         return res.status(400).json({ message: 'Invalid trip ID' });
       }
