@@ -5,10 +5,10 @@ import {
   Message, InsertMessage, SurveyQuestion, InsertSurveyQuestion,
   SurveyResponse, InsertSurveyResponse, Expense, InsertExpense,
   ExpenseSplit, InsertExpenseSplit, Settlement, InsertSettlement,
-  InvitationLink, InsertInvitationLink,
+  InvitationLink, InsertInvitationLink, Notification, InsertNotification,
   users, trips, tripMembers, activities, activityRsvp, 
   messages, surveyQuestions, surveyResponses, expenses, expenseSplits, settlements,
-  polls, pollVotes, invitationLinks, userTripSettings, flightInfo
+  polls, pollVotes, invitationLinks, userTripSettings, flightInfo, notifications
 } from "@shared/schema";
 import { eq, and, or, desc, sql, ilike, inArray, isNotNull, lt, ne } from "drizzle-orm";
 export class DatabaseStorage {
@@ -1542,6 +1542,48 @@ export class DatabaseStorage {
       .where(eq(messages.id, id))
       .returning();
     return updated || undefined;
+  }
+
+  async createNotification(notification: {
+    userId: number;
+    type: string;
+    title: string;
+    message: string;
+    data?: any;
+  }): Promise<Notification> {
+    const [newNotification] = await db
+      .insert(notifications)
+      .values({
+        ...notification,
+        data: notification.data ? JSON.stringify(notification.data) : null,
+        createdAt: new Date()
+      })
+      .returning();
+    
+    return newNotification;
+  }
+
+  async getUserNotifications(userId: number): Promise<Notification[]> {
+    return await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt));
+  }
+
+  async markNotificationAsRead(notificationId: number, userId: number): Promise<Notification | undefined> {
+    const [updatedNotification] = await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(
+        and(
+          eq(notifications.id, notificationId),
+          eq(notifications.userId, userId)
+        )
+      )
+      .returning();
+    
+    return updatedNotification || undefined;
   }
 }
 

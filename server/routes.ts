@@ -3448,6 +3448,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // NOTIFICATION ROUTES
+  
+  // Create notification
+  router.post('/notifications', isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = ensureUser(req, res);
+      if (!user) return;
+      
+      const { type, title, message, data } = req.body;
+      
+      if (!type || !title || !message) {
+        return res.status(400).json({ message: 'Type, title, and message are required' });
+      }
+      
+      // Get trip organizer for RSVP notifications
+      let targetUserId = user.id;
+      if (type === 'rsvp_response' && data?.tripId) {
+        const trip = await storage.getTrip(data.tripId);
+        if (trip) {
+          targetUserId = trip.organizer;
+        }
+      }
+      
+      const notification = await storage.createNotification({
+        userId: targetUserId,
+        type,
+        title,
+        message,
+        data: data || null
+      });
+      
+      res.status(201).json(notification);
+    } catch (error) {
+      console.error('Error creating notification:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+  
+  // Get user notifications
+  router.get('/notifications', isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = ensureUser(req, res);
+      if (!user) return;
+      
+      const notifications = await storage.getUserNotifications(user.id);
+      res.json(notifications);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+  
+  // Mark notification as read
+  router.put('/notifications/:id/read', isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = ensureUser(req, res);
+      if (!user) return;
+      
+      const notificationId = parseInt(req.params.id);
+      if (isNaN(notificationId)) {
+        return res.status(400).json({ message: 'Invalid notification ID' });
+      }
+      
+      const notification = await storage.markNotificationAsRead(notificationId, user.id);
+      if (!notification) {
+        return res.status(404).json({ message: 'Notification not found' });
+      }
+      
+      res.json(notification);
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+  
   // EXPENSE ROUTES
   
   // Removed duplicate expense route - using the one at line 2860 instead

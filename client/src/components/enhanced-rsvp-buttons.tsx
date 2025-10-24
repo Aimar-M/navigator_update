@@ -36,9 +36,24 @@ export default function EnhancedRSVPButtons({
 
   const rsvpMutation = useMutation({
     mutationFn: async (rsvpStatus: string) => {
-      return await apiRequest('PUT', `${API_BASE}/api/trips/${tripId}/members/${userId}/rsvp`, {
+      const response = await apiRequest('PUT', `${API_BASE}/api/trips/${tripId}/members/${userId}/rsvp`, {
         rsvpStatus
       });
+      
+      // Create notification for the trip organizer
+      await apiRequest('POST', `${API_BASE}/api/notifications`, {
+        type: 'rsvp_response',
+        title: `RSVP Response for ${tripName}`,
+        message: `A member has ${rsvpStatus === 'confirmed' ? 'confirmed' : rsvpStatus === 'declined' ? 'declined' : 'marked maybe for'} your trip.`,
+        data: {
+          tripId,
+          memberId: userId,
+          rsvpStatus,
+          tripName
+        }
+      });
+      
+      return response;
     },
     onSuccess: (data, rsvpStatus) => {
       const statusMessages = {
@@ -56,6 +71,7 @@ export default function EnhancedRSVPButtons({
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/members`] });
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/memberships/pending`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/notifications`] });
       
       if (onRsvpUpdate) {
         onRsvpUpdate(rsvpStatus);
