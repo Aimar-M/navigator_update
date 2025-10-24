@@ -3457,6 +3457,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // SELF-JOIN TRIP ROUTE (for invitation links)
+  router.post('/trips/:id/join', isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = ensureUser(req, res);
+      if (!user) return;
+      
+      const tripId = parseInt(req.params.id);
+      const { rsvpStatus = 'pending' } = req.body;
+      
+      if (isNaN(tripId)) {
+        return res.status(400).json({ message: 'Invalid trip ID' });
+      }
+      
+      const trip = await storage.getTrip(tripId);
+      if (!trip) {
+        return res.status(404).json({ message: 'Trip not found' });
+      }
+      
+      // Check if user is already a member
+      const existingMember = await storage.getTripMember(tripId, user.id);
+      if (existingMember) {
+        return res.status(400).json({ message: 'You are already a member of this trip' });
+      }
+      
+      // Add user as a member with the specified RSVP status
+      const member = await storage.addTripMember({
+        tripId,
+        userId: user.id,
+        status: 'confirmed', // Auto-confirm when joining via invitation
+        rsvpStatus: rsvpStatus,
+        rsvpDate: new Date()
+      });
+      
+      res.status(201).json(member);
+    } catch (error) {
+      console.error('Error joining trip:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+  
   // NOTIFICATION ROUTES
   
   // Create notification

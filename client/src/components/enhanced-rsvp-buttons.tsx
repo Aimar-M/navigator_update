@@ -36,24 +36,51 @@ export default function EnhancedRSVPButtons({
 
   const rsvpMutation = useMutation({
     mutationFn: async (rsvpStatus: string) => {
-      const response = await apiRequest('PUT', `${API_BASE}/api/trips/${tripId}/members/${userId}/rsvp`, {
-        rsvpStatus
-      });
-      
-      // Create notification for the trip organizer
-      await apiRequest('POST', `${API_BASE}/api/notifications`, {
-        type: 'rsvp_response',
-        title: `RSVP Response for ${tripName}`,
-        message: `A member has ${rsvpStatus === 'confirmed' ? 'confirmed' : rsvpStatus === 'declined' ? 'declined' : 'marked maybe for'} your trip.`,
-        data: {
-          tripId,
-          memberId: userId,
-          rsvpStatus,
-          tripName
+      try {
+        // First try to update RSVP status (if user is already a member)
+        const response = await apiRequest('PUT', `${API_BASE}/api/trips/${tripId}/members/${userId}/rsvp`, {
+          rsvpStatus
+        });
+        
+        // Create notification for the trip organizer
+        await apiRequest('POST', `${API_BASE}/api/notifications`, {
+          type: 'rsvp_response',
+          title: `RSVP Response for ${tripName}`,
+          message: `A member has ${rsvpStatus === 'confirmed' ? 'confirmed' : rsvpStatus === 'declined' ? 'declined' : 'marked maybe for'} your trip.`,
+          data: {
+            tripId,
+            memberId: userId,
+            rsvpStatus,
+            tripName
+          }
+        });
+        
+        return response;
+      } catch (error: any) {
+        // If user is not a member yet, add them as a member first
+        if (error.message?.includes('Trip member not found')) {
+          // Add user as a member with the RSVP status
+          const addMemberResponse = await apiRequest('POST', `${API_BASE}/api/trips/${tripId}/join`, {
+            rsvpStatus: rsvpStatus
+          });
+          
+          // Create notification for the trip organizer
+          await apiRequest('POST', `${API_BASE}/api/notifications`, {
+            type: 'rsvp_response',
+            title: `RSVP Response for ${tripName}`,
+            message: `A member has ${rsvpStatus === 'confirmed' ? 'confirmed' : rsvpStatus === 'declined' ? 'declined' : 'marked maybe for'} your trip.`,
+            data: {
+              tripId,
+              memberId: userId,
+              rsvpStatus,
+              tripName
+            }
+          });
+          
+          return addMemberResponse;
         }
-      });
-      
-      return response;
+        throw error;
+      }
     },
     onSuccess: (data, rsvpStatus) => {
       const statusMessages = {

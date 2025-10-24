@@ -228,18 +228,19 @@ export default function InvitationPage() {
           <CardFooter>
             <div className="w-full space-y-3">
               {user && !isExpired ? (
-                <div className="space-y-3">
-                  <Button 
-                    className="w-full" 
-                    disabled={acceptingInvite}
-                    onClick={handleAcceptInvitation}
-                  >
-                    {acceptingInvite ? "Joining..." : "Accept Invitation & Join Trip"}
-                  </Button>
-                  <p className="text-sm text-gray-600 text-center">
-                    Accept the invitation first, then you can RSVP to the trip
-                  </p>
-                </div>
+                <EnhancedRSVPButtons
+                  tripId={trip.id}
+                  userId={user.id}
+                  currentRsvpStatus="pending"
+                  tripName={trip.name}
+                  requiresDownPayment={trip.requiresDownPayment}
+                  downPaymentAmount={trip.downPaymentAmount}
+                  onRsvpUpdate={(newStatus) => {
+                    if (newStatus === 'confirmed') {
+                      navigate(`/trips/${trip.id}`);
+                    }
+                  }}
+                />
               ) : (
                 <Button 
                   className="w-full" 
