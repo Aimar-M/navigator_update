@@ -85,6 +85,9 @@ export default function Landing() {
               <Link href="/contact" className="text-white/80 hover:text-white transition-colors" data-testid="nav-contact">
                 Contact
               </Link>
+              <Link href="/terms" className="text-white/80 hover:text-white transition-colors" data-testid="nav-terms">
+                Terms & Conditions
+              </Link>
             </nav>
           </div>
         </div>

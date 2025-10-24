@@ -146,6 +146,9 @@ export default function Contact() {
               <Link href="/contact" className="bg-blue-600 text-white px-3 py-1.5 rounded-full text-sm font-medium" data-testid="nav-contact">
                 Contact
               </Link>
+              <Link href="/terms" className="text-gray-600 hover:text-gray-900 transition-colors" data-testid="nav-terms">
+                Terms & Conditions
+              </Link>
             </nav>
           </div>
         </div>

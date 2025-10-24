@@ -6,6 +6,7 @@ import Home from "@/pages/home";
 import Landing from "@/pages/landing";
 import About from "@/pages/about";
 import Contact from "@/pages/contact";
+import Terms from "@/pages/terms";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import TripDetails from "@/pages/trip-details";
@@ -37,6 +38,7 @@ function Router() {
       <Route path="/" component={Landing} />
       <Route path="/about" component={About} />
       <Route path="/contact" component={Contact} />
+      <Route path="/terms" component={Terms} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/dashboard" component={Home} />
