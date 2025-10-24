@@ -57,122 +57,137 @@ export default function Terms() {
       {/* Terms and Conditions Content */}
       <section className="py-20 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header */}
           <div className="text-center mb-16">
             <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
-              Terms & Conditions
+              Navigator Terms of Service & Privacy Policy
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Please read these terms and conditions carefully before using our service.
+              Please read these Terms of Service and Privacy Policy carefully before using Navigator.
             </p>
           </div>
 
-          <div className="prose prose-lg max-w-none">
+          {/* Content */}
+          <div className="prose prose-lg max-w-none text-gray-700">
             <div className="bg-gray-50 rounded-lg p-8 mb-8">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">1. Acceptance of Terms</h2>
-              <p className="text-gray-700 leading-relaxed">
-                By accessing and using Navigator, you accept and agree to be bound by the terms and provision of this agreement. 
-                If you do not agree to abide by the above, please do not use this service.
-              </p>
-            </div>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-4">Navigator Terms of Service</h2>
+              <p><strong>Effective Date:</strong> [Insert Date]</p>
+              <p><strong>Provider:</strong> Navigator Technologies, Inc. (“Navigator,” “we,” “our,” “us”)</p>
+              <p><strong>Website:</strong> <a href="https://navigatortrips.com" className="text-blue-600 underline">https://navigatortrips.com</a></p>
+              <p><strong>Contact:</strong> <a href="mailto:info@navigatortrips.com" className="text-blue-600 underline">info@navigatortrips.com</a></p>
 
-            <div className="bg-gray-50 rounded-lg p-8 mb-8">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">2. Use License</h2>
-              <p className="text-gray-700 leading-relaxed mb-4">
-                Permission is granted to temporarily download one copy of Navigator per device for personal, 
-                non-commercial transitory viewing only. This is the grant of a license, not a transfer of title, and under this license you may not:
+              <h3 className="text-xl font-semibold mt-8 mb-4">Pre-Launch Notice</h3>
+              <p>
+                Navigator Technologies, Inc. is currently operating the Navigator platform as a pre-release (“beta”) version.
+                By using the Navigator app or website, you acknowledge that the platform is provided on a testing and early-access basis.
               </p>
-              <ul className="list-disc list-inside text-gray-700 space-y-2 ml-4">
-                <li>modify or copy the materials</li>
-                <li>use the materials for any commercial purpose or for any public display</li>
-                <li>attempt to reverse engineer any software contained in Navigator</li>
-                <li>remove any copyright or other proprietary notations from the materials</li>
+
+              <h3 className="text-xl font-semibold mt-8 mb-4">1. Acceptance of Terms</h3>
+              <p>
+                By accessing or using Navigator, you agree to these Terms of Service (“Terms”). If you do not agree, do not use the platform.
+              </p>
+
+              <h3 className="text-xl font-semibold mt-8 mb-4">2. Description of Service</h3>
+              <p>
+                Navigator is a group travel coordination platform designed to simplify planning and expense management for trips shared among multiple participants.
+              </p>
+              <ul className="list-disc list-inside">
+                <li>Trip creation and itinerary sharing</li>
+                <li>Member invitations and RSVP tracking</li>
+                <li>Expense recording and intelligent cost-splitting</li>
+                <li>Settlement facilitation through third-party services (e.g., PayPal, Venmo)</li>
               </ul>
-            </div>
+              <p>Navigator does not act as a travel agency, booking service, financial intermediary, or money transmitter.</p>
 
-            <div className="bg-gray-50 rounded-lg p-8 mb-8">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">3. User Accounts</h2>
-              <p className="text-gray-700 leading-relaxed">
-                When you create an account with us, you must provide information that is accurate, 
-                complete, and current at all times. You are responsible for safeguarding the password and 
-                for all activities that occur under your account.
-              </p>
-            </div>
-
-            <div className="bg-gray-50 rounded-lg p-8 mb-8">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">4. Privacy Policy</h2>
-              <p className="text-gray-700 leading-relaxed">
-                Your privacy is important to us. Our Privacy Policy explains how we collect, use, and protect 
-                your information when you use our service. By using our service, you agree to the collection 
-                and use of information in accordance with this policy.
-              </p>
-            </div>
-
-            <div className="bg-gray-50 rounded-lg p-8 mb-8">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">5. Prohibited Uses</h2>
-              <p className="text-gray-700 leading-relaxed mb-4">
-                You may not use our service:
-              </p>
-              <ul className="list-disc list-inside text-gray-700 space-y-2 ml-4">
-                <li>For any unlawful purpose or to solicit others to perform unlawful acts</li>
-                <li>To violate any international, federal, provincial, or state regulations, rules, laws, or local ordinances</li>
-                <li>To infringe upon or violate our intellectual property rights or the intellectual property rights of others</li>
-                <li>To harass, abuse, insult, harm, defame, slander, disparage, intimidate, or discriminate</li>
-                <li>To submit false or misleading information</li>
-                <li>To upload or transmit viruses or any other type of malicious code</li>
+              <h3 className="text-xl font-semibold mt-8 mb-4">3. User Accounts</h3>
+              <ul className="list-disc list-inside">
+                <li>Provide accurate and complete registration information</li>
+                <li>Maintain the security of your password and login credentials</li>
+                <li>Be responsible for all activity under your account</li>
               </ul>
-            </div>
+              <p>Navigator reserves the right to suspend or terminate accounts that violate these Terms.</p>
 
-            <div className="bg-gray-50 rounded-lg p-8 mb-8">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">6. Content</h2>
-              <p className="text-gray-700 leading-relaxed">
-                Our service allows you to post, link, store, share and otherwise make available certain information, 
-                text, graphics, videos, or other material. You are responsible for the content that you post to the service, 
-                including its legality, reliability, and appropriateness.
+              <h3 className="text-xl font-semibold mt-8 mb-4">4. User Conduct and Responsibilities</h3>
+              <ul className="list-disc list-inside">
+                <li>Do not use Navigator for unlawful, fraudulent, or abusive purposes</li>
+                <li>Do not impersonate others or misrepresent affiliations</li>
+                <li>Do not upload harmful code or content</li>
+                <li>Do not harass or harm other users</li>
+                <li>Do not attempt to reverse-engineer the platform</li>
+              </ul>
+
+              <h3 className="text-xl font-semibold mt-8 mb-4">5. Payments and Expense Tracking</h3>
+              <p>
+                Navigator allows users to record and share group expenses and settlements. Payments via PayPal or Venmo are governed by their respective terms.
+                Navigator does not process or hold funds.
+              </p>
+
+              <h3 className="text-xl font-semibold mt-8 mb-4">6. Trip and Content Ownership</h3>
+              <p>
+                You retain ownership of the content you create but grant Navigator a limited, worldwide, royalty-free license to store, process, and display it.
+              </p>
+
+              <h3 className="text-xl font-semibold mt-8 mb-4">7. Privacy and Data Use</h3>
+              <p>
+                Navigator collects and processes personal data in accordance with its Privacy Policy. Navigator does not sell personal data to third parties.
+              </p>
+
+              <h3 className="text-xl font-semibold mt-8 mb-4">8. Termination and Suspension</h3>
+              <p>
+                Navigator may suspend or terminate your account for violating these Terms. You may delete your account at any time.
+              </p>
+
+              <h3 className="text-xl font-semibold mt-8 mb-4">9. Intellectual Property</h3>
+              <p>
+                All intellectual property on the platform belongs to Navigator Technologies, Inc. You may not copy or modify any portion of the service without consent.
+              </p>
+
+              <h3 className="text-xl font-semibold mt-8 mb-4">10. Third-Party Services</h3>
+              <p>
+                Navigator integrates with external services (e.g., PayPal, Venmo, Mapbox, Google Maps APIs). Your use of these is subject to their own terms.
+              </p>
+
+              <h3 className="text-xl font-semibold mt-8 mb-4">11. Limitation of Liability</h3>
+              <p>
+                Navigator provides the platform “as is” and is not liable for data loss, payment errors, or indirect damages.
+              </p>
+
+              <h3 className="text-xl font-semibold mt-8 mb-4">12. Indemnification</h3>
+              <p>
+                You agree to defend and hold harmless Navigator Technologies, Inc. from any claims or expenses resulting from your misuse of the platform.
+              </p>
+
+              <h3 className="text-xl font-semibold mt-8 mb-4">13. Modifications to Terms</h3>
+              <p>
+                Navigator may modify these Terms periodically. Continued use of the platform after changes constitutes acceptance.
+              </p>
+
+              <h3 className="text-xl font-semibold mt-8 mb-4">14. Governing Law and Jurisdiction</h3>
+              <p>
+                These Terms are governed by the laws of Delaware, USA. Disputes will be resolved exclusively in Delaware courts.
+              </p>
+
+              <h3 className="text-xl font-semibold mt-8 mb-4">15. Contact Information</h3>
+              <p>
+                For questions, contact <a href="mailto:info@navigatortrips.com" className="text-blue-600 underline">info@navigatortrips.com</a>.
               </p>
             </div>
 
-            <div className="bg-gray-50 rounded-lg p-8 mb-8">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">7. Termination</h2>
-              <p className="text-gray-700 leading-relaxed">
-                We may terminate or suspend your account and bar access to the service immediately, without prior notice or liability, 
-                under our sole discretion, for any reason whatsoever and without limitation, including but not limited to a breach of the Terms.
-              </p>
-            </div>
+            {/* Privacy Policy */}
+            <div className="bg-gray-50 rounded-lg p-8">
+              <h2 className="text-2xl font-semibold text-gray-900 mb-4">Navigator Privacy Policy</h2>
+              <p><strong>Effective Date:</strong> [Insert Date]</p>
+              <p><strong>Provider:</strong> Navigator Technologies, Inc.</p>
+              <p><strong>Website:</strong> <a href="https://navigatortrips.com" className="text-blue-600 underline">https://navigatortrips.com</a></p>
+              <p><strong>Contact:</strong> <a href="mailto:info@navigatortrips.com" className="text-blue-600 underline">info@navigatortrips.com</a></p>
 
-            <div className="bg-gray-50 rounded-lg p-8 mb-8">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">8. Disclaimer</h2>
-              <p className="text-gray-700 leading-relaxed">
-                The information on this service is provided on an "as is" basis. To the fullest extent permitted by law, 
-                this Company excludes all representations, warranties, conditions and terms relating to our service and the use of this service.
-              </p>
-            </div>
-
-            <div className="bg-gray-50 rounded-lg p-8 mb-8">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">9. Governing Law</h2>
-              <p className="text-gray-700 leading-relaxed">
-                These Terms shall be interpreted and governed by the laws of the jurisdiction in which our company operates, 
-                without regard to its conflict of law provisions.
-              </p>
-            </div>
-
-            <div className="bg-gray-50 rounded-lg p-8 mb-8">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">10. Changes</h2>
-              <p className="text-gray-700 leading-relaxed">
-                We reserve the right, at our sole discretion, to modify or replace these Terms at any time. 
-                If a revision is material, we will provide at least 30 days notice prior to any new terms taking effect.
-              </p>
-            </div>
-
-            <div className="bg-blue-50 rounded-lg p-8">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">Contact Information</h2>
-              <p className="text-gray-700 leading-relaxed">
-                If you have any questions about these Terms and Conditions, please contact us through our 
-                <Link href="/contact" className="text-blue-600 hover:text-blue-800 underline"> contact page</Link>.
-              </p>
+              {/* You can continue adding the remaining Privacy Policy numbered sections
+                  using the same structure as above (h3 headings + p or ul elements). */}
             </div>
           </div>
         </div>
       </section>
+
     </div>
   );
 }
