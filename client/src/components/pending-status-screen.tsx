@@ -12,6 +12,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { openPaymentLinkWithMobileFallback } from "@/lib/utils";
 import Lottie from "lottie-react";
 import EnhancedItineraryPreview from "@/components/enhanced-itinerary-preview";
+import EnhancedRSVPButtons from "@/components/enhanced-rsvp-buttons";
 
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
@@ -260,6 +261,10 @@ export default function PendingStatusScreen({ trip, member }: PendingStatusScree
         return 'RSVP Pending';
       } else if (member.rsvpStatus === 'confirmed') {
         return 'RSVP Confirmed';
+      } else if (member.rsvpStatus === 'maybe') {
+        return 'RSVP Maybe';
+      } else if (member.rsvpStatus === 'declined') {
+        return 'RSVP Declined';
       }
     }
     return 'Status Unknown';
@@ -584,32 +589,20 @@ export default function PendingStatusScreen({ trip, member }: PendingStatusScree
               </div>
             )}
 
-            {/* RSVP Confirmation for trips without payment */}
+            {/* Enhanced RSVP Component */}
             {!trip.requiresDownPayment && (
-              <div className="text-center">
-                <Button 
-                  onClick={() => confirmAttendanceMutation.mutate()}
-                  disabled={confirmAttendanceMutation.isPending}
-                  className="w-full py-4 text-sm font-semibold transition-all duration-300 rounded-xl"
-                  style={{ 
-                    backgroundColor: '#3A8DFF',
-                    color: 'white',
-                    border: 'none'
-                  }}
-                >
-                  {confirmAttendanceMutation.isPending ? (
-                    <div className="flex items-center gap-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                      Confirming Attendance...
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4" />
-                      Confirm Attendance
-                    </div>
-                  )}
-                </Button>
-              </div>
+              <EnhancedRSVPButtons
+                tripId={trip.id}
+                userId={user?.id || 0}
+                currentRsvpStatus={member.rsvpStatus || 'pending'}
+                tripName={trip.name}
+                requiresDownPayment={trip.requiresDownPayment}
+                downPaymentAmount={trip.downPaymentAmount ? parseFloat(trip.downPaymentAmount) : undefined}
+                onRsvpUpdate={(newStatus) => {
+                  // Handle RSVP update if needed
+                  console.log('RSVP updated to:', newStatus);
+                }}
+              />
             )}
           </CardContent>
         </Card>

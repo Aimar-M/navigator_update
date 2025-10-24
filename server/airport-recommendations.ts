@@ -45,7 +45,7 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 }
 
-// Find airports near a location using Google Places API
+// Find airports near a location using Google Places API with multiple search strategies
 export async function findNearbyAirports(location: UserLocation, radius: number = 200): Promise<Airport[]> {
   try {
     console.log('🔍 [AIRPORT-RECOMMENDATIONS] Finding airports near:', location);
@@ -55,44 +55,105 @@ export async function findNearbyAirports(location: UserLocation, radius: number 
       throw new Error('Google Places API key not configured');
     }
 
-    const url = new URL('https://maps.googleapis.com/maps/api/place/nearbysearch/json');
-    url.searchParams.append('location', `${location.latitude},${location.longitude}`);
-    url.searchParams.append('radius', (radius * 1000).toString()); // Convert km to meters
-    url.searchParams.append('type', 'airport');
-    url.searchParams.append('key', GOOGLE_PLACES_API_KEY);
-    url.searchParams.append('language', 'en');
+    const allAirports: Airport[] = [];
+    const seenPlaceIds = new Set<string>();
 
-    const response = await fetch(url.toString());
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Places API error:', response.status, errorText);
-      throw new Error(`Places API error: ${response.status} - ${errorText}`);
-    }
+    // Strategy 1: Search for airports with specific keywords
+    const searchTerms = [
+      'airport',
+      'international airport', 
+      'regional airport',
+      'municipal airport',
+      'airfield',
+      'aviation'
+    ];
 
-    const data = await response.json();
-    
-    if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
-      console.error('❌ Places API status error:', data.status, data.error_message);
-      throw new Error(`Places API error: ${data.status} - ${data.error_message}`);
-    }
+    for (const term of searchTerms) {
+      try {
+        const url = new URL('https://maps.googleapis.com/maps/api/place/nearbysearch/json');
+        url.searchParams.append('location', `${location.latitude},${location.longitude}`);
+        url.searchParams.append('radius', (radius * 1000).toString()); // Convert km to meters
+        url.searchParams.append('keyword', term);
+        url.searchParams.append('key', GOOGLE_PLACES_API_KEY);
+        url.searchParams.append('language', 'en');
 
-    const airports = data.results?.map((result: any) => ({
-      place_id: result.place_id,
-      name: result.name,
-      formatted_address: result.vicinity,
-      geometry: {
-        location: {
-          lat: result.geometry.location.lat,
-          lng: result.geometry.location.lng
+        const response = await fetch(url.toString());
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          if (data.status === 'OK' && data.results) {
+            data.results.forEach((result: any) => {
+              // Check if it's actually an airport
+              if (result.types?.includes('airport') || 
+                  result.name?.toLowerCase().includes('airport') ||
+                  result.name?.toLowerCase().includes('airfield') ||
+                  result.name?.toLowerCase().includes('aviation')) {
+                
+                if (!seenPlaceIds.has(result.place_id)) {
+                  seenPlaceIds.add(result.place_id);
+                  allAirports.push({
+                    place_id: result.place_id,
+                    name: result.name,
+                    formatted_address: result.vicinity,
+                    geometry: {
+                      location: {
+                        lat: result.geometry.location.lat,
+                        lng: result.geometry.location.lng
+                      }
+                    },
+                    rating: result.rating,
+                    types: result.types || []
+                  });
+                }
+              }
+            });
+          }
         }
-      },
-      rating: result.rating,
-      types: result.types || []
-    })) || [];
+      } catch (error) {
+        console.log(`⚠️ [AIRPORT-RECOMMENDATIONS] Search term "${term}" failed:`, error);
+      }
+    }
 
-    console.log(`✅ [AIRPORT-RECOMMENDATIONS] Found ${airports.length} airports`);
-    return airports;
+    // Strategy 2: Text search for airports
+    try {
+      const textSearchUrl = new URL('https://maps.googleapis.com/maps/api/place/textsearch/json');
+      textSearchUrl.searchParams.append('query', `airport near ${location.latitude},${location.longitude}`);
+      textSearchUrl.searchParams.append('key', GOOGLE_PLACES_API_KEY);
+      textSearchUrl.searchParams.append('language', 'en');
+
+      const textResponse = await fetch(textSearchUrl.toString());
+      
+      if (textResponse.ok) {
+        const textData = await textResponse.json();
+        
+        if (textData.status === 'OK' && textData.results) {
+          textData.results.forEach((result: any) => {
+            if (!seenPlaceIds.has(result.place_id)) {
+              seenPlaceIds.add(result.place_id);
+              allAirports.push({
+                place_id: result.place_id,
+                name: result.name,
+                formatted_address: result.formatted_address,
+                geometry: {
+                  location: {
+                    lat: result.geometry.location.lat,
+                    lng: result.geometry.location.lng
+                  }
+                },
+                rating: result.rating,
+                types: result.types || []
+              });
+            }
+          });
+        }
+      }
+    } catch (error) {
+      console.log('⚠️ [AIRPORT-RECOMMENDATIONS] Text search failed:', error);
+    }
+
+    console.log(`✅ [AIRPORT-RECOMMENDATIONS] Found ${allAirports.length} airports using multiple search strategies`);
+    return allAirports;
   } catch (error: any) {
     console.error('❌ [AIRPORT-RECOMMENDATIONS] Error finding airports:', error.message);
     throw error;
@@ -208,8 +269,14 @@ export async function getAirportRecommendations(
   try {
     console.log('🎯 [AIRPORT-RECOMMENDATIONS] Getting recommendations for:', { userLocation, destination });
     
-    // Find nearby airports - use larger radius to get more options for comparison
-    const airports = await findNearbyAirports(userLocation, 500); // 500km radius
+    // Find nearby airports - start with smaller radius for closer results
+    let airports = await findNearbyAirports(userLocation, 100); // 100km radius
+    
+    // If we don't find enough airports, expand the search
+    if (airports.length < 3) {
+      console.log(`🔍 [AIRPORT-RECOMMENDATIONS] Found only ${airports.length} airports, expanding search to 300km`);
+      airports = await findNearbyAirports(userLocation, 300); // 300km radius
+    }
     
     if (airports.length === 0) {
       console.log('⚠️ [AIRPORT-RECOMMENDATIONS] No airports found nearby');

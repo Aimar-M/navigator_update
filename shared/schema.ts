@@ -167,7 +167,7 @@ export const tripMembers = pgTable("trip_members", {
   tripId: integer("trip_id").notNull().references(() => trips.id),
   userId: integer("user_id").notNull().references(() => users.id),
   status: text("status").notNull().default("pending"), // pending, confirmed, declined (invitation status)
-  rsvpStatus: text("rsvp_status").notNull().default("pending"), // pending, awaiting_payment, confirmed, declined (RSVP status)
+  rsvpStatus: text("rsvp_status").notNull().default("pending"), // pending, awaiting_payment, confirmed, declined, maybe (RSVP status)
   isAdmin: boolean("is_admin").notNull().default(false), // admin flag for future permissions
   joinedAt: timestamp("joined_at").defaultNow(),
   rsvpDate: timestamp("rsvp_date"),

@@ -1620,7 +1620,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Invalid trip ID or user ID' });
       }
       
-      if (!['pending', 'confirmed', 'declined'].includes(rsvpStatus)) {
+      if (!['pending', 'confirmed', 'declined', 'maybe'].includes(rsvpStatus)) {
         return res.status(400).json({ message: 'Invalid RSVP status' });
       }
       
@@ -6011,6 +6011,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('❌ Airport recommendations status error:', error);
       res.status(500).json({ 
         error: 'Failed to check airport recommendations status',
+        message: error.message 
+      });
+    }
+  });
+
+  // Debug endpoint to see all airports found near a location
+  router.get('/airports/debug', isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { lat, lng, radius = 100 } = req.query;
+      
+      if (!lat || !lng) {
+        return res.status(400).json({ 
+          error: 'Latitude and longitude are required' 
+        });
+      }
+
+      const { findNearbyAirports } = await import('./airport-recommendations');
+      const airports = await findNearbyAirports(
+        { latitude: parseFloat(lat as string), longitude: parseFloat(lng as string) },
+        parseInt(radius as string)
+      );
+
+      // Calculate distances for debugging
+      const airportsWithDistance = airports.map(airport => {
+        const distance = Math.sqrt(
+          Math.pow(airport.geometry.location.lat - parseFloat(lat as string), 2) +
+          Math.pow(airport.geometry.location.lng - parseFloat(lng as string), 2)
+        ) * 111; // Rough km conversion
+        
+        return {
+          ...airport,
+          distance_km: distance.toFixed(2)
+        };
+      });
+
+      res.json({ 
+        airports: airportsWithDistance,
+        count: airports.length,
+        userLocation: { lat, lng },
+        searchRadius: radius
+      });
+    } catch (error: any) {
+      console.error('❌ Airport debug error:', error);
+      res.status(500).json({ 
+        error: 'Failed to debug airports',
         message: error.message 
       });
     }

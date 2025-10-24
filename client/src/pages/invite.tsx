@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatDateRange } from "@/lib/utils";
 import Header from "@/components/header";
 import MobileNavigation from "@/components/mobile-navigation";
+import EnhancedRSVPButtons from "@/components/enhanced-rsvp-buttons";
 import { apiRequest } from "@/lib/queryClient";
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
@@ -226,13 +227,29 @@ export default function InvitationPage() {
           </CardContent>
           <CardFooter>
             <div className="w-full space-y-3">
-              <Button 
-                className="w-full" 
-                disabled={isExpired || acceptingInvite}
-                onClick={handleAcceptInvitation}
-              >
-                {acceptingInvite ? "Joining..." : user ? "Join Trip" : "Sign in to Join Trip"}
-              </Button>
+              {user && !isExpired ? (
+                <EnhancedRSVPButtons
+                  tripId={trip.id}
+                  userId={user.id}
+                  currentRsvpStatus="pending"
+                  tripName={trip.name}
+                  requiresDownPayment={trip.requiresDownPayment}
+                  downPaymentAmount={trip.downPaymentAmount}
+                  onRsvpUpdate={(newStatus) => {
+                    if (newStatus === 'confirmed') {
+                      navigate(`/trips/${trip.id}`);
+                    }
+                  }}
+                />
+              ) : (
+                <Button 
+                  className="w-full" 
+                  disabled={isExpired || acceptingInvite}
+                  onClick={handleAcceptInvitation}
+                >
+                  {acceptingInvite ? "Joining..." : user ? "Join Trip" : "Sign in to Join Trip"}
+                </Button>
+              )}
               
               <Button 
                 variant="outline" 

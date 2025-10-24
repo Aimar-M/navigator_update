@@ -14,6 +14,8 @@ import navigatorLogo from "@assets/ab_Navigator2-11_1749673314519.png";
 import navigatorText from "@assets/ab_Navigator2-09_1749673915685.png";
 import Lottie from "lottie-react";
 import EnhancedItineraryPreview from "@/components/enhanced-itinerary-preview";
+import EnhancedRSVPButtons from "@/components/enhanced-rsvp-buttons";
+import { useAuth } from "@/hooks/use-auth";
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -130,6 +132,7 @@ interface InvitationData {
 export default function InvitationPage() {
   const { token } = useParams<{ token: string }>();
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
 
   const { data: invitationData, isLoading, error } = useQuery<InvitationData>({
     queryKey: [`${API_BASE}/api/invite/${token}`],
@@ -490,39 +493,56 @@ export default function InvitationPage() {
         </Card>
 
         {/* RSVP Action Section */}
-        <Card className="mb-8 bg-white rounded-2xl shadow-lg border-0 overflow-hidden">
-          <div className="p-6 text-center" style={{ backgroundColor: '#3A8DFF' }}>
-            <div className="flex items-center justify-center w-12 h-12 rounded-full mx-auto mb-4 shadow-lg" style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}>
-              <UserPlus className="h-6 w-6 text-white" />
+        {user ? (
+          <EnhancedRSVPButtons
+            tripId={trip.id}
+            userId={user.id}
+            currentRsvpStatus="pending"
+            tripName={trip.name}
+            requiresDownPayment={trip.requiresDownPayment}
+            downPaymentAmount={trip.downPaymentAmount}
+            onRsvpUpdate={(newStatus) => {
+              if (newStatus === 'confirmed') {
+                setLocation(`/trips/${trip.id}`);
+              }
+            }}
+            className="mb-8"
+          />
+        ) : (
+          <Card className="mb-8 bg-white rounded-2xl shadow-lg border-0 overflow-hidden">
+            <div className="p-6 text-center" style={{ backgroundColor: '#3A8DFF' }}>
+              <div className="flex items-center justify-center w-12 h-12 rounded-full mx-auto mb-4 shadow-lg" style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}>
+                <UserPlus className="h-6 w-6 text-white" />
+              </div>
+              <h2 className="text-xl font-bold text-white tracking-tight">
+                Join This Trip
+              </h2>
             </div>
-            <h2 className="text-xl font-bold text-white tracking-tight">
-              Join This Trip
-            </h2>
-          </div>
 
-          <CardContent className="p-6 space-y-4">
-            <div className="grid md:grid-cols-2 gap-3">
-              <Button 
-                onClick={handleSignUpRedirect}
-                className="w-full py-4 text-base font-semibold text-white transform hover:scale-105 transition-all duration-300 shadow-md rounded-xl border-0"
-                style={{ backgroundColor: '#0E4272' }}
-              >
-                <UserPlus className="h-4 w-4 mr-2" />
-                Create Account & Join
-              </Button>
-              
-              <Button 
-                onClick={handleSignInRedirect}
-                variant="outline"
-                className="w-full py-4 text-base font-semibold rounded-xl border-2 hover:bg-opacity-10 transition-all duration-300"
-                style={{ borderColor: '#0E4272', color: '#0E4272' }}
-              >
-                <User className="h-4 w-4 mr-2" />
-                Sign In & Join
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+            <CardContent className="p-6 space-y-4">
+              <div className="grid md:grid-cols-2 gap-3">
+                <Button 
+                  onClick={handleSignUpRedirect}
+                  className="w-full py-4 text-base font-semibold text-white transform hover:scale-105 transition-all duration-300 shadow-md rounded-xl border-0"
+                  style={{ backgroundColor: '#0E4272' }}
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Create Account & Join
+                </Button>
+                
+                <Button 
+                  onClick={handleSignInRedirect}
+                  variant="outline"
+                  className="w-full py-4 text-base font-semibold rounded-xl border-2 hover:bg-opacity-10 transition-all duration-300"
+                  style={{ borderColor: '#0E4272', color: '#0E4272' }}
+                >
+                  <User className="h-4 w-4 mr-2" />
+                  Sign In & Join
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
 
 

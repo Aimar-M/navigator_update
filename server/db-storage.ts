@@ -353,6 +353,10 @@ export class DatabaseStorage {
     else if (rsvpStatus === 'declined') {
       updateData.status = 'declined';
     }
+    // If maybe RSVP, keep member status as pending but update RSVP status
+    else if (rsvpStatus === 'maybe') {
+      // Keep status as pending, just update RSVP status
+    }
 
     const [updatedMember] = await db
       .update(tripMembers)
