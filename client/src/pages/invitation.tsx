@@ -504,6 +504,8 @@ export default function InvitationPage() {
             onRsvpUpdate={(newStatus) => {
               if (newStatus === 'confirmed') {
                 setLocation(`/trips/${trip.id}`);
+              } else if (newStatus === 'declined' || newStatus === 'maybe') {
+                setLocation('/');
               }
             }}
             className="mb-8"

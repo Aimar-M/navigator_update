@@ -238,6 +238,8 @@ export default function InvitationPage() {
                   onRsvpUpdate={(newStatus) => {
                     if (newStatus === 'confirmed') {
                       navigate(`/trips/${trip.id}`);
+                    } else if (newStatus === 'declined' || newStatus === 'maybe') {
+                      navigate('/');
                     }
                   }}
                 />
