@@ -1629,10 +1629,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'You can only update your own RSVP status' });
       }
       
+      // First check if the user is actually a member of the trip
+      const existingMember = await storage.getTripMember(tripId, userId);
+      if (!existingMember) {
+        return res.status(404).json({ 
+          message: 'Trip member not found',
+          details: `User ${userId} is not a member of trip ${tripId}`
+        });
+      }
+      
       const updatedMember = await storage.updateTripMemberRSVPStatus(tripId, userId, rsvpStatus);
       
       if (!updatedMember) {
-        return res.status(404).json({ message: 'Trip member not found' });
+        return res.status(404).json({ message: 'Failed to update trip member RSVP status' });
       }
       
       res.json(updatedMember);

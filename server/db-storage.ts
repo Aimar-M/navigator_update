@@ -302,6 +302,20 @@ export class DatabaseStorage {
       .where(eq(tripMembers.userId, userId));
   }
 
+  async getTripMember(tripId: number, userId: number): Promise<TripMember | undefined> {
+    const [member] = await db
+      .select()
+      .from(tripMembers)
+      .where(
+        and(
+          eq(tripMembers.tripId, tripId),
+          eq(tripMembers.userId, userId)
+        )
+      );
+    
+    return member || undefined;
+  }
+
   async updateTripMemberStatus(tripId: number, userId: number, status: string): Promise<TripMember | undefined> {
     const [updatedMember] = await db
       .update(tripMembers)

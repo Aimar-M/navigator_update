@@ -78,11 +78,22 @@ export default function EnhancedRSVPButtons({
       }
     },
     onError: (error: any) => {
-      toast({
-        title: "RSVP Failed",
-        description: error.message || "Failed to update RSVP. Please try again.",
-        variant: "destructive",
-      });
+      console.error('RSVP Error:', error);
+      
+      // Handle specific error cases
+      if (error.message?.includes('Trip member not found')) {
+        toast({
+          title: "Not a Trip Member",
+          description: "You need to be a member of this trip to RSVP. Please use the invitation link to join first.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "RSVP Failed",
+          description: error.message || "Failed to update RSVP. Please try again.",
+          variant: "destructive",
+        });
+      }
     },
   });
 

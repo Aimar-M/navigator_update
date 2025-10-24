@@ -494,20 +494,32 @@ export default function InvitationPage() {
 
         {/* RSVP Action Section */}
         {user ? (
-          <EnhancedRSVPButtons
-            tripId={trip.id}
-            userId={user.id}
-            currentRsvpStatus="pending"
-            tripName={trip.name}
-            requiresDownPayment={trip.requiresDownPayment}
-            downPaymentAmount={trip.downPaymentAmount}
-            onRsvpUpdate={(newStatus) => {
-              if (newStatus === 'confirmed') {
-                setLocation(`/trips/${trip.id}`);
-              }
-            }}
-            className="mb-8"
-          />
+          <Card className="mb-8 bg-white rounded-2xl shadow-lg border-0 overflow-hidden">
+            <div className="p-6 text-center" style={{ backgroundColor: '#3A8DFF' }}>
+              <div className="flex items-center justify-center w-12 h-12 rounded-full mx-auto mb-4 shadow-lg" style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}>
+                <UserPlus className="h-6 w-6 text-white" />
+              </div>
+              <h2 className="text-xl font-bold text-white tracking-tight">
+                Accept Invitation First
+              </h2>
+            </div>
+
+            <CardContent className="p-6 space-y-4">
+              <div className="text-center">
+                <Button 
+                  onClick={handleSignUpRedirect}
+                  className="w-full py-4 text-base font-semibold text-white transform hover:scale-105 transition-all duration-300 shadow-md rounded-xl border-0"
+                  style={{ backgroundColor: '#0E4272' }}
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Accept Invitation & Join Trip
+                </Button>
+                <p className="text-sm text-gray-600 mt-3">
+                  Accept the invitation first, then you can RSVP to the trip
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         ) : (
           <Card className="mb-8 bg-white rounded-2xl shadow-lg border-0 overflow-hidden">
             <div className="p-6 text-center" style={{ backgroundColor: '#3A8DFF' }}>
