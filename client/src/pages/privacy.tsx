@@ -46,12 +46,6 @@ export default function Privacy() {
               <Link href="/contact" className="text-gray-600 hover:text-gray-900 transition-colors" data-testid="nav-contact">
                 Contact
               </Link>
-              <Link href="/terms" className="text-gray-600 hover:text-gray-900 transition-colors" data-testid="nav-terms">
-                Terms & Conditions
-              </Link>
-              <Link href="/privacy" className="bg-blue-600 text-white px-3 py-1.5 rounded-full text-sm font-medium" data-testid="nav-privacy">
-                Privacy Policy
-              </Link>
             </nav>
           </div>
         </div>
