@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, primaryKey, foreignKey, uuid, decimal, jsonb, uniqueIndex, varchar, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, primaryKey, foreignKey, uuid, decimal, jsonb, json, uniqueIndex, varchar, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 import { z } from "zod";
@@ -282,7 +282,7 @@ export const messages = pgTable("messages", {
   userId: integer("user_id").notNull().references(() => users.id),
   content: text("content").notNull(),
   timestamp: timestamp("timestamp").notNull().defaultNow(),
-  image: text("image").array(), // Now supports multiple images as array
+  image: text("image"), // Single image for now
 });
 
 export const messagesRelations = relations(messages, ({ one }) => ({
@@ -414,7 +414,7 @@ export const notifications = pgTable("notifications", {
   type: text("type").notNull(), // 'rsvp_response', 'invitation', etc.
   title: text("title").notNull(),
   message: text("message").notNull(),
-  data: json("data"), // Additional data like tripId, memberId, etc.
+  data: jsonb("data"), // Additional data like tripId, memberId, etc.
   isRead: boolean("is_read").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
