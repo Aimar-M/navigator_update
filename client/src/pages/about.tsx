@@ -82,6 +82,9 @@ export default function About() {
               <Link href="/terms" className="text-gray-600 hover:text-gray-900 transition-colors" data-testid="nav-terms">
                 Terms & Conditions
               </Link>
+              <Link href="/privacy" className="text-gray-600 hover:text-gray-900 transition-colors" data-testid="nav-privacy">
+                Privacy Policy
+              </Link>
             </nav>
           </div>
         </div>

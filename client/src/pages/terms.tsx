@@ -49,6 +49,9 @@ export default function Terms() {
               <Link href="/terms" className="bg-blue-600 text-white px-3 py-1.5 rounded-full text-sm font-medium" data-testid="nav-terms">
                 Terms & Conditions
               </Link>
+              <Link href="/privacy" className="text-gray-600 hover:text-gray-900 transition-colors" data-testid="nav-privacy">
+                Privacy Policy
+              </Link>
             </nav>
           </div>
         </div>
@@ -71,7 +74,7 @@ export default function Terms() {
           <div className="prose prose-lg max-w-none text-gray-700">
             <div className="bg-gray-50 rounded-lg p-8 mb-8">
               <h2 className="text-2xl font-semibold text-gray-900 mb-4">Navigator Terms of Service</h2>
-              <p><strong>Effective Date:</strong> [Insert Date]</p>
+              <p><strong>Effective Date:</strong> October 24, 2025</p>
               <p><strong>Provider:</strong> Navigator Technologies, Inc. (“Navigator,” “we,” “our,” “us”)</p>
               <p><strong>Website:</strong> <a href="https://navigatortrips.com" className="text-blue-600 underline">https://navigatortrips.com</a></p>
               <p><strong>Contact:</strong> <a href="mailto:info@navigatortrips.com" className="text-blue-600 underline">info@navigatortrips.com</a></p>
