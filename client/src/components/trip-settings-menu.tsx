@@ -27,8 +27,8 @@ export default function TripSettingsMenu({
   const [, navigate] = useLocation();
 
   const handleLeaveSuccess = () => {
-    // Navigate to trips list after leaving
-    navigate("/trips");
+    // Navigate to homepage after leaving
+    navigate("/");
   };
 
   return (
