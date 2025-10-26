@@ -48,18 +48,8 @@ export function LeaveTripDialog({
   // Check if user can leave (balance check)
   const { data: eligibility, isLoading: isCheckingEligibility } = useQuery<RemovalEligibility>({
     queryKey: [`${API_BASE}/api/trips/${tripId}/members/${user?.id}/removal-eligibility`],
-    enabled: isOpen && !!user,
-    retry: false,
-    queryFn: async () => {
-      if (!user) throw new Error('User not authenticated');
-      
-      const response = await fetch(
-        `${API_BASE}/api/trips/${tripId}/members/${user.id}/removal-eligibility`,
-        { credentials: 'include' }
-      );
-      if (!response.ok) throw new Error('Failed to check eligibility');
-      return response.json();
-    }
+    enabled: isOpen && !!user && user.id > 0,
+    retry: false
   });
 
   // Leave trip mutation
