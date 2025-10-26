@@ -717,10 +717,10 @@ export default function TripDetails() {
                 <div className="flex-1">
                   <h3 className="font-medium">Recommended Airports</h3>
                   {isEditing ? (
-                    <GooglePlacesAutocomplete
+                    <GooglePlacesMulti
                       value={editForm.airportGateway}
                       onChange={(value) => setEditForm(prev => ({ ...prev, airportGateway: value }))}
-                      placeholder="Search for an airport (e.g., JFK, LAX)"
+                      placeholder="Search for airports (e.g., JFK, LAX)"
                       className="mt-1"
                       types="airport"
                     />
@@ -728,16 +728,26 @@ export default function TripDetails() {
                     <div className="mt-2">
                       {trip.airportGateway ? (
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                          <div className="flex items-center space-x-2">
-                            <Plane className="h-5 w-5 text-blue-600" />
-                            <div>
-                              <p className="font-medium text-blue-900">{trip.airportGateway}</p>
-                              <p className="text-sm text-blue-700">Recommended by organizer</p>
+                          <div className="flex items-start space-x-2">
+                            <Plane className="h-5 w-5 text-blue-600 mt-0.5" />
+                            <div className="flex-1">
+                              <p className="text-sm text-blue-700 mb-2">Recommended by organizer:</p>
+                              <div className="flex flex-wrap gap-2">
+                                {trip.airportGateway.split(',').map((airport, index) => (
+                                  <div
+                                    key={index}
+                                    className="inline-flex items-center rounded-full bg-white text-blue-900 border border-blue-300 px-3 py-1.5 text-sm font-medium"
+                                  >
+                                    <Plane className="h-3.5 w-3.5 mr-1.5" />
+                                    {airport.trim()}
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           </div>
                         </div>
                       ) : (
-                        <p className="text-gray-500 text-sm italic">No airport recommendation set</p>
+                        <p className="text-gray-500 text-sm italic">No airport recommendations set</p>
                       )}
                     </div>
                   )}
