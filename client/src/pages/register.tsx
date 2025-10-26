@@ -362,7 +362,7 @@ export default function Register() {
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full" disabled={isLoading || !formData.agreeTerms}>
                 {isLoading ? "Creating account..." : "Create Account"}
               </Button>
               
@@ -380,6 +380,7 @@ export default function Register() {
                 type="button" 
                 variant="outline" 
                 className="w-full"
+                disabled={!formData.agreeTerms}
                 onClick={() => {
                   console.log('🔍 Google OAuth button clicked (register)');
                   console.log('🔍 Environment variables:', {
