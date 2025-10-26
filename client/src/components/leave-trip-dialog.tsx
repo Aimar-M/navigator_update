@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
@@ -40,21 +41,17 @@ export function LeaveTripDialog({
   onSuccess
 }: LeaveTripDialogProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [confirmLeave, setConfirmLeave] = useState(false);
 
   // Check if user can leave (balance check)
   const { data: eligibility, isLoading: isCheckingEligibility } = useQuery<RemovalEligibility>({
-    queryKey: [`${API_BASE}/api/trips/${tripId}/members/self/removal-eligibility`],
-    enabled: isOpen,
+    queryKey: [`${API_BASE}/api/trips/${tripId}/members/${user?.id}/removal-eligibility`],
+    enabled: isOpen && !!user,
     retry: false,
     queryFn: async () => {
-      // We'll need to get the current user ID first
-      const userResponse = await fetch(`${API_BASE}/api/user`, {
-        credentials: 'include'
-      });
-      if (!userResponse.ok) throw new Error('Failed to fetch user');
-      const user = await userResponse.json();
+      if (!user) throw new Error('User not authenticated');
       
       const response = await fetch(
         `${API_BASE}/api/trips/${tripId}/members/${user.id}/removal-eligibility`,
