@@ -98,7 +98,7 @@ export default function Landing() {
             <img 
               src={navigatorLogo} 
               alt="Navigator Logo" 
-              className="h-96 mx-auto filter brightness-0 invert opacity-90"
+              className="h-72 mx-auto filter brightness-0 invert opacity-90"
               data-testid="navigator-logo"
             />
           </div>
