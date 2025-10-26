@@ -1475,6 +1475,117 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'Server error' });
     }
   });
+
+  // Leave trip (self-removal endpoint)
+  router.post('/trips/:tripId/leave', isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = ensureUser(req, res);
+      if (!user) return;
+      
+      const tripId = parseInt(req.params.tripId);
+      
+      if (isNaN(tripId)) {
+        return res.status(400).json({ message: 'Invalid trip ID' });
+      }
+      
+      // Get trip details
+      const trip = await storage.getTrip(tripId);
+      if (!trip) {
+        return res.status(404).json({ message: 'Trip not found' });
+      }
+      
+      // Get all members to check membership and permissions
+      const members = await storage.getTripMembers(tripId);
+      const currentUserMember = members.find(m => m.userId === user.id);
+      
+      if (!currentUserMember) {
+        return res.status(403).json({ message: 'You are not a member of this trip' });
+      }
+      
+      // Cannot leave if you are the organizer
+      if (user.id === trip.organizer) {
+        return res.status(403).json({ 
+          message: 'Trip organizer cannot leave the trip. Please transfer organizer role first or delete the trip.' 
+        });
+      }
+      
+      // Check for unsettled balances
+      const dbStorage = storage as any;
+      if (typeof dbStorage.analyzeMemberRemovalEligibility === 'function') {
+        const eligibility = await dbStorage.analyzeMemberRemovalEligibility(tripId, user.id);
+        
+        if (!eligibility.canRemove) {
+          return res.status(400).json({ 
+            message: eligibility.reason || 'Cannot leave trip due to unsettled balances',
+            balance: eligibility.balance,
+            manualExpenseBalance: eligibility.manualExpenseBalance,
+            prepaidActivityBalance: eligibility.prepaidActivityBalance,
+            prepaidActivitiesOwed: eligibility.prepaidActivitiesOwed,
+            suggestions: eligibility.suggestions
+          });
+        }
+      }
+      
+      // Handle user's activities - decline RSVPs
+      const activities = await storage.getActivitiesByTrip(tripId);
+      const userActivities = activities.filter(activity => activity.createdBy === user.id);
+      
+      for (const activity of userActivities) {
+        // Remove user's RSVP
+        const rsvps = await storage.getActivityRSVPs(activity.id);
+        const userRSVP = rsvps.find(rsvp => rsvp.userId === user.id);
+        if (userRSVP) {
+          await storage.updateActivityRSVP(activity.id, user.id, 'declined');
+        }
+        
+        // Mark activity as created by leaving user - assign to organizer
+        await storage.updateActivity(activity.id, {
+          name: `${activity.name} (Created by ${user.name || user.username})`,
+          createdBy: trip.organizer
+        });
+      }
+      
+      // Handle user's expenses - mark as submitted by leaving user
+      const expenses = await storage.getExpensesByTrip(tripId);
+      const userExpenses = expenses.filter(expense => expense.submittedBy === user.id);
+      
+      for (const expense of userExpenses) {
+        await storage.updateExpense(expense.id, {
+          description: `${expense.description} (Submitted by ${user.name || user.username})`,
+          submittedBy: trip.organizer
+        });
+      }
+      
+      // DO NOT remove user from expense splits - preserves financial history
+      
+      // Remove the member from the trip
+      const removed = await storage.removeTripMember(tripId, user.id);
+      
+      if (!removed) {
+        return res.status(500).json({ message: 'Failed to leave trip' });
+      }
+      
+      // Broadcast to remaining members that user has left
+      broadcastToTrip(wss, tripId, {
+        type: 'MEMBER_LEFT',
+        data: { 
+          userId: user.id,
+          userName: user.name || user.username,
+          tripId 
+        }
+      });
+      
+      res.json({ 
+        message: 'Successfully left the trip',
+        tripId
+      });
+      
+    } catch (error) {
+      console.error('Error leaving trip:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Server error';
+      res.status(500).json({ message: errorMessage });
+    }
+  });
   
   // Get travel companions from past trips (for suggestions)
   router.get('/trips/:id/past-companions', isAuthenticated, async (req: Request, res: Response) => {

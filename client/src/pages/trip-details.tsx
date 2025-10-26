@@ -21,6 +21,7 @@ import { useState, useEffect } from "react";
 import InviteModal from "@/components/invite-modal";
 import TripImageUpload from "@/components/trip-image-upload";
 import { EnhancedMemberRemovalDialog } from "@/components/EnhancedMemberRemovalDialog";
+import TripSettingsMenu from "@/components/trip-settings-menu";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -485,40 +486,49 @@ export default function TripDetails() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">Trip Details</h2>
-              {isOrganizer && (
-                <div className="flex items-center gap-2">
-                  {isEditing ? (
-                    <>
+              <div className="flex items-center gap-2">
+                {/* Trip Settings Menu for all members */}
+                <TripSettingsMenu 
+                  tripId={tripId}
+                  isOrganizer={isOrganizer}
+                />
+                
+                {/* Edit button only for organizers */}
+                {isOrganizer && (
+                  <>
+                    {isEditing ? (
+                      <>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setIsEditing(false)}
+                          disabled={updateTripMutation.isPending}
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          Cancel
+                        </Button>
+                        <Button 
+                          size="sm"
+                          onClick={handleSaveChanges}
+                          disabled={updateTripMutation.isPending}
+                        >
+                          <Save className="h-4 w-4 mr-1" />
+                          {updateTripMutation.isPending ? 'Saving...' : 'Save'}
+                        </Button>
+                      </>
+                    ) : (
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => setIsEditing(false)}
-                        disabled={updateTripMutation.isPending}
+                        onClick={handleEditToggle}
                       >
-                        <X className="h-4 w-4 mr-1" />
-                        Cancel
+                        <Edit2 className="h-4 w-4 mr-1" />
+                        Edit
                       </Button>
-                      <Button 
-                        size="sm"
-                        onClick={handleSaveChanges}
-                        disabled={updateTripMutation.isPending}
-                      >
-                        <Save className="h-4 w-4 mr-1" />
-                        {updateTripMutation.isPending ? 'Saving...' : 'Save'}
-                      </Button>
-                    </>
-                  ) : (
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={handleEditToggle}
-                    >
-                      <Edit2 className="h-4 w-4 mr-1" />
-                      Edit
-                    </Button>
-                  )}
-                </div>
-              )}
+                    )}
+                  </>
+                )}
+              </div>
             </div>
             
             <div className="space-y-4">
