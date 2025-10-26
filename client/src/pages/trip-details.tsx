@@ -731,16 +731,19 @@ export default function TripDetails() {
                           <div className="flex items-start space-x-2">
                             <Plane className="h-5 w-5 text-blue-600 mt-0.5" />
                             <div className="flex-1">
-                              <p className="text-sm text-blue-700 mb-2">Recommended by organizer:</p>
+                              <p className="text-sm text-blue-700 mb-2">Recommended by organizer (click to view in Google Maps):</p>
                               <div className="flex flex-wrap gap-2">
                                 {trip.airportGateway.split(',').map((airport, index) => (
-                                  <div
+                                  <a
                                     key={index}
-                                    className="inline-flex items-center rounded-full bg-white text-blue-900 border border-blue-300 px-3 py-1.5 text-sm font-medium"
+                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(airport.trim())}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center rounded-full bg-white text-blue-900 border border-blue-300 px-3 py-1.5 text-sm font-medium hover:bg-blue-100 hover:border-blue-400 transition-colors cursor-pointer"
                                   >
                                     <Plane className="h-3.5 w-3.5 mr-1.5" />
                                     {airport.trim()}
-                                  </div>
+                                  </a>
                                 ))}
                               </div>
                             </div>
