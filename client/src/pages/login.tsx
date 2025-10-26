@@ -187,11 +187,13 @@ export default function Login() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4 relative">
       {/* Company logo in top left */}
-      <img 
-        src={companyLogo} 
-        alt="Navigator Company Logo" 
-        className="absolute top-4 left-4 h-12 md:h-24"
-      />
+      <Link href="/">
+        <img 
+          src={companyLogo} 
+          alt="Navigator Company Logo" 
+          className="absolute top-4 left-4 h-12 md:h-24 cursor-pointer hover:opacity-80 transition-opacity"
+        />
+      </Link>
       <div className="w-full max-w-md">
         <div className="text-center mb-2">
           <div className="flex flex-col items-center justify-center mb-2">
