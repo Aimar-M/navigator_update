@@ -94,7 +94,7 @@ export default function Landing() {
       <div className="relative z-10 flex items-center justify-center min-h-screen">
         <div className="text-center px-4 sm:px-6 lg:px-8">
           {/* Navigator Logo */}
-          <div className="mb-12">
+          <div className="mb-10">
             <img 
               src={navigatorLogo} 
               alt="Navigator Logo" 
