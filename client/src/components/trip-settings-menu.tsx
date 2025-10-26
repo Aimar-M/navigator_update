@@ -45,9 +45,6 @@ export default function TripSettingsMenu({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel>Trip Settings</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          
           {/* Only show Leave Trip option if not the organizer */}
           {!isOrganizer && (
             <DropdownMenuItem 
