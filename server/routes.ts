@@ -1329,8 +1329,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const members = await storage.getTripMembers(tripId);
       const currentMember = members.find(m => m.userId === user.id);
       
-      if (!currentMember?.isAdmin && trip.organizer !== user.id) {
-        return res.status(403).json({ message: 'Only admins can check removal eligibility' });
+      // Allow if:
+      // 1. User is checking their own eligibility (for leaving trip)
+      // 2. User is admin/organizer (for removing other members)
+      const isCheckingSelf = user.id === userId;
+      const isAdmin = currentMember?.isAdmin || trip.organizer === user.id;
+      
+      if (!isCheckingSelf && !isAdmin) {
+        return res.status(403).json({ message: 'You can only check your own eligibility or must be an admin' });
       }
       
       const eligibility = await storage.analyzeMemberRemovalEligibility(tripId, userId);
