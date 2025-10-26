@@ -5,7 +5,7 @@ import { useFullStory } from "@/hooks/use-fullstory";
 import { fullstory } from "@/lib/fullstory";
 import { useEffect } from "react";
 import backgroundVideo from "@/assets/IMG_4795_1758657014573.mov";
-import navigatorLogo from "@/assets/navigator-logo.svg";
+import navigatorLogo from "@/assets/ab_Navigator2-02.png";
 import FullStoryDebug from "@/components/FullStoryDebug";
 
 export default function Landing() {

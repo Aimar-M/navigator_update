@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import navigatorLogo from "@/assets/navigator-logo.svg";
+import navigatorLogo from "@/assets/ab_Navigator2-11_1749673314519.png";
 import { Eye, EyeOff } from "lucide-react";
 
 export default function Register() {
