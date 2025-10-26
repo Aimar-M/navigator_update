@@ -32,6 +32,7 @@ export default function Register() {
     name: "",
     password: "",
     confirmPassword: "",
+    agreeTerms: false,
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -171,6 +172,10 @@ export default function Register() {
       newErrors.confirmPassword = "Passwords do not match";
     }
     
+    if (!formData.agreeTerms) {
+      newErrors.agreeTerms = "You must agree to the Terms and Conditions and Privacy Policy";
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -198,6 +203,7 @@ export default function Register() {
           name: "",
           password: "",
           confirmPassword: "",
+          agreeTerms: false,
         });
       }
       
@@ -325,6 +331,33 @@ export default function Register() {
                 </div>
                 {errors.confirmPassword && (
                   <p className="text-sm text-red-500">{errors.confirmPassword}</p>
+                )}
+              </div>
+              
+              {/* Terms and Privacy Agreement */}
+              <div className="space-y-2">
+                <div className="flex items-start space-x-2">
+                  <input
+                    type="checkbox"
+                    id="agreeTerms"
+                    name="agreeTerms"
+                    checked={formData.agreeTerms}
+                    onChange={handleChange}
+                    className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="agreeTerms" className="text-sm text-gray-600">
+                    I agree to the{" "}
+                    <Link 
+                      href="/legal" 
+                      className="text-blue-600 hover:text-blue-700 underline"
+                      target="_blank"
+                    >
+                      Terms and Conditions and Privacy Policy
+                    </Link>
+                  </label>
+                </div>
+                {errors.agreeTerms && (
+                  <p className="text-sm text-red-500">{errors.agreeTerms}</p>
                 )}
               </div>
             </CardContent>
