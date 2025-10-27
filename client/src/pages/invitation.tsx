@@ -502,11 +502,8 @@ export default function InvitationPage() {
             requiresDownPayment={trip.requiresDownPayment}
             downPaymentAmount={trip.downPaymentAmount}
             onRsvpUpdate={(newStatus) => {
-              if (newStatus === 'confirmed') {
-                setLocation(`/trips/${trip.id}`);
-              } else if (newStatus === 'declined' || newStatus === 'maybe') {
-                setLocation('/');
-              }
+              // Always redirect to homepage after RSVP
+              setLocation('/');
             }}
             className="mb-8"
           />

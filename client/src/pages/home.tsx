@@ -155,36 +155,6 @@ export default function Home() {
   }, [user, trackPage]);
 
   console.log("user:", user, "token:", token);
-  
-  // Handle pending invitation by ensuring it gets processed through proper RSVP workflow
-  useEffect(() => {
-    const handlePendingInvitation = async () => {
-      const pendingInvitation = localStorage.getItem('pendingInvitation');
-      if (pendingInvitation && user && token) {
-        try {
-          // Accept the invitation to add user to trip membership (but with pending RSVP status)
-          await apiRequest('POST', `${API_BASE}/api/invite/${pendingInvitation}/accept`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-          });
-          // Invalidate queries so trip list and pending invitations auto-refresh
-          queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips`] });
-          queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/memberships/pending`] });
-        } catch (error) {
-          console.error('Error accepting invitation:', error);
-        } finally {
-          // Always clear the pending invitation from localStorage
-          localStorage.removeItem('pendingInvitation');
-        }
-      }
-    };
-
-    handlePendingInvitation();
-  }, [user, token, queryClient]);
-  
   console.log(user, token, API_BASE);
 
   // Use React Query with proper dependencies to avoid setState during render

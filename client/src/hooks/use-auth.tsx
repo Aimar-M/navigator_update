@@ -194,8 +194,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Connect WebSocket after login
       wsClient.connect(userData.id, []);
       
-      // Always redirect to home page - let home page handle pending invitations
-      navigate("/");
+      // Check if there's a pending invitation
+      const pendingInvitation = localStorage.getItem('pendingInvitation');
+      if (pendingInvitation) {
+        // Redirect back to invitation page to RSVP
+        navigate(`/invite/${pendingInvitation}`);
+      } else {
+        // Otherwise redirect to home page
+        navigate("/");
+      }
     } catch (error) {
       toast({
         title: "Login failed",
@@ -245,8 +252,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Connect WebSocket after registration
       wsClient.connect(newUser.id, []);
       
-      // Always redirect to home page - let home page handle pending invitations
-      navigate("/");
+      // Check if there's a pending invitation
+      const pendingInvitation = localStorage.getItem('pendingInvitation');
+      if (pendingInvitation) {
+        // Redirect back to invitation page to RSVP
+        navigate(`/invite/${pendingInvitation}`);
+      } else {
+        // Otherwise redirect to home page
+        navigate("/");
+      }
     } catch (error) {
       toast({
         title: "Registration failed",

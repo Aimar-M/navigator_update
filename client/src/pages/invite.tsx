@@ -236,11 +236,8 @@ export default function InvitationPage() {
                   requiresDownPayment={trip.requiresDownPayment}
                   downPaymentAmount={trip.downPaymentAmount}
                   onRsvpUpdate={(newStatus) => {
-                    if (newStatus === 'confirmed') {
-                      navigate(`/trips/${trip.id}`);
-                    } else if (newStatus === 'declined' || newStatus === 'maybe') {
-                      navigate('/');
-                    }
+                    // Always redirect to homepage after RSVP
+                    navigate('/');
                   }}
                 />
               ) : (

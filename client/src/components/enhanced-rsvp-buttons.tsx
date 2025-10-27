@@ -100,6 +100,9 @@ export default function EnhancedRSVPButtons({
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/memberships/pending`] });
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/notifications`] });
       
+      // Clear pending invitation from localStorage if it exists
+      localStorage.removeItem('pendingInvitation');
+      
       if (onRsvpUpdate) {
         onRsvpUpdate(rsvpStatus);
       }
