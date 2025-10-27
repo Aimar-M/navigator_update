@@ -3529,7 +3529,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let tripMember;
       if (existingMember) {
         // User already exists - reset their status to allow rejoining
-        const memberStatus = "confirmed";
+        // For paid trips, keep status as pending until payment is confirmed
+        const memberStatus = trip.requiresDownPayment ? "pending" : "confirmed";
         const rsvpStatus = trip.requiresDownPayment ? "pending" : "confirmed";
         
         // Update existing member to reset their status
@@ -3551,7 +3552,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tripMember = await storage.getTripMemberWithPaymentInfo(invitation.tripId, user.id);
       } else {
         // New member - add them normally
-        const memberStatus = "confirmed";
+        // For paid trips, keep status as pending until payment is confirmed
+        const memberStatus = trip.requiresDownPayment ? "pending" : "confirmed";
         const rsvpStatus = trip.requiresDownPayment ? "pending" : "confirmed";
         
         tripMember = await storage.addTripMember({
@@ -3599,10 +3601,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Add user as a member with the specified RSVP status
+      // For paid trips, keep status as pending until payment is confirmed
+      const memberStatus = trip.requiresDownPayment ? 'pending' : 'confirmed';
       const member = await storage.addTripMember({
         tripId,
         userId: user.id,
-        status: 'confirmed', // Auto-confirm when joining via invitation
+        status: memberStatus,
         rsvpStatus: rsvpStatus,
         rsvpDate: new Date()
       });
