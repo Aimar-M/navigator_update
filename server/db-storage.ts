@@ -353,9 +353,14 @@ export class DatabaseStorage {
       throw new Error('Trip not found');
     }
 
+    // Get current member to check payment status
+    const currentMember = await this.getTripMemberWithPaymentInfo(tripId, userId);
+    const paymentConfirmed = currentMember?.paymentStatus === 'confirmed';
+
     // Determine what to update
     const updateData: any = { 
-      rsvpStatus: trip.requiresDownPayment && rsvpStatus === 'confirmed' ? 'pending' : rsvpStatus,
+      // Only override to 'pending' if payment is NOT yet confirmed
+      rsvpStatus: trip.requiresDownPayment && rsvpStatus === 'confirmed' && !paymentConfirmed ? 'pending' : rsvpStatus,
       rsvpDate: new Date()
     };
 
@@ -363,8 +368,12 @@ export class DatabaseStorage {
     if (rsvpStatus === 'confirmed' && !trip.requiresDownPayment) {
       updateData.status = 'confirmed';
     }
-    // If confirming RSVP but down payment IS required, keep both as pending
-    else if (rsvpStatus === 'confirmed' && trip.requiresDownPayment) {
+    // If confirming RSVP but down payment IS required and payment IS confirmed, grant full access
+    else if (rsvpStatus === 'confirmed' && trip.requiresDownPayment && paymentConfirmed) {
+      updateData.status = 'confirmed';
+    }
+    // If confirming RSVP but down payment IS required and payment NOT confirmed, keep both as pending
+    else if (rsvpStatus === 'confirmed' && trip.requiresDownPayment && !paymentConfirmed) {
       updateData.status = 'pending';
     }
     // If declining RSVP, set member status to declined
