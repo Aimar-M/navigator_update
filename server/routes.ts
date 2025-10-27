@@ -3601,13 +3601,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Add user as a member with the specified RSVP status
-      // For paid trips, keep status as pending until payment is confirmed
+      // For paid trips, keep BOTH status and rsvpStatus as pending until payment is confirmed
       const memberStatus = trip.requiresDownPayment ? 'pending' : 'confirmed';
+      const finalRsvpStatus = trip.requiresDownPayment ? 'pending' : rsvpStatus;
       const member = await storage.addTripMember({
         tripId,
         userId: user.id,
         status: memberStatus,
-        rsvpStatus: rsvpStatus,
+        rsvpStatus: finalRsvpStatus,
         rsvpDate: new Date()
       });
       

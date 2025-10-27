@@ -355,13 +355,17 @@ export class DatabaseStorage {
 
     // Determine what to update
     const updateData: any = { 
-      rsvpStatus,
+      rsvpStatus: trip.requiresDownPayment && rsvpStatus === 'confirmed' ? 'pending' : rsvpStatus,
       rsvpDate: new Date()
     };
 
     // If confirming RSVP and no down payment required, automatically confirm member status
     if (rsvpStatus === 'confirmed' && !trip.requiresDownPayment) {
       updateData.status = 'confirmed';
+    }
+    // If confirming RSVP but down payment IS required, keep both as pending
+    else if (rsvpStatus === 'confirmed' && trip.requiresDownPayment) {
+      updateData.status = 'pending';
     }
     // If declining RSVP, set member status to declined
     else if (rsvpStatus === 'declined') {
