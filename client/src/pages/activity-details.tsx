@@ -6,12 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, MapPin, Clock, DollarSign, Users, CheckIcon, XIcon, Trash2, ExternalLink, UserCheck, MoreHorizontal } from "lucide-react";
+import { ArrowLeft, MapPin, Clock, DollarSign, Users, CheckIcon, XIcon, Trash2, ExternalLink, UserCheck, MoreHorizontal, Edit3, Save, X } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import GooglePlacesAutocomplete from "@/components/google-places-autocomplete";
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -80,6 +84,24 @@ export default function ActivityDetails() {
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
   const [editCapDialogOpen, setEditCapDialogOpen] = useState(false);
   const [newMaxParticipants, setNewMaxParticipants] = useState<string>("");
+  
+  // Edit mode state
+  const [isEditing, setIsEditing] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    name: "",
+    description: "",
+    date: "",
+    startTime: "",
+    activityType: "",
+    activityLink: "",
+    location: "",
+    duration: "",
+    cost: "",
+    paymentType: "free",
+    maxParticipants: "",
+    checkInDate: "",
+    checkOutDate: ""
+  });
 
   const { data: activity, isLoading } = useQuery<ActivityDetail>({
     queryKey: [`${API_BASE}/api/activities/${activityId}`],
@@ -217,6 +239,53 @@ export default function ActivityDetails() {
     }
   });
 
+  // Edit activity mutation
+  const editActivityMutation = useMutation({
+    mutationFn: async (activityData: any) => {
+      return await apiRequest("PUT", `${API_BASE}/api/activities/${activityId}`, activityData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/activities/${activityId}`] });
+      if (activity?.tripId) {
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${activity.tripId}/activities`] });
+      }
+      toast({
+        title: "Activity Updated",
+        description: "The activity has been updated successfully.",
+      });
+      setIsEditing(false);
+    },
+    onError: (error: any) => {
+      console.error("Edit activity error:", error);
+      toast({
+        title: "Update Failed",
+        description: error?.response?.data?.message || "There was a problem updating the activity. Please try again.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Initialize edit form data when activity loads
+  useEffect(() => {
+    if (activity && !isEditing) {
+      setEditFormData({
+        name: activity.name || "",
+        description: activity.description || "",
+        date: activity.date ? new Date(activity.date).toISOString().split('T')[0] : "",
+        startTime: activity.startTime || "",
+        activityType: activity.activityType || "",
+        activityLink: activity.activityLink || "",
+        location: activity.location || "",
+        duration: activity.duration || "",
+        cost: activity.cost || "",
+        paymentType: activity.paymentType || "free",
+        maxParticipants: activity.maxParticipants?.toString() || "",
+        checkInDate: activity.checkInDate ? new Date(activity.checkInDate).toISOString().split('T')[0] : "",
+        checkOutDate: activity.checkOutDate ? new Date(activity.checkOutDate).toISOString().split('T')[0] : ""
+      });
+    }
+  }, [activity, isEditing]);
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-6">
@@ -291,6 +360,68 @@ export default function ActivityDetails() {
     }
   };
 
+  const handleEditToggle = () => {
+    setIsEditing(!isEditing);
+    if (isEditing) {
+      // Reset form data when canceling edit
+      if (activity) {
+        setEditFormData({
+          name: activity.name || "",
+          description: activity.description || "",
+          date: activity.date ? new Date(activity.date).toISOString().split('T')[0] : "",
+          startTime: activity.startTime || "",
+          activityType: activity.activityType || "",
+          activityLink: activity.activityLink || "",
+          location: activity.location || "",
+          duration: activity.duration || "",
+          cost: activity.cost || "",
+          paymentType: activity.paymentType || "free",
+          maxParticipants: activity.maxParticipants?.toString() || "",
+          checkInDate: activity.checkInDate ? new Date(activity.checkInDate).toISOString().split('T')[0] : "",
+          checkOutDate: activity.checkOutDate ? new Date(activity.checkOutDate).toISOString().split('T')[0] : ""
+        });
+      }
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editFormData.name.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Activity name is required.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!editFormData.date) {
+      toast({
+        title: "Validation Error",
+        description: "Activity date is required.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const activityData = {
+      name: editFormData.name.trim(),
+      description: editFormData.description.trim(),
+      date: new Date(editFormData.date).toISOString(),
+      startTime: editFormData.startTime.trim() || null,
+      activityType: editFormData.activityType.trim() || null,
+      activityLink: editFormData.activityLink.trim() || null,
+      location: editFormData.location.trim() || null,
+      duration: editFormData.duration.trim() || null,
+      cost: editFormData.cost.trim() || null,
+      paymentType: editFormData.paymentType,
+      maxParticipants: editFormData.maxParticipants ? parseInt(editFormData.maxParticipants) : null,
+      checkInDate: editFormData.checkInDate ? new Date(editFormData.checkInDate).toISOString() : null,
+      checkOutDate: editFormData.checkOutDate ? new Date(editFormData.checkOutDate).toISOString() : null
+    };
+
+    await editActivityMutation.mutateAsync(activityData);
+  };
+
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl">
       {/* Header */}
@@ -305,21 +436,62 @@ export default function ActivityDetails() {
           Back to Itinerary
         </Button>
         
-        {/* Delete button - show for activity creator or admins when admin-only mode is enabled */}
-        {currentUser && canEditActivity && (activity.createdBy === currentUser.id || isCurrentUserAdmin) && (
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => {
-              if (confirm("Are you sure you want to delete this activity? This will also remove any associated expenses.")) {
-                deleteMutation.mutate();
-              }
-            }}
-            disabled={deleteMutation.isPending}
-          >
-            {deleteMutation.isPending ? "Deleting..." : "Delete Activity"}
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {/* Edit button - show for activity creator or admins when admin-only mode is enabled */}
+          {currentUser && canEditActivity && (activity.createdBy === currentUser.id || isCurrentUserAdmin) && (
+            <>
+              {!isEditing ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleEditToggle}
+                  className="flex items-center gap-2"
+                >
+                  <Edit3 className="h-4 w-4" />
+                  Edit Activity
+                </Button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleEditToggle}
+                    className="flex items-center gap-2"
+                  >
+                    <X className="h-4 w-4" />
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={handleSaveEdit}
+                    disabled={editActivityMutation.isPending}
+                    className="flex items-center gap-2"
+                  >
+                    <Save className="h-4 w-4" />
+                    {editActivityMutation.isPending ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+          
+          {/* Delete button - show for activity creator or admins when admin-only mode is enabled */}
+          {currentUser && canEditActivity && (activity.createdBy === currentUser.id || isCurrentUserAdmin) && !isEditing && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => {
+                if (confirm("Are you sure you want to delete this activity? This will also remove any associated expenses.")) {
+                  deleteMutation.mutate();
+                }
+              }}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete Activity"}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Activity Details Card */}
@@ -327,65 +499,317 @@ export default function ActivityDetails() {
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="text-2xl font-bold text-gray-900">{activity.name}</CardTitle>
-              
-              {/* Creator/Owner Information */}
-              {activity.creator && (
-                <div className="flex items-center gap-2 mt-2 mb-1">
-                  <span className="text-sm text-gray-500">Created by</span>
-                  <div className="flex items-center gap-2">
-                    {activity.creator.avatar ? (
-                      <Avatar className="h-5 w-5">
-                        <AvatarImage src={activity.creator.avatar} />
-                        <AvatarFallback className="text-xs">{activity.creator.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                    ) : (
-                      <div className="h-5 w-5 rounded-full bg-gray-200 flex items-center justify-center">
-                        <span className="text-xs font-medium text-gray-600">
-                          {activity.creator.name.charAt(0)}
-                        </span>
+              {!isEditing ? (
+                <>
+                  <CardTitle className="text-2xl font-bold text-gray-900">{activity.name}</CardTitle>
+                  
+                  {/* Creator/Owner Information */}
+                  {activity.creator && (
+                    <div className="flex items-center gap-2 mt-2 mb-1">
+                      <span className="text-sm text-gray-500">Created by</span>
+                      <div className="flex items-center gap-2">
+                        {activity.creator.avatar ? (
+                          <Avatar className="h-5 w-5">
+                            <AvatarImage src={activity.creator.avatar} />
+                            <AvatarFallback className="text-xs">{activity.creator.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                        ) : (
+                          <div className="h-5 w-5 rounded-full bg-gray-200 flex items-center justify-center">
+                            <span className="text-xs font-medium text-gray-600">
+                              {activity.creator.name.charAt(0)}
+                            </span>
+                          </div>
+                        )}
+                        <span className="text-sm font-medium text-gray-900">{activity.creator.name}</span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="text-gray-500 mt-1">
+                    {formatDate(activity.date)}
+                    {activity.startTime && (
+                      <span className="ml-2 font-medium text-blue-600">
+                        at {activity.startTime}
+                      </span>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <CardTitle className="text-2xl font-bold text-gray-900 mb-4">Edit Activity</CardTitle>
+                  
+                  {/* Edit Form */}
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="name">Activity Name *</Label>
+                        <Input
+                          id="name"
+                          value={editFormData.name}
+                          onChange={(e) => setEditFormData(prev => ({ ...prev, name: e.target.value }))}
+                          placeholder="Enter activity name"
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="date">Date *</Label>
+                        <Input
+                          id="date"
+                          type="date"
+                          value={editFormData.date}
+                          onChange={(e) => setEditFormData(prev => ({ ...prev, date: e.target.value }))}
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="startTime">Start Time</Label>
+                        <Input
+                          id="startTime"
+                          type="time"
+                          value={editFormData.startTime}
+                          onChange={(e) => setEditFormData(prev => ({ ...prev, startTime: e.target.value }))}
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="activityType">Activity Type</Label>
+                        <Select
+                          value={editFormData.activityType}
+                          onValueChange={(value) => setEditFormData(prev => ({ ...prev, activityType: value }))}
+                        >
+                          <SelectTrigger className="mt-1">
+                            <SelectValue placeholder="Select activity type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">None</SelectItem>
+                            <SelectItem value="Food & Drink">Food & Drink</SelectItem>
+                            <SelectItem value="Transportation">Transportation</SelectItem>
+                            <SelectItem value="Attraction">Attraction</SelectItem>
+                            <SelectItem value="Event">Event</SelectItem>
+                            <SelectItem value="Activity">Activity</SelectItem>
+                            <SelectItem value="Accommodation">Accommodation</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="location">Location</Label>
+                        <GooglePlacesAutocomplete
+                          value={editFormData.location}
+                          onChange={(value) => setEditFormData(prev => ({ ...prev, location: value }))}
+                          placeholder="Enter location"
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="duration">Duration</Label>
+                        <Input
+                          id="duration"
+                          value={editFormData.duration}
+                          onChange={(e) => setEditFormData(prev => ({ ...prev, duration: e.target.value }))}
+                          placeholder="e.g., 2 hours, 1 day"
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="cost">Cost</Label>
+                        <Input
+                          id="cost"
+                          type="number"
+                          step="0.01"
+                          value={editFormData.cost}
+                          onChange={(e) => setEditFormData(prev => ({ ...prev, cost: e.target.value }))}
+                          placeholder="0.00"
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="paymentType">Payment Type</Label>
+                        <Select
+                          value={editFormData.paymentType}
+                          onValueChange={(value) => setEditFormData(prev => ({ ...prev, paymentType: value }))}
+                        >
+                          <SelectTrigger className="mt-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="free">Free</SelectItem>
+                            <SelectItem value="payment_onsite">Pay Onsite</SelectItem>
+                            <SelectItem value="prepaid">Prepaid</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="maxParticipants">Max Participants</Label>
+                        <Input
+                          id="maxParticipants"
+                          type="number"
+                          value={editFormData.maxParticipants}
+                          onChange={(e) => setEditFormData(prev => ({ ...prev, maxParticipants: e.target.value }))}
+                          placeholder="Leave empty for no limit"
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="activityLink">Activity Website</Label>
+                        <Input
+                          id="activityLink"
+                          type="url"
+                          value={editFormData.activityLink}
+                          onChange={(e) => setEditFormData(prev => ({ ...prev, activityLink: e.target.value }))}
+                          placeholder="https://example.com"
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="description">Description</Label>
+                      <Textarea
+                        id="description"
+                        value={editFormData.description}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, description: e.target.value }))}
+                        placeholder="Enter activity description"
+                        className="mt-1"
+                        rows={3}
+                      />
+                    </div>
+                    
+                    {/* Accommodation-specific fields */}
+                    {editFormData.activityType === "Accommodation" && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="checkInDate">Check-in Date</Label>
+                          <Input
+                            id="checkInDate"
+                            type="date"
+                            value={editFormData.checkInDate}
+                            onChange={(e) => setEditFormData(prev => ({ ...prev, checkInDate: e.target.value }))}
+                            className="mt-1"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="checkOutDate">Check-out Date</Label>
+                          <Input
+                            id="checkOutDate"
+                            type="date"
+                            value={editFormData.checkOutDate}
+                            onChange={(e) => setEditFormData(prev => ({ ...prev, checkOutDate: e.target.value }))}
+                            className="mt-1"
+                          />
+                        </div>
                       </div>
                     )}
-                    <span className="text-sm font-medium text-gray-900">{activity.creator.name}</span>
                   </div>
-                </div>
+                </>
               )}
-              
-              <div className="text-gray-500 mt-1">
-                {formatDate(activity.date)}
-                {activity.startTime && (
-                  <span className="ml-2 font-medium text-blue-600">
-                    at {activity.startTime}
-                  </span>
-                )}
-              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="flex flex-col items-end gap-2">
-                <Badge variant="outline" className="bg-primary-100 text-primary-800">
-                  {goingRSVPs.length} Going
-                </Badge>
-                {activity.maxParticipants ? (
-                  <>
-                    {isCurrentUserAdmin ? (
+            {!isEditing && (
+              <div className="flex items-center gap-3">
+                <div className="flex flex-col items-end gap-2">
+                  <Badge variant="outline" className="bg-primary-100 text-primary-800">
+                    {goingRSVPs.length} Going
+                  </Badge>
+                  {activity.maxParticipants ? (
+                    <>
+                      {isCurrentUserAdmin ? (
+                        <Dialog open={editCapDialogOpen} onOpenChange={setEditCapDialogOpen}>
+                          <DialogTrigger asChild>
+                            <Badge 
+                              variant="secondary" 
+                              className="text-xs cursor-pointer hover:bg-blue-200 transition-colors"
+                              onClick={() => {
+                                setNewMaxParticipants(activity.maxParticipants?.toString() || "unlimited");
+                                setEditCapDialogOpen(true);
+                              }}
+                            >
+                              Cap: {activity.maxParticipants} (click to edit)
+                            </Badge>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Edit Participant Cap</DialogTitle>
+                              <DialogDescription>
+                                Update the maximum number of participants for this activity.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div>
+                                <label className="text-sm font-medium">Participant Limit</label>
+                                <Select
+                                  value={newMaxParticipants}
+                                  onValueChange={setNewMaxParticipants}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Choose participant limit..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {participantOptions.map((option, index) => (
+                                      <SelectItem key={index} value={option.value}>
+                                        {option.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            <DialogFooter>
+                              <Button
+                                variant="outline"
+                                onClick={() => setEditCapDialogOpen(false)}
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                onClick={() => updateCapMutation.mutate(newMaxParticipants)}
+                                disabled={updateCapMutation.isPending}
+                              >
+                                {updateCapMutation.isPending ? "Updating..." : "Update Cap"}
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      ) : (
+                        <Badge variant="secondary" className="text-xs">
+                          Cap: {activity.maxParticipants}
+                        </Badge>
+                      )}
+                      <Badge 
+                        variant={spotsLeft === 0 ? "destructive" : spotsLeft && spotsLeft <= 3 ? "default" : "outline"}
+                        className="text-xs"
+                      >
+                        {spotsLeft && spotsLeft > 0 ? `${spotsLeft} spots left` : "Full"}
+                      </Badge>
+                    </>
+                  ) : (
+                    isCurrentUserAdmin && (
                       <Dialog open={editCapDialogOpen} onOpenChange={setEditCapDialogOpen}>
                         <DialogTrigger asChild>
                           <Badge 
-                            variant="secondary" 
-                            className="text-xs cursor-pointer hover:bg-blue-200 transition-colors"
+                            variant="outline" 
+                            className="text-xs cursor-pointer hover:bg-blue-100 transition-colors border-dashed"
                             onClick={() => {
-                              setNewMaxParticipants(activity.maxParticipants?.toString() || "unlimited");
+                              setNewMaxParticipants("unlimited");
                               setEditCapDialogOpen(true);
                             }}
                           >
-                            Cap: {activity.maxParticipants} (click to edit)
+                            + Add cap
                           </Badge>
                         </DialogTrigger>
                         <DialogContent>
                           <DialogHeader>
-                            <DialogTitle>Edit Participant Cap</DialogTitle>
+                            <DialogTitle>Add Participant Cap</DialogTitle>
                             <DialogDescription>
-                              Update the maximum number of participants for this activity.
+                              Set a maximum number of participants for this activity.
                             </DialogDescription>
                           </DialogHeader>
                           <div className="space-y-4">
@@ -419,225 +843,158 @@ export default function ActivityDetails() {
                               onClick={() => updateCapMutation.mutate(newMaxParticipants)}
                               disabled={updateCapMutation.isPending}
                             >
-                              {updateCapMutation.isPending ? "Updating..." : "Update Cap"}
+                              {updateCapMutation.isPending ? "Adding..." : "Add Cap"}
                             </Button>
                           </DialogFooter>
                         </DialogContent>
                       </Dialog>
-                    ) : (
-                      <Badge variant="secondary" className="text-xs">
-                        Cap: {activity.maxParticipants}
-                      </Badge>
-                    )}
-                    <Badge 
-                      variant={spotsLeft === 0 ? "destructive" : spotsLeft && spotsLeft <= 3 ? "default" : "outline"}
-                      className="text-xs"
-                    >
-                      {spotsLeft && spotsLeft > 0 ? `${spotsLeft} spots left` : "Full"}
-                    </Badge>
-                  </>
-                ) : (
-                  isCurrentUserAdmin && (
-                    <Dialog open={editCapDialogOpen} onOpenChange={setEditCapDialogOpen}>
-                      <DialogTrigger asChild>
-                        <Badge 
-                          variant="outline" 
-                          className="text-xs cursor-pointer hover:bg-blue-100 transition-colors border-dashed"
-                          onClick={() => {
-                            setNewMaxParticipants("unlimited");
-                            setEditCapDialogOpen(true);
-                          }}
+                    )
+                  )}
+                </div>
+                
+                {/* Admin actions dropdown */}
+                {isCurrentUserAdmin && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {currentUser && activity.createdBy === currentUser.id && (
+                        <DropdownMenuItem onSelect={() => setTransferDialogOpen(true)}>
+                          <UserCheck className="mr-2 h-4 w-4" />
+                          Transfer Ownership
+                        </DropdownMenuItem>
+                      )}
+                      {canEditActivity && (
+                        <DropdownMenuItem 
+                          onSelect={() => deleteMutation.mutate()}
+                          className="text-red-600 focus:text-red-600"
                         >
-                          + Add cap
-                        </Badge>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Add Participant Cap</DialogTitle>
-                          <DialogDescription>
-                            Set a maximum number of participants for this activity.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <div>
-                            <label className="text-sm font-medium">Participant Limit</label>
-                            <Select
-                              value={newMaxParticipants}
-                              onValueChange={setNewMaxParticipants}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Choose participant limit..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {participantOptions.map((option, index) => (
-                                  <SelectItem key={index} value={option.value}>
-                                    {option.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        <DialogFooter>
-                          <Button
-                            variant="outline"
-                            onClick={() => setEditCapDialogOpen(false)}
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            onClick={() => updateCapMutation.mutate(newMaxParticipants)}
-                            disabled={updateCapMutation.isPending}
-                          >
-                            {updateCapMutation.isPending ? "Adding..." : "Add Cap"}
-                          </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                  )
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete Activity
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
               </div>
-              
-              {/* Admin actions dropdown */}
-              {isCurrentUserAdmin && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {currentUser && activity.createdBy === currentUser.id && (
-                      <DropdownMenuItem onSelect={() => setTransferDialogOpen(true)}>
-                        <UserCheck className="mr-2 h-4 w-4" />
-                        Transfer Ownership
-                      </DropdownMenuItem>
-                    )}
-                    {canEditActivity && (
-                      <DropdownMenuItem 
-                        onSelect={() => deleteMutation.mutate()}
-                        className="text-red-600 focus:text-red-600"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete Activity
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </div>
+            )}
           </div>
         </CardHeader>
-        <CardContent>
-          {activity.description && (
-            <p className="text-gray-700 mb-4">{activity.description}</p>
-          )}
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            {activity.activityType && (
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                  {activity.activityType}
-                </Badge>
-              </div>
+        {!isEditing && (
+          <CardContent>
+            {activity.description && (
+              <p className="text-gray-700 mb-4">{activity.description}</p>
             )}
             
-            {activity.activityLink && (
-              <div className="flex items-center gap-2">
-                <ExternalLink className="h-4 w-4 text-gray-500" />
-                <a 
-                  href={activity.activityLink.startsWith('http') ? activity.activityLink : `https://${activity.activityLink}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-blue-600 hover:text-blue-800 underline"
-                >
-                  View Activity Website
-                </a>
-              </div>
-            )}
-            
-            {activity.location && (
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-gray-500" />
-                <span className="text-sm text-gray-700">{activity.location}</span>
-              </div>
-            )}
-            
-            {activity.duration && (
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-gray-500" />
-                <span className="text-sm text-gray-700">{activity.duration}</span>
-              </div>
-            )}
-            
-            {activity.cost && (
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-gray-500" />
-                <span className="text-sm text-gray-700">${activity.cost}</span>
-              </div>
-            )}
-            
-            {activity.paymentType && (
-              <div className="flex items-center gap-2">
-                <Badge 
-                  variant={activity.paymentType === 'free' ? 'secondary' : activity.paymentType === 'prepaid' ? 'default' : 'outline'}
-                >
-                  {activity.paymentType === 'free' ? 'Free' : 
-                   activity.paymentType === 'payment_onsite' ? 'Pay Onsite' : 
-                   'Prepaid'}
-                </Badge>
-              </div>
-            )}
-          </div>
-
-          {/* RSVP Buttons */}
-          <div className="flex gap-3 mb-6">
-            <Button
-              variant={userRSVP?.status === "going" ? "default" : "outline"}
-              onClick={() => handleRSVP("going")}
-              disabled={isSubmitting || !canRSVPGoing}
-              className={`flex items-center gap-2 ${userRSVP?.status === "going" ? "bg-green-600 hover:bg-green-700" : ""} ${!canRSVPGoing ? "opacity-50 cursor-not-allowed" : ""}`}
-              title={!canRSVPGoing ? "Activity is full" : ""}
-            >
-              <CheckIcon className="h-4 w-4" />
-              {userRSVP?.status === "going" ? "You're Going" : "Going"}
-            </Button>
-            
-            {/* Prevent activity creator from declining prepaid activities */}
-            {!(currentUser && activity.createdBy === currentUser.id && activity.paymentType === 'prepaid') && (
-              <Button
-                variant={userRSVP?.status === "not going" ? "default" : "outline"}
-                onClick={() => handleRSVP("not going")}
-                disabled={isSubmitting}
-                className={`flex items-center gap-2 ${userRSVP?.status === "not going" ? "bg-red-600 hover:bg-red-700" : ""}`}
-              >
-                <XIcon className="h-4 w-4" />
-                {userRSVP?.status === "not going" ? "You're Not Going" : "Not Going"}
-              </Button>
-            )}
-            
-            {/* Show delete button for activity creators */}
-            {currentUser && activity.createdBy === currentUser.id && (
-              <Button
-                variant="destructive"
-                onClick={() => deleteMutation.mutate()}
-                disabled={isSubmitting}
-                className="flex items-center gap-2"
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete Activity
-              </Button>
-            )}
-          </div>
-          
-          {/* Show message for prepaid activity creators - moved below button container */}
-          {currentUser && activity.createdBy === currentUser.id && activity.paymentType === 'prepaid' && (
-            <div className="flex items-center text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded mt-4">
-              <span>As the creator of this prepaid activity, you must attend.</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              {activity.activityType && (
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                    {activity.activityType}
+                  </Badge>
+                </div>
+              )}
+              
+              {activity.activityLink && (
+                <div className="flex items-center gap-2">
+                  <ExternalLink className="h-4 w-4 text-gray-500" />
+                  <a 
+                    href={activity.activityLink.startsWith('http') ? activity.activityLink : `https://${activity.activityLink}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 hover:text-blue-800 underline"
+                  >
+                    View Activity Website
+                  </a>
+                </div>
+              )}
+              
+              {activity.location && (
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-700">{activity.location}</span>
+                </div>
+              )}
+              
+              {activity.duration && (
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-700">{activity.duration}</span>
+                </div>
+              )}
+              
+              {activity.cost && (
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-700">${activity.cost}</span>
+                </div>
+              )}
+              
+              {activity.paymentType && (
+                <div className="flex items-center gap-2">
+                  <Badge 
+                    variant={activity.paymentType === 'free' ? 'secondary' : activity.paymentType === 'prepaid' ? 'default' : 'outline'}
+                  >
+                    {activity.paymentType === 'free' ? 'Free' : 
+                     activity.paymentType === 'payment_onsite' ? 'Pay Onsite' : 
+                     'Prepaid'}
+                  </Badge>
+                </div>
+              )}
             </div>
-          )}
-          
-        </CardContent>
+
+            {/* RSVP Buttons */}
+            <div className="flex gap-3 mb-6">
+              <Button
+                variant={userRSVP?.status === "going" ? "default" : "outline"}
+                onClick={() => handleRSVP("going")}
+                disabled={isSubmitting || !canRSVPGoing}
+                className={`flex items-center gap-2 ${userRSVP?.status === "going" ? "bg-green-600 hover:bg-green-700" : ""} ${!canRSVPGoing ? "opacity-50 cursor-not-allowed" : ""}`}
+                title={!canRSVPGoing ? "Activity is full" : ""}
+              >
+                <CheckIcon className="h-4 w-4" />
+                {userRSVP?.status === "going" ? "You're Going" : "Going"}
+              </Button>
+              
+              {/* Prevent activity creator from declining prepaid activities */}
+              {!(currentUser && activity.createdBy === currentUser.id && activity.paymentType === 'prepaid') && (
+                <Button
+                  variant={userRSVP?.status === "not going" ? "default" : "outline"}
+                  onClick={() => handleRSVP("not going")}
+                  disabled={isSubmitting}
+                  className={`flex items-center gap-2 ${userRSVP?.status === "not going" ? "bg-red-600 hover:bg-red-700" : ""}`}
+                >
+                  <XIcon className="h-4 w-4" />
+                  {userRSVP?.status === "not going" ? "You're Not Going" : "Not Going"}
+                </Button>
+              )}
+              
+              {/* Show delete button for activity creators */}
+              {currentUser && activity.createdBy === currentUser.id && (
+                <Button
+                  variant="destructive"
+                  onClick={() => deleteMutation.mutate()}
+                  disabled={isSubmitting}
+                  className="flex items-center gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete Activity
+                </Button>
+              )}
+            </div>
+            
+            {/* Show message for prepaid activity creators - moved below button container */}
+            {currentUser && activity.createdBy === currentUser.id && activity.paymentType === 'prepaid' && (
+              <div className="flex items-center text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded mt-4">
+                <span>As the creator of this prepaid activity, you must attend.</span>
+              </div>
+            )}
+            
+          </CardContent>
+        )}
       </Card>
 
       {/* Transfer Ownership Dialog */}
@@ -701,65 +1058,67 @@ export default function ActivityDetails() {
       </Dialog>
 
       {/* Participants Lists */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Going */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-green-600" />
-              Going ({goingRSVPs.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {goingRSVPs.length > 0 ? (
-              <div className="space-y-3">
-                {goingRSVPs.map((rsvp) => (
-                  <div key={rsvp.id} className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={rsvp.user.avatar} />
-                      <AvatarFallback className="bg-green-100 text-green-600">
-                        {(rsvp.user.name || 'U').charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm font-medium text-gray-900">{rsvp.user.name || 'Unknown User'}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500 text-sm">No one has confirmed yet</p>
-            )}
-          </CardContent>
-        </Card>
+      {!isEditing && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Going */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-green-600" />
+                Going ({goingRSVPs.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {goingRSVPs.length > 0 ? (
+                <div className="space-y-3">
+                  {goingRSVPs.map((rsvp) => (
+                    <div key={rsvp.id} className="flex items-center gap-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={rsvp.user.avatar} />
+                        <AvatarFallback className="bg-green-100 text-green-600">
+                          {(rsvp.user.name || 'U').charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm font-medium text-gray-900">{rsvp.user.name || 'Unknown User'}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm">No one has confirmed yet</p>
+              )}
+            </CardContent>
+          </Card>
 
-        {/* Not Going */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <XIcon className="h-5 w-5 text-red-600" />
-              Not Going ({notGoingRSVPs.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {notGoingRSVPs.length > 0 ? (
-              <div className="space-y-3">
-                {notGoingRSVPs.map((rsvp) => (
-                  <div key={rsvp.id} className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={rsvp.user.avatar} />
-                      <AvatarFallback className="bg-red-100 text-red-600">
-                        {(rsvp.user.name || 'U').charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm font-medium text-gray-900">{rsvp.user.name || 'Unknown User'}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500 text-sm">No one has declined yet</p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+          {/* Not Going */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <XIcon className="h-5 w-5 text-red-600" />
+                Not Going ({notGoingRSVPs.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {notGoingRSVPs.length > 0 ? (
+                <div className="space-y-3">
+                  {notGoingRSVPs.map((rsvp) => (
+                    <div key={rsvp.id} className="flex items-center gap-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={rsvp.user.avatar} />
+                        <AvatarFallback className="bg-red-100 text-red-600">
+                          {(rsvp.user.name || 'U').charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm font-medium text-gray-900">{rsvp.user.name || 'Unknown User'}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm">No one has declined yet</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
