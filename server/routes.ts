@@ -3463,6 +3463,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           requiresDownPayment: trip.requiresDownPayment,
           downPaymentAmount: trip.downPaymentAmount,
           cover: trip.cover,
+          accommodationLinks: trip.accommodationLinks,
+          airportGateway: trip.airportGateway,
           organizer: organizer ? {
             id: organizer.id,
             name: organizer.name || organizer.username,
