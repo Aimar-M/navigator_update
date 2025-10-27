@@ -577,14 +577,14 @@ export default function ActivityDetails() {
                       <div>
                         <Label htmlFor="activityType">Activity Type</Label>
                         <Select
-                          value={editFormData.activityType}
-                          onValueChange={(value) => setEditFormData(prev => ({ ...prev, activityType: value }))}
+                          value={editFormData.activityType || "none"}
+                          onValueChange={(value) => setEditFormData(prev => ({ ...prev, activityType: value === "none" ? "" : value }))}
                         >
                           <SelectTrigger className="mt-1">
                             <SelectValue placeholder="Select activity type" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">None</SelectItem>
+                            <SelectItem value="none">None</SelectItem>
                             <SelectItem value="Food & Drink">Food & Drink</SelectItem>
                             <SelectItem value="Transportation">Transportation</SelectItem>
                             <SelectItem value="Attraction">Attraction</SelectItem>
