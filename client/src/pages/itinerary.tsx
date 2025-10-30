@@ -17,6 +17,7 @@ import TripDetailLayout from "@/components/trip-detail-layout";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import GooglePlacesAutocomplete from "@/components/google-places-autocomplete";
+import ActivityFormDialog, { ActivityFormData } from "@/components/ActivityFormDialog";
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -53,7 +54,7 @@ function Itinerary() {
   const [viewMode, setViewMode] = useState<'list' | 'day'>('list');
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   
-  const [activityFormData, setActivityFormData] = useState({
+  const [activityFormData, setActivityFormData] = useState<ActivityFormData>({
     name: "",
     description: "",
     date: "",
@@ -671,298 +672,37 @@ function Itinerary() {
         </div>
       </div>
 
-      {/* Add Activity Dialog */}
-      <Dialog open={isAddActivityModalOpen} onOpenChange={setIsAddActivityModalOpen}>
-        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Add New Itinerary Item</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {/* Title */}
-            <div>
-              <Label htmlFor="activity-name">Title *</Label>
-              <Input
-                id="activity-name"
-                value={activityFormData.name}
-                onChange={(e) => setActivityFormData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="e.g., Visit Museum, Beach Day, etc."
-              />
-            </div>
-
-            {/* Description */}
-            <div>
-              <Label htmlFor="activity-description">Description</Label>
-              <Textarea
-                id="activity-description"
-                value={activityFormData.description}
-                onChange={(e) => setActivityFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Describe what you'll be doing..."
-                rows={3}
-              />
-            </div>
-
-            {/* Category */}
-            <div>
-              <Label htmlFor="activity-type">Category</Label>
-              <Select
-                value={activityFormData.activityType}
-                onValueChange={(value) => setActivityFormData(prev => ({ ...prev, activityType: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category (optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Food & Drink">Food & Drink</SelectItem>
-                  <SelectItem value="Transportation">Transportation</SelectItem>
-                  <SelectItem value="Attraction">Attraction</SelectItem>
-                  <SelectItem value="Event">Event</SelectItem>
-                  <SelectItem value="Activity">Activity</SelectItem>
-                  <SelectItem value="Accommodation">Accommodation</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Trip Day & Start Time OR Check In & Check Out for Accommodation */}
-            {activityFormData.activityType === "Accommodation" ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="activity-checkin">Check In *</Label>
-                  <Select
-                    value={activityFormData.checkInDate}
-                    onValueChange={(value) => setActivityFormData(prev => ({ ...prev, checkInDate: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select check-in day..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {tripDays.map((day) => (
-                        <SelectItem key={day.value} value={day.value}>
-                          {day.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="activity-checkout">Check Out *</Label>
-                  <Select
-                    value={activityFormData.checkOutDate}
-                    onValueChange={(value) => setActivityFormData(prev => ({ ...prev, checkOutDate: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select check-out day..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {tripDays.map((day) => (
-                        <SelectItem key={day.value} value={day.value}>
-                          {day.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="activity-date">Trip Day *</Label>
-                  <Select
-                    value={activityFormData.date}
-                    onValueChange={(value) => setActivityFormData(prev => ({ ...prev, date: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a day..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {tripDays.map((day) => (
-                        <SelectItem key={day.value} value={day.value}>
-                          {day.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="activity-start-time">Start Time</Label>
-                  <Input
-                    id="activity-start-time"
-                    type="time"
-                    step="300"
-                    value={activityFormData.startTime}
-                    onChange={(e) => setActivityFormData(prev => ({ ...prev, startTime: e.target.value }))}
-                    placeholder="HH:MM"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Payment Type & Cost */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="activity-payment-type">Payment Type</Label>
-                <Select 
-                  value={activityFormData.paymentType} 
-                  onValueChange={(value) => setActivityFormData(prev => ({ ...prev, paymentType: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select payment type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="free">Free</SelectItem>
-                    <SelectItem value="included">Included</SelectItem>
-                    <SelectItem value="payment_onsite">Payment Onsite</SelectItem>
-                    <SelectItem value="pay_in_advance">Pay in advance (via link)</SelectItem>
-                    <SelectItem value="prepaid">Prepaid by Organizer (group cost)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="activity-cost">
-                  Cost {["free", "included"].includes(activityFormData.paymentType) ? "(optional)" : "*"}
-                </Label>
-                <Input
-                  id="activity-cost"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={activityFormData.cost}
-                  onChange={(e) => setActivityFormData(prev => ({ ...prev, cost: e.target.value }))}
-                  placeholder={["free", "included"].includes(activityFormData.paymentType) ? "0.00" : "Enter cost amount"}
-                  required={!["free", "included"].includes(activityFormData.paymentType)}
-                  className={!["free", "included"].includes(activityFormData.paymentType) && !activityFormData.cost ? "border-red-300" : ""}
-                />
-                {!["free", "included"].includes(activityFormData.paymentType) && !activityFormData.cost && (
-                  <p className="text-sm text-red-600 mt-1">Cost is required for paid activities</p>
-                )}
-              </div>
-            </div>
-
-            {/* More Details Button - Mobile Only */}
-            <div className="md:hidden">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowMoreDetails(!showMoreDetails)}
-                className="w-full flex items-center justify-center gap-2"
-              >
-                {showMoreDetails ? "Hide Details" : "Add More Details"}
-                {showMoreDetails ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-              </Button>
-            </div>
-
-            {/* Additional Details - Always visible on desktop, toggleable on mobile */}
-            <div className={`space-y-4 ${showMoreDetails ? 'block' : 'hidden md:block'}`}>
-              {/* Duration & Location */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="activity-duration">Duration</Label>
-                  <Input
-                    id="activity-duration"
-                    value={activityFormData.duration}
-                    onChange={(e) => setActivityFormData(prev => ({ ...prev, duration: e.target.value }))}
-                    placeholder="e.g., 2 hours, Half day"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="activity-location">Location</Label>
-                  <GooglePlacesAutocomplete
-                    id="activity-location"
-                    value={activityFormData.location}
-                    onChange={(value) => setActivityFormData(prev => ({ ...prev, location: value }))}
-                    onPlaceSelect={(place) => {
-                      console.log('Selected activity location:', place);
-                      // Store coordinates for future use
-                      if (place.geometry?.location) {
-                        console.log('Activity coordinates:', place.geometry.location);
-                      }
-                    }}
-                    placeholder="Where is this activity?"
-                    types="establishment"
-                  />
-                </div>
-              </div>
-
-              {/* Website & Registration Cap */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="activity-link">
-                    Website {activityFormData.paymentType === "pay_in_advance" ? "*" : ""}
-                  </Label>
-                  <Input
-                    id="activity-link"
-                    type="url"
-                    value={activityFormData.activityLink}
-                    onChange={(e) => setActivityFormData(prev => ({ ...prev, activityLink: e.target.value }))}
-                    placeholder="https://example.com/activity-booking"
-                    required={activityFormData.paymentType === "pay_in_advance"}
-                    className={activityFormData.paymentType === "pay_in_advance" && !activityFormData.activityLink ? "border-red-300" : ""}
-                  />
-                  {activityFormData.paymentType === "pay_in_advance" && !activityFormData.activityLink && (
-                    <p className="text-sm text-red-600 mt-1">Website link is required for advance payment activities</p>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="activity-max-participants">
-                    Registration cap (optional)
-                  </Label>
-                  <Select
-                    value={activityFormData.maxParticipants}
-                    onValueChange={(value) => setActivityFormData(prev => ({ ...prev, maxParticipants: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose participant limit..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {participantOptions.map((option, index) => (
-                        <SelectItem key={index} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setIsAddActivityModalOpen(false);
-                  setActivityFormData({
-                    name: "",
-                    description: "",
-                    date: "",
-                    startTime: "",
-                    activityType: "",
-                    activityLink: "",
-                    location: "",
-                    duration: "",
-                    cost: "",
-                    paymentType: "free",
-                    maxParticipants: "",
-                    checkInDate: "",
-                    checkOutDate: ""
-                  });
-                }}
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleAddActivity}
-                disabled={isSubmitting || addActivityMutation.isPending}
-              >
-                {isSubmitting || addActivityMutation.isPending ? "Adding..." : "Add Activity"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ActivityFormDialog
+        open={isAddActivityModalOpen}
+        onOpenChange={(open) => {
+          setIsAddActivityModalOpen(open);
+          if (!open) {
+            setActivityFormData({
+              name: "",
+              description: "",
+              date: "",
+              startTime: "",
+              activityType: "",
+              activityLink: "",
+              location: "",
+              duration: "",
+              cost: "",
+              paymentType: "free",
+              maxParticipants: "",
+              checkInDate: "",
+              checkOutDate: ""
+            });
+          }
+        }}
+        title="Add New Itinerary Item"
+        submitLabel={isSubmitting || addActivityMutation.isPending ? "Adding..." : "Add Activity"}
+        isSubmitting={isSubmitting || addActivityMutation.isPending}
+        formData={activityFormData}
+        setFormData={setActivityFormData}
+        onSubmit={handleAddActivity}
+        tripDays={tripDays}
+        participantOptions={participantOptions}
+      />
     </TripDetailLayout>
   );
 }

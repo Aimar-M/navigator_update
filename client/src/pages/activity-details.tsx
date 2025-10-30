@@ -16,6 +16,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 import GooglePlacesAutocomplete from "@/components/google-places-autocomplete";
+import ActivityFormDialog, { ActivityFormData } from "@/components/ActivityFormDialog";
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -87,7 +88,7 @@ export default function ActivityDetails() {
   
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
-  const [editFormData, setEditFormData] = useState({
+  const [editFormData, setEditFormData] = useState<ActivityFormData>({
     name: "",
     description: "",
     date: "",
@@ -153,6 +154,30 @@ export default function ActivityDetails() {
   };
 
   const participantOptions = generateParticipantOptions(confirmedMembersCount);
+
+  // Generate trip days for the date selector
+  const generateTripDays = () => {
+    if (!(trip as any)?.startDate || !(trip as any)?.endDate) return [] as { value: string; label: string; dayNumber: number; date: Date }[];
+    const startDate = new Date((trip as any).startDate);
+    const endDate = new Date((trip as any).endDate);
+    const days: { value: string; label: string; dayNumber: number; date: Date }[] = [];
+    const currentDate = new Date(startDate);
+    let dayNumber = 1;
+    while (currentDate <= endDate) {
+      const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
+      const monthDay = currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      days.push({
+        value: currentDate.toISOString().split('T')[0],
+        label: `Day ${dayNumber} - ${dayName}, ${monthDay}`,
+        dayNumber,
+        date: new Date(currentDate)
+      });
+      currentDate.setDate(currentDate.getDate() + 1);
+      dayNumber++;
+    }
+    return days;
+  };
+  const tripDays = generateTripDays();
 
   const rsvpMutation = useMutation({
     mutationFn: async (status: string) => {
@@ -439,41 +464,15 @@ export default function ActivityDetails() {
         <div className="flex items-center gap-2">
           {/* Edit button - show for activity creator or admins when admin-only mode is enabled */}
           {currentUser && canEditActivity && (activity.createdBy === currentUser.id || isCurrentUserAdmin) && (
-            <>
-              {!isEditing ? (
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleEditToggle}
+              onClick={() => setIsEditing(true)}
                   className="flex items-center gap-2"
                 >
                   <Edit3 className="h-4 w-4" />
                   Edit Activity
                 </Button>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleEditToggle}
-                    className="flex items-center gap-2"
-                  >
-                    <X className="h-4 w-4" />
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={handleSaveEdit}
-                    disabled={editActivityMutation.isPending}
-                    className="flex items-center gap-2"
-                  >
-                    <Save className="h-4 w-4" />
-                    {editActivityMutation.isPending ? "Saving..." : "Save Changes"}
-                  </Button>
-                </div>
-              )}
-            </>
           )}
           
           {/* Delete button - show for activity creator or admins when admin-only mode is enabled */}
@@ -534,184 +533,7 @@ export default function ActivityDetails() {
                     )}
                   </div>
                 </>
-              ) : (
-                <>
-                  <CardTitle className="text-2xl font-bold text-gray-900 mb-4">Edit Activity</CardTitle>
-                  
-                  {/* Edit Form */}
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="name">Activity Name *</Label>
-                        <Input
-                          id="name"
-                          value={editFormData.name}
-                          onChange={(e) => setEditFormData(prev => ({ ...prev, name: e.target.value }))}
-                          placeholder="Enter activity name"
-                          className="mt-1"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="date">Date *</Label>
-                        <Input
-                          id="date"
-                          type="date"
-                          value={editFormData.date}
-                          onChange={(e) => setEditFormData(prev => ({ ...prev, date: e.target.value }))}
-                          className="mt-1"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="startTime">Start Time</Label>
-                        <Input
-                          id="startTime"
-                          type="time"
-                          value={editFormData.startTime}
-                          onChange={(e) => setEditFormData(prev => ({ ...prev, startTime: e.target.value }))}
-                          className="mt-1"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="activityType">Activity Type</Label>
-                        <Select
-                          value={editFormData.activityType || "none"}
-                          onValueChange={(value) => setEditFormData(prev => ({ ...prev, activityType: value === "none" ? "" : value }))}
-                        >
-                          <SelectTrigger className="mt-1">
-                            <SelectValue placeholder="Select activity type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">None</SelectItem>
-                            <SelectItem value="Food & Drink">Food & Drink</SelectItem>
-                            <SelectItem value="Transportation">Transportation</SelectItem>
-                            <SelectItem value="Attraction">Attraction</SelectItem>
-                            <SelectItem value="Event">Event</SelectItem>
-                            <SelectItem value="Activity">Activity</SelectItem>
-                            <SelectItem value="Accommodation">Accommodation</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="location">Location</Label>
-                        <GooglePlacesAutocomplete
-                          value={editFormData.location}
-                          onChange={(value) => setEditFormData(prev => ({ ...prev, location: value }))}
-                          placeholder="Enter location"
-                          className="mt-1"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="duration">Duration</Label>
-                        <Input
-                          id="duration"
-                          value={editFormData.duration}
-                          onChange={(e) => setEditFormData(prev => ({ ...prev, duration: e.target.value }))}
-                          placeholder="e.g., 2 hours, 1 day"
-                          className="mt-1"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="cost">Cost</Label>
-                        <Input
-                          id="cost"
-                          type="number"
-                          step="0.01"
-                          value={editFormData.cost}
-                          onChange={(e) => setEditFormData(prev => ({ ...prev, cost: e.target.value }))}
-                          placeholder="0.00"
-                          className="mt-1"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="paymentType">Payment Type</Label>
-                        <Select
-                          value={editFormData.paymentType}
-                          onValueChange={(value) => setEditFormData(prev => ({ ...prev, paymentType: value }))}
-                        >
-                          <SelectTrigger className="mt-1">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="free">Free</SelectItem>
-                            <SelectItem value="payment_onsite">Pay Onsite</SelectItem>
-                            <SelectItem value="prepaid">Prepaid</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="maxParticipants">Max Participants</Label>
-                        <Input
-                          id="maxParticipants"
-                          type="number"
-                          value={editFormData.maxParticipants}
-                          onChange={(e) => setEditFormData(prev => ({ ...prev, maxParticipants: e.target.value }))}
-                          placeholder="Leave empty for no limit"
-                          className="mt-1"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="activityLink">Activity Website</Label>
-                        <Input
-                          id="activityLink"
-                          type="url"
-                          value={editFormData.activityLink}
-                          onChange={(e) => setEditFormData(prev => ({ ...prev, activityLink: e.target.value }))}
-                          placeholder="https://example.com"
-                          className="mt-1"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="description">Description</Label>
-                      <Textarea
-                        id="description"
-                        value={editFormData.description}
-                        onChange={(e) => setEditFormData(prev => ({ ...prev, description: e.target.value }))}
-                        placeholder="Enter activity description"
-                        className="mt-1"
-                        rows={3}
-                      />
-                    </div>
-                    
-                    {/* Accommodation-specific fields */}
-                    {editFormData.activityType === "Accommodation" && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="checkInDate">Check-in Date</Label>
-                          <Input
-                            id="checkInDate"
-                            type="date"
-                            value={editFormData.checkInDate}
-                            onChange={(e) => setEditFormData(prev => ({ ...prev, checkInDate: e.target.value }))}
-                            className="mt-1"
-                          />
-                        </div>
-                        
-                        <div>
-                          <Label htmlFor="checkOutDate">Check-out Date</Label>
-                          <Input
-                            id="checkOutDate"
-                            type="date"
-                            value={editFormData.checkOutDate}
-                            onChange={(e) => setEditFormData(prev => ({ ...prev, checkOutDate: e.target.value }))}
-                            className="mt-1"
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
+              ) : null}
             </div>
             {!isEditing && (
               <div className="flex items-center gap-3">
@@ -1119,6 +941,37 @@ export default function ActivityDetails() {
           </Card>
         </div>
       )}
+      <ActivityFormDialog
+        open={isEditing}
+        onOpenChange={(open) => {
+          setIsEditing(open);
+          if (!open && activity) {
+            setEditFormData({
+              name: activity.name || "",
+              description: activity.description || "",
+              date: activity.date ? new Date(activity.date).toISOString().split('T')[0] : "",
+              startTime: activity.startTime || "",
+              activityType: activity.activityType || "",
+              activityLink: activity.activityLink || "",
+              location: activity.location || "",
+              duration: activity.duration || "",
+              cost: activity.cost || "",
+              paymentType: activity.paymentType || "free",
+              maxParticipants: activity.maxParticipants?.toString() || "",
+              checkInDate: (activity as any).checkInDate ? new Date((activity as any).checkInDate).toISOString().split('T')[0] : "",
+              checkOutDate: (activity as any).checkOutDate ? new Date((activity as any).checkOutDate).toISOString().split('T')[0] : ""
+            });
+          }
+        }}
+        title="Edit Itinerary Item"
+        submitLabel={editActivityMutation.isPending ? "Saving..." : "Save Changes"}
+        isSubmitting={editActivityMutation.isPending}
+        formData={editFormData}
+        setFormData={setEditFormData}
+        onSubmit={handleSaveEdit}
+        tripDays={tripDays}
+        participantOptions={participantOptions}
+      />
     </div>
   );
 }
