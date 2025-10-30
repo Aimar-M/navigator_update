@@ -229,7 +229,7 @@ export default function EnhancedRSVPButtons({
             {currentRsvpStatus === 'confirmed' ? 'Going' : 'Yes, I\'m Going'}
           </Button>
 
-          <Button
+          {/* <Button
             onClick={() => handleRsvp('maybe')}
             disabled={isSubmitting}
             className={`flex items-center gap-2 py-4 text-base font-semibold transition-all duration-300 ${
@@ -240,7 +240,7 @@ export default function EnhancedRSVPButtons({
           >
             <HelpCircle className="h-5 w-5" />
             {currentRsvpStatus === 'maybe' ? 'Maybe' : 'Maybe'}
-          </Button>
+          </Button> */}
 
           <Button
             onClick={() => handleRsvp('declined')}
