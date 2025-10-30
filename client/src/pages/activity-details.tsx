@@ -419,37 +419,7 @@ export default function ActivityDetails() {
       return;
     }
 
-    // Validate required fields based on activity type
-    if ((editFormData.activityType || "") === "Accommodation") {
-      if (!editFormData.checkInDate || !editFormData.checkOutDate) {
-        toast({
-          title: "Missing information",
-          description: "Please provide check-in and check-out dates",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      const checkInIndex = tripDays.findIndex(day => day.value === editFormData.checkInDate);
-      const checkOutIndex = tripDays.findIndex(day => day.value === editFormData.checkOutDate);
-      if (checkInIndex !== -1 && checkOutIndex !== -1 && checkOutIndex <= checkInIndex) {
-        toast({
-          title: "Invalid dates",
-          description: "Check-out date must be after check-in date",
-          variant: "destructive"
-        });
-        return;
-      }
-    } else {
-      if (!editFormData.date) {
-        toast({
-          title: "Validation Error",
-          description: "Activity date is required.",
-          variant: "destructive"
-        });
-        return;
-      }
-    }
+    // For now, do not send date fields via PUT (server does not coerce strings to Date)
 
     // Validate cost if required
     if (!["free", "included"].includes(editFormData.paymentType) && (!editFormData.cost || parseFloat(editFormData.cost) <= 0)) {
@@ -486,23 +456,7 @@ export default function ActivityDetails() {
         ? parseInt(editFormData.maxParticipants)
         : null,
     };
-
-    if ((editFormData.activityType || "") === "Accommodation") {
-      const checkInDay = tripDays.find(day => day.value === editFormData.checkInDate) || (editFormData.checkInDate ? { date: new Date(editFormData.checkInDate) } as any : null);
-      const checkOutDay = tripDays.find(day => day.value === editFormData.checkOutDate) || (editFormData.checkOutDate ? { date: new Date(editFormData.checkOutDate) } as any : null);
-      if (checkInDay) {
-        payload.checkInDate = checkInDay.date;
-        payload.date = checkInDay.date;
-      }
-      if (checkOutDay) {
-        payload.checkOutDate = checkOutDay.date;
-      }
-    } else {
-      const selectedDay = tripDays.find(day => day.value === editFormData.date) || (editFormData.date ? { date: new Date(editFormData.date) } as any : null);
-      if (selectedDay) {
-        payload.date = selectedDay.date;
-      }
-    }
+    // Intentionally omit date, checkInDate, checkOutDate to avoid schema Date parsing issues on PUT
 
     await editActivityMutation.mutateAsync(payload);
   };
