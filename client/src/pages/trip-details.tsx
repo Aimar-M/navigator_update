@@ -595,6 +595,7 @@ export default function TripDetails() {
                       placeholder="Enter destination"
                       types="(cities)"
                       className="mt-1"
+                      dropdownDirection="up"
                     />
                   ) : (
                     <p className="text-gray-600">{trip.destination}</p>
@@ -733,6 +734,7 @@ export default function TripDetails() {
                       placeholder="Search for airports (e.g., JFK, LAX)"
                       className="mt-1"
                       types="airport"
+                      dropdownDirection="up"
                     />
                   ) : (
                     <div className="mt-2">

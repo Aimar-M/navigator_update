@@ -36,6 +36,8 @@ interface GooglePlacesAutocompleteProps {
   className?: string;
   types?: string; // e.g., 'establishment', 'geocode', '(cities)', etc.
   country?: string; // e.g., 'us', 'ca', 'gb'
+  // Control the dropdown direction. Default is 'down'. Use 'up' for inputs near bottom of viewport
+  dropdownDirection?: 'down' | 'up';
 }
 
 const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
@@ -49,6 +51,7 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
   className = "",
   types,
   country,
+  dropdownDirection = 'down',
 }) => {
   const [inputValue, setInputValue] = useState(value);
   const [suggestions, setSuggestions] = useState<PlacePrediction[]>([]);
@@ -252,7 +255,9 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
       {showSuggestions && suggestions.length > 0 && (
         <div
           ref={suggestionsRef}
-          className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+          className={`absolute z-50 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto ${
+            dropdownDirection === 'up' ? 'bottom-full mb-1' : 'mt-1'
+          }`}
         >
           {suggestions.map((suggestion, index) => (
             <div

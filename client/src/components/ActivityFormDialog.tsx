@@ -251,6 +251,7 @@ export default function ActivityFormDialog(props: ActivityFormDialogProps) {
                   }}
                   placeholder="Where is this activity?"
                   types="establishment"
+                  dropdownDirection="up"
                 />
               </div>
             </div>

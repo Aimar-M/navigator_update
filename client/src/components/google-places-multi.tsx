@@ -14,6 +14,7 @@ interface GooglePlacesMultiProps {
   name?: string;
   className?: string;
   types?: string;
+  dropdownDirection?: 'down' | 'up';
 }
 
 function GooglePlacesMultiImpl({
@@ -24,6 +25,7 @@ function GooglePlacesMultiImpl({
   name,
   className = "",
   types = "(cities)",
+  dropdownDirection = 'down',
 }: GooglePlacesMultiProps) {
   const [inputValue, setInputValue] = useState("");
   const [chips, setChips] = useState<PlaceChip[]>([]);
@@ -128,6 +130,7 @@ function GooglePlacesMultiImpl({
         }}
         placeholder={placeholder}
         types={types}
+        dropdownDirection={dropdownDirection}
       />
     </div>
   );
