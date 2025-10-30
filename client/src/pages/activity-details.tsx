@@ -419,32 +419,92 @@ export default function ActivityDetails() {
       return;
     }
 
-    if (!editFormData.date) {
+    // Validate required fields based on activity type
+    if ((editFormData.activityType || "") === "Accommodation") {
+      if (!editFormData.checkInDate || !editFormData.checkOutDate) {
+        toast({
+          title: "Missing information",
+          description: "Please provide check-in and check-out dates",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const checkInIndex = tripDays.findIndex(day => day.value === editFormData.checkInDate);
+      const checkOutIndex = tripDays.findIndex(day => day.value === editFormData.checkOutDate);
+      if (checkInIndex !== -1 && checkOutIndex !== -1 && checkOutIndex <= checkInIndex) {
+        toast({
+          title: "Invalid dates",
+          description: "Check-out date must be after check-in date",
+          variant: "destructive"
+        });
+        return;
+      }
+    } else {
+      if (!editFormData.date) {
+        toast({
+          title: "Validation Error",
+          description: "Activity date is required.",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
+    // Validate cost if required
+    if (!["free", "included"].includes(editFormData.paymentType) && (!editFormData.cost || parseFloat(editFormData.cost) <= 0)) {
       toast({
-        title: "Validation Error",
-        description: "Activity date is required.",
+        title: "Cost required",
+        description: "Please provide a valid cost for paid activities",
         variant: "destructive"
       });
       return;
     }
 
-    const activityData = {
+    // Validate website if pay in advance
+    if (editFormData.paymentType === "pay_in_advance" && !editFormData.activityLink) {
+      toast({
+        title: "Website required",
+        description: "Please provide a website link for advance payment activities",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Build payload matching add flow semantics
+    const payload: any = {
       name: editFormData.name.trim(),
-      description: editFormData.description.trim(),
-      date: new Date(editFormData.date).toISOString(),
-      startTime: editFormData.startTime.trim() || null,
-      activityType: editFormData.activityType.trim() || null,
-      activityLink: editFormData.activityLink.trim() || null,
-      location: editFormData.location.trim() || null,
-      duration: editFormData.duration.trim() || null,
-      cost: editFormData.cost.trim() || null,
+      description: editFormData.description?.trim() || null,
+      startTime: editFormData.startTime?.trim() || null,
+      activityType: editFormData.activityType?.trim() || null,
+      activityLink: editFormData.activityLink?.trim() || null,
+      location: editFormData.location?.trim() || null,
+      duration: editFormData.duration?.trim() || null,
+      cost: editFormData.cost ? editFormData.cost : null,
       paymentType: editFormData.paymentType,
-      maxParticipants: editFormData.maxParticipants ? parseInt(editFormData.maxParticipants) : null,
-      checkInDate: editFormData.checkInDate ? new Date(editFormData.checkInDate).toISOString() : null,
-      checkOutDate: editFormData.checkOutDate ? new Date(editFormData.checkOutDate).toISOString() : null
+      maxParticipants: editFormData.maxParticipants && editFormData.maxParticipants !== 'unlimited'
+        ? parseInt(editFormData.maxParticipants)
+        : null,
     };
 
-    await editActivityMutation.mutateAsync(activityData);
+    if ((editFormData.activityType || "") === "Accommodation") {
+      const checkInDay = tripDays.find(day => day.value === editFormData.checkInDate) || (editFormData.checkInDate ? { date: new Date(editFormData.checkInDate) } as any : null);
+      const checkOutDay = tripDays.find(day => day.value === editFormData.checkOutDate) || (editFormData.checkOutDate ? { date: new Date(editFormData.checkOutDate) } as any : null);
+      if (checkInDay) {
+        payload.checkInDate = checkInDay.date;
+        payload.date = checkInDay.date;
+      }
+      if (checkOutDay) {
+        payload.checkOutDate = checkOutDay.date;
+      }
+    } else {
+      const selectedDay = tripDays.find(day => day.value === editFormData.date) || (editFormData.date ? { date: new Date(editFormData.date) } as any : null);
+      if (selectedDay) {
+        payload.date = selectedDay.date;
+      }
+    }
+
+    await editActivityMutation.mutateAsync(payload);
   };
 
   return (
