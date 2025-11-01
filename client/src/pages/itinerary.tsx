@@ -221,7 +221,7 @@ function Itinerary() {
   const activitiesByDay = groupActivitiesByDay(sortedActivities);
 
   // Generate trip days for the date selector
-g  const generateTripDays = () => {
+  const generateTripDays = () => {
     if (!(trip as any)?.startDate || !(trip as any)?.endDate) return [];
     
     const startDate = new Date((trip as any).startDate);
