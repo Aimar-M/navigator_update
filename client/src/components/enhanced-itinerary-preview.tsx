@@ -301,11 +301,11 @@ export default function EnhancedItineraryPreview({ activities, tripName, classNa
                   </div>
                   <div>
                     <h4 className="text-sm font-medium text-red-700 mb-2">
-                      Not Going ({activity.rsvps.filter(rsvp => rsvp.status === 'not_going').length})
+                      Not Going ({activity.rsvps.filter(rsvp => rsvp.status === 'not going').length})
                     </h4>
                     <div className="space-y-2">
                       {activity.rsvps
-                        .filter(rsvp => rsvp.status === 'not_going')
+                        .filter(rsvp => rsvp.status === 'not going')
                         .map((rsvp, index) => (
                           <div key={index} className="text-sm text-gray-600">
                             {rsvp.user?.name || 'Unknown User'}

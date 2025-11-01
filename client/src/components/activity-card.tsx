@@ -285,10 +285,10 @@ export default function ActivityCard({
                   </Button>
                   <Button
                     size="sm"
-                    variant={userRsvp?.status === "not_going" ? "destructive" : "outline"}
+                    variant={userRsvp?.status === "not going" ? "destructive" : "outline"}
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleRsvp("not_going");
+                      handleRsvp("not going");
                     }}
                     disabled={isSubmitting}
                     className="h-7 w-7 p-0"
