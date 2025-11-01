@@ -19,6 +19,34 @@ import { useAuth } from "@/hooks/use-auth";
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
+// Helper functions for accommodation links with custom names
+function parseAccommodationLink(link: string): { name: string; url: string } {
+  // Check if the link contains custom name (format: "Name||URL")
+  if (link.includes('||')) {
+    const [name, url] = link.split('||');
+    return { name: name || '', url: url || '' };
+  }
+  
+  // For legacy links without custom names, generate a default name
+  if (link.startsWith('http')) {
+    try {
+      const domain = new URL(link).hostname.replace('www.', '');
+      return { name: domain, url: link };
+    } catch {
+      return { name: '', url: link };
+    }
+  }
+  
+  return { name: '', url: link };
+}
+
+function getDisplayName(linkData: { name: string; url: string }, index: number): string {
+  // If no custom name provided, use fallback
+  if (!linkData.name || linkData.name.trim() === '') {
+    return `Accommodation Option ${index + 1}`;
+  }
+  return linkData.name;
+}
 
 // Simple travel-themed Lottie animation data
 const travelAnimation: any = {
@@ -351,19 +379,24 @@ export default function InvitationPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {trip.accommodationLinks.map((link, index) => (
-                  <div key={index} className="rounded-xl p-4 border" style={{ backgroundColor: '#F5F9FF', borderColor: '#CED6E0' }}>
-                    <a 
-                      href={link} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 text-blue-600 hover:text-blue-800 transition-colors"
-                    >
-                      <MapPin className="h-4 w-4" />
-                      <span className="font-medium">Accommodation Option {index + 1}</span>
-                    </a>
-                  </div>
-                ))}
+                {trip.accommodationLinks.map((link, index) => {
+                  const linkData = parseAccommodationLink(link);
+                  const displayName = getDisplayName(linkData, index);
+                  const url = linkData.url || link;
+                  return (
+                    <div key={index} className="rounded-xl p-4 border" style={{ backgroundColor: '#F5F9FF', borderColor: '#CED6E0' }}>
+                      <a 
+                        href={url.startsWith('http') ? url : `https://${url}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 text-blue-600 hover:text-blue-800 transition-colors"
+                      >
+                        <MapPin className="h-4 w-4" />
+                        <span className="font-medium">{displayName}</span>
+                      </a>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
