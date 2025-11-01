@@ -164,11 +164,6 @@ const ChatPoll = ({ poll, tripId }: ChatPollProps) => {
         <div className="flex items-center text-xs text-gray-500 mt-1">
           <UserAvatar user={localPoll.creator} size="xs" className="mr-1" />
           <span>{localPoll.creator?.name || "Anonymous"}</span>
-          {localPoll.endDate && (
-            <span className="ml-2">
-              Ends {format(new Date(localPoll.endDate), "MMM d")}
-            </span>
-          )}
         </div>
       </CardHeader>
       

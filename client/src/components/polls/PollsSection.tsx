@@ -100,11 +100,6 @@ const PollCard = ({ poll, tripId }: { poll: any; tripId: number }) => {
         <div className="flex items-center text-sm text-gray-500 mt-2">
           <UserAvatar user={poll.creator} size="sm" className="mr-2" />
           <span>Created by {poll.creator?.name || "Anonymous"}</span>
-          {poll.endDate && (
-            <span className="ml-4">
-              Ends {format(new Date(poll.endDate), "MMM d, yyyy 'at' h:mm a")}
-            </span>
-          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">

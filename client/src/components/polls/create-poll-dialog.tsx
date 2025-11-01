@@ -275,25 +275,6 @@ export const CreatePollDialog = ({
               )}
             />
             
-            <FormField
-              control={form.control}
-              name="endDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>End Date (Optional)</FormLabel>
-                  <FormDescription>When should this poll close?</FormDescription>
-                  <FormControl>
-                    <Input
-                      type="datetime-local"
-                      {...field}
-                      value={field.value || ""}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
             <div className="flex justify-end space-x-2 pt-4">
               <Button 
                 type="button" 
