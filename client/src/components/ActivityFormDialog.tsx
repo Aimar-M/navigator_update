@@ -185,10 +185,10 @@ export default function ActivityFormDialog(props: ActivityFormDialogProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="free">Free</SelectItem>
-                  <SelectItem value="included">Included</SelectItem>
+                  <SelectItem value="included">Included in Trip Deposit</SelectItem>
                   <SelectItem value="payment_onsite">Payment Onsite</SelectItem>
-                  <SelectItem value="pay_in_advance">Pay in advance (via link)</SelectItem>
-                  <SelectItem value="prepaid">Prepaid by Organizer (group cost)</SelectItem>
+                  <SelectItem value="pay_in_advance">Pay via link</SelectItem>
+                  <SelectItem value="prepaid">Split Payment (group cost)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
