@@ -491,6 +491,7 @@ export default function TripDetails() {
                 <TripSettingsMenu 
                   tripId={tripId}
                   isOrganizer={isOrganizer}
+                  tripName={trip?.name}
                 />
                 
                 {/* Edit button only for organizers */}

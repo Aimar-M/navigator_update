@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { MoreVertical, LogOut } from "lucide-react";
+import { MoreVertical, LogOut, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,19 +11,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LeaveTripDialog } from "@/components/leave-trip-dialog";
+import { DeleteTripDialog } from "@/components/delete-trip-dialog";
 
 interface TripSettingsMenuProps {
   tripId: number;
   isOrganizer: boolean;
+  tripName?: string;
   className?: string;
 }
 
 export default function TripSettingsMenu({ 
   tripId, 
   isOrganizer,
+  tripName,
   className = "" 
 }: TripSettingsMenuProps) {
   const [isLeaveTripDialogOpen, setIsLeaveTripDialogOpen] = useState(false);
+  const [isDeleteTripDialogOpen, setIsDeleteTripDialogOpen] = useState(false);
   const [, navigate] = useLocation();
 
   const handleLeaveSuccess = () => {
@@ -56,11 +60,18 @@ export default function TripSettingsMenu({
             </DropdownMenuItem>
           )}
           
+          {/* Show Delete Trip option for organizers */}
           {isOrganizer && (
-            <DropdownMenuItem disabled className="text-gray-400">
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>Leave Trip (Organizers cannot leave)</span>
-            </DropdownMenuItem>
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                className="text-red-600 focus:text-red-600 cursor-pointer"
+                onClick={() => setIsDeleteTripDialogOpen(true)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                <span>Delete Trip</span>
+              </DropdownMenuItem>
+            </>
           )}
         </DropdownMenuContent>
       </DropdownMenu>
@@ -70,6 +81,13 @@ export default function TripSettingsMenu({
         isOpen={isLeaveTripDialogOpen}
         onClose={() => setIsLeaveTripDialogOpen(false)}
         onSuccess={handleLeaveSuccess}
+      />
+
+      <DeleteTripDialog
+        tripId={tripId}
+        tripName={tripName}
+        isOpen={isDeleteTripDialogOpen}
+        onClose={() => setIsDeleteTripDialogOpen(false)}
       />
     </>
   );
