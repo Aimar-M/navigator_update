@@ -96,7 +96,13 @@ export default function AccountSettings() {
             const tripNames = organizerTrips.slice(0, 3).map((trip: any) => `• ${trip.tripName}`).join('\n');
             description += `You are organizing ${tripCount} trips:\n${tripNames}\n... and ${tripCount - 3} more trip${tripCount - 3 > 1 ? 's' : ''}\n\n`;
           }
-          description += "Please transfer organizer role or delete these trips first.";
+          description += "To delete your account, you must first delete all trips you're organizing.\n\n";
+          description += "How to delete trips:\n";
+          description += "1. Go to each trip's detail page\n";
+          description += "2. Click the three-dot menu (⋮) in the top right\n";
+          description += "3. Select 'Delete Trip'\n";
+          description += "4. Type 'DELETE' to confirm\n\n";
+          description += "After deleting all trips, you can delete your account.";
         }
         
         if (balanceTrips.length > 0) {
@@ -329,11 +335,23 @@ export default function AccountSettings() {
                     <li>• This action cannot be reversed</li>
                   </ul>
                   <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg mt-3">
-                    <p className="text-sm font-medium text-yellow-800 mb-1">
+                    <p className="text-sm font-medium text-yellow-800 mb-2">
                       Important: Account Deletion Requirements
                     </p>
-                    <p className="text-xs text-yellow-700">
-                      You cannot delete your account if you have unsettled balances in any trip, are organizing trips, or have pending settlements. Please settle all balances and transfer organizer roles before deleting your account.
+                    <p className="text-xs text-yellow-700 mb-2">
+                      You cannot delete your account if you have unsettled balances in any trip, are organizing trips, or have pending settlements.
+                    </p>
+                    <p className="text-xs font-medium text-yellow-800 mb-1">
+                      If you're organizing trips:
+                    </p>
+                    <ol className="text-xs text-yellow-700 list-decimal list-inside space-y-1 ml-2">
+                      <li>Go to each trip's detail page</li>
+                      <li>Click the three-dot menu (⋮) in the top right</li>
+                      <li>Select "Delete Trip"</li>
+                      <li>Type "DELETE" to confirm</li>
+                    </ol>
+                    <p className="text-xs text-yellow-700 mt-2">
+                      After deleting all trips and settling balances, you can delete your account.
                     </p>
                   </div>
                 </div>
