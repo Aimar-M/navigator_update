@@ -17,11 +17,17 @@ async function throwIfResNotOk(res: Response) {
       }
     }
     
-    // Create error with additional data for RSVP handling
+    // Create error with additional data for RSVP handling and account deletion
     const error = new Error(`${res.status}: ${errorText}`);
     if (errorData?.requiresRSVP) {
       (error as any).requiresRSVP = true;
       (error as any).rsvpStatus = errorData.rsvpStatus;
+    }
+    // Attach all error data for account deletion blocking trips
+    if (errorData) {
+      (error as any).message = errorData.message || errorText;
+      (error as any).blockingTrips = errorData.blockingTrips;
+      (error as any).details = errorData.details;
     }
     throw error;
   }

@@ -73,11 +73,26 @@ export default function AccountSettings() {
       window.location.href = "/";
     },
     onError: (error: any) => {
-      toast({
-        title: "Account Deletion Failed",
-        description: error.message || "There was a problem deleting your account. Please try again.",
-        variant: "destructive",
-      });
+      // Check if error has blocking trips information
+      const blockingTrips = error?.blockingTrips || [];
+      const errorMessage = error?.message || "There was a problem deleting your account. Please try again.";
+      
+      if (blockingTrips.length > 0) {
+        // Show detailed error about blocking trips
+        const tripsList = blockingTrips.map((trip: any) => `• ${trip.tripName}: ${trip.reason}`).join('\n');
+        toast({
+          title: "Cannot Delete Account",
+          description: `You cannot delete your account because you have unsettled balances or are organizing trips:\n\n${tripsList}\n\nPlease resolve these issues before deleting your account.`,
+          variant: "destructive",
+          duration: 10000, // Show for 10 seconds
+        });
+      } else {
+        toast({
+          title: "Account Deletion Failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
     },
   });
 
@@ -273,6 +288,14 @@ export default function AccountSettings() {
                     <li>• Your payment history and settlements will be deleted</li>
                     <li>• This action cannot be reversed</li>
                   </ul>
+                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg mt-3">
+                    <p className="text-sm font-medium text-yellow-800 mb-1">
+                      Important: Account Deletion Requirements
+                    </p>
+                    <p className="text-xs text-yellow-700">
+                      You cannot delete your account if you have unsettled balances in any trip, are organizing trips, or have pending settlements. Please settle all balances and transfer organizer roles before deleting your account.
+                    </p>
+                  </div>
                 </div>
 
                 <div className="flex justify-start pt-4">
