@@ -78,13 +78,47 @@ export default function AccountSettings() {
       const errorMessage = error?.message || "There was a problem deleting your account. Please try again.";
       
       if (blockingTrips.length > 0) {
-        // Show detailed error about blocking trips
-        const tripsList = blockingTrips.map((trip: any) => `• ${trip.tripName}: ${trip.reason}`).join('\n');
+        // Group trips by reason type
+        const organizerTrips = blockingTrips.filter((trip: any) => trip.reason?.includes('organizer'));
+        const balanceTrips = blockingTrips.filter((trip: any) => !trip.reason?.includes('organizer'));
+        
+        // Create a more concise message
+        let description = "You cannot delete your account because:\n\n";
+        
+        if (organizerTrips.length > 0) {
+          const tripCount = organizerTrips.length;
+          if (tripCount <= 3) {
+            // Show all trips if 3 or fewer
+            const tripNames = organizerTrips.map((trip: any) => `• ${trip.tripName}`).join('\n');
+            description += `You are organizing ${tripCount} trip${tripCount > 1 ? 's' : ''}:\n${tripNames}\n\n`;
+          } else {
+            // Show first 3 and count if more
+            const tripNames = organizerTrips.slice(0, 3).map((trip: any) => `• ${trip.tripName}`).join('\n');
+            description += `You are organizing ${tripCount} trips:\n${tripNames}\n... and ${tripCount - 3} more trip${tripCount - 3 > 1 ? 's' : ''}\n\n`;
+          }
+          description += "Please transfer organizer role or delete these trips first.";
+        }
+        
+        if (balanceTrips.length > 0) {
+          if (organizerTrips.length > 0) {
+            description += "\n\n";
+          }
+          const tripCount = balanceTrips.length;
+          if (tripCount <= 3) {
+            const tripNames = balanceTrips.map((trip: any) => `• ${trip.tripName}`).join('\n');
+            description += `You have unsettled balances in ${tripCount} trip${tripCount > 1 ? 's' : ''}:\n${tripNames}\n\n`;
+          } else {
+            const tripNames = balanceTrips.slice(0, 3).map((trip: any) => `• ${trip.tripName}`).join('\n');
+            description += `You have unsettled balances in ${tripCount} trips:\n${tripNames}\n... and ${tripCount - 3} more trip${tripCount - 3 > 1 ? 's' : ''}\n\n`;
+          }
+          description += "Please settle all balances before deleting your account.";
+        }
+        
         toast({
           title: "Cannot Delete Account",
-          description: `You cannot delete your account because you have unsettled balances or are organizing trips:\n\n${tripsList}\n\nPlease resolve these issues before deleting your account.`,
+          description: description,
           variant: "destructive",
-          duration: 10000, // Show for 10 seconds
+          duration: 20000, // Show for 20 seconds for longer messages
         });
       } else {
         toast({
@@ -140,7 +174,13 @@ export default function AccountSettings() {
   // Handle delete account confirmation
   const handleDeleteAccount = async () => {
     if (deleteConfirmation.toLowerCase() === "delete") {
-      await deleteAccountMutation.mutateAsync();
+      try {
+        await deleteAccountMutation.mutateAsync();
+      } catch (error) {
+        // Error is already handled by the mutation's onError handler
+        // This catch prevents uncaught promise rejection
+        console.error('Account deletion error:', error);
+      }
     }
   };
 
