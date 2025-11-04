@@ -14,6 +14,7 @@ import {
   insertExpenseSchema, insertFlightInfoSchema, insertPollSchema, insertPollVoteSchema,
   User
 } from "@shared/schema";
+import { expenses } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from 'bcrypt';
 import { sendEmail, getEmailStatus } from './email';
@@ -2466,6 +2467,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Only trip admins can delete activities' });
       }
       
+      // CRITICAL: Check for settlements before deleting activity (since it deletes associated expenses)
+      const settlements = await storage.getSettlementsByTrip(activity.tripId);
+      if (settlements.length > 0) {
+        // Get all expenses associated with this activity
+        const activityExpenses = await db
+          .select()
+          .from(expenses)
+          .where(eq(expenses.activityId, activityId));
+        
+        if (activityExpenses.length > 0) {
+          // Check if any of these expenses existed before settlements were created
+          const oldestSettlement = Math.min(...settlements.map(s => new Date(s.createdAt).getTime()));
+          
+          for (const expense of activityExpenses) {
+            const expenseCreatedAt = new Date(expense.createdAt).getTime();
+            if (expenseCreatedAt < oldestSettlement) {
+              return res.status(403).json({ 
+                message: `Cannot delete this activity because it has expenses that were included in settlement calculations. Deleting activities with expenses that were part of settlements would corrupt the financial records and make balances inaccurate.` 
+              });
+            }
+          }
+          
+          // Also check if there are confirmed settlements
+          const confirmedSettlements = settlements.filter(s => s.status === 'confirmed');
+          if (confirmedSettlements.length > 0) {
+            return res.status(403).json({ 
+              message: `Cannot delete this activity because confirmed settlements exist for this trip. Deleting activities with associated expenses would corrupt the financial records.` 
+            });
+          }
+        }
+      }
+      
       const success = await storage.deleteActivity(activityId);
       if (!success) {
         return res.status(404).json({ message: 'Activity not found' });
@@ -2574,6 +2607,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if RSVP already exists
       const rsvps = await storage.getActivityRSVPs(activityId);
       const existingRsvp = rsvps.find(rsvp => rsvp.userId === user.id);
+      
+      // CRITICAL: Prevent RSVP changes if there are settlements and activity has expenses
+      // This protects financial integrity when users try to change participation
+      if ((status === 'not going' && existingRsvp?.status === 'going') || 
+          (status === 'going' && existingRsvp?.status === 'not going')) {
+        const settlements = await storage.getSettlementsByTrip(activity.tripId);
+        if (settlements.length > 0) {
+          // Check if activity has expenses
+          const existingExpenses = await storage.getExpensesByTrip(activity.tripId);
+          const activityExpenses = existingExpenses.filter(expense => expense.activityId === activityId);
+          
+          if (activityExpenses.length > 0) {
+            // Check if any expense existed before settlements
+            const oldestSettlement = Math.min(...settlements.map(s => new Date(s.createdAt).getTime()));
+            const hasOldExpenses = activityExpenses.some(expense => 
+              new Date(expense.createdAt).getTime() < oldestSettlement
+            );
+            
+            if (hasOldExpenses) {
+              return res.status(403).json({ 
+                message: `Cannot change RSVP status because this activity's expenses were included in settlement calculations. Changing your participation would corrupt the financial records. Please contact the trip organizer.` 
+              });
+            }
+            
+            // Also check if there are confirmed settlements
+            const confirmedSettlements = settlements.filter(s => s.status === 'confirmed');
+            if (confirmedSettlements.length > 0) {
+              return res.status(403).json({ 
+                message: `Cannot change RSVP status because confirmed settlements exist for this trip. Changing your participation would corrupt the financial records.` 
+              });
+            }
+          }
+        }
+      }
       
       // Check registration cap if user is trying to RSVP as "going"
       if (status === 'going' && activity.maxParticipants) {
@@ -2716,6 +2783,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
           );
 
           if (userExpense) {
+            // CRITICAL: Check for settlements before deleting expense
+            const settlements = await storage.getSettlementsByTrip(activity.tripId);
+            if (settlements.length > 0) {
+              const oldestSettlement = Math.min(...settlements.map(s => new Date(s.createdAt).getTime()));
+              const expenseCreatedAt = new Date(userExpense.createdAt).getTime();
+              
+              if (expenseCreatedAt < oldestSettlement) {
+                return res.status(403).json({ 
+                  message: `Cannot change RSVP to "not going" because your expense for this activity was included in settlement calculations. Changing your RSVP would corrupt the financial records. Please contact the trip organizer.` 
+                });
+              }
+              
+              // Also check if there are confirmed settlements
+              const confirmedSettlements = settlements.filter(s => s.status === 'confirmed');
+              if (confirmedSettlements.length > 0) {
+                return res.status(403).json({ 
+                  message: `Cannot change RSVP to "not going" because confirmed settlements exist for this trip. Changing your RSVP would corrupt the financial records.` 
+                });
+              }
+            }
+            
             // Remove the expense splits first
             await storage.removeExpenseSplits(userExpense.id);
             // Then remove the expense itself
