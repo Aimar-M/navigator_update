@@ -8,7 +8,17 @@
     "build": "vite build && npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist --ignore-annotations",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "test:smoke": "node tests/smoke-test.js",
+    "test:smoke:k6": "k6 run tests/smoke-test-k6.js",
+    "test:smoke:all:k6": "k6 run tests/comprehensive-smoke-test-k6.js",
+    "test:load": "node tests/load-test-simple.js",
+    "test:load:k6": "k6 run tests/load-test-k6.js",
+    "test:load:all:k6": "k6 run tests/comprehensive-load-test-k6.js",
+    "test:stress:k6": "k6 run tests/stress-test-k6.js",
+    "test:spike:k6": "k6 run tests/spike-test-k6.js",
+    "test:soak:k6": "k6 run tests/soak-test-k6.js",
+    "test:all-apis:k6": "k6 run tests/comprehensive-api-test-k6.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

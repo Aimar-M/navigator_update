@@ -139,7 +139,7 @@ export default function About() {
                 We use technology to remove barriers, reduce chaos, and make travel easy so people everywhere can 
                 create, share, and relive the memories that matter most.
               </p>
-              <p className="text-xl leading-relaxed text-gray-900 font-normal">We are here to unleash the beauty of the world and to empower you, our Navigators, to move through every journey with ease and joy. ✈🌍✨
+              <p className="text-xl leading-relaxed text-gray-600 font-normal">We are here to unleash the beauty of the world and to empower you, our Navigators, to move through every journey with ease and joy. ✈🌍✨
 </p>
             </div>
           </div>
