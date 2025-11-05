@@ -19,6 +19,8 @@ import { z } from "zod";
 import bcrypt from 'bcrypt';
 import { sendEmail, getEmailStatus } from './email';
 import passport from './google-auth';
+import { validateNumericId, ValidationError, parseAndValidateId } from './id-validation';
+import { encryptId, decryptId, parseUrlId } from './url-encryption';
 
 // Generate a random token for password reset
 function generateToken(): string {
@@ -3410,11 +3412,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = ensureUser(req, res);
       if (!user) return;
 
-      const activityId = parseInt(req.params.id);
+      // Validate and parse ID (supports encrypted or plain IDs)
+      let activityId: number;
+      try {
+        activityId = parseUrlId(req.params.id, false);
+      } catch (error) {
+        if (error instanceof ValidationError || error instanceof Error) {
+          return res.status(400).json({ message: error.message });
+        }
+        return res.status(400).json({ message: 'Invalid activity ID' });
+      }
+
       const activity = await storage.getActivity(activityId);
       
       if (!activity) {
         return res.status(404).json({ message: 'Activity not found' });
+      }
+
+      // SECURITY FIX: Check if user is a member of the trip
+      const members = await storage.getTripMembers(activity.tripId);
+      const isMember = members.some(member => member.userId === user.id);
+      
+      if (!isMember) {
+        return res.status(403).json({ message: 'Not a member of this trip' });
       }
 
       // Get RSVPs for this activity
