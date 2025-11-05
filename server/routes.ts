@@ -1245,7 +1245,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!trip) {
         return res.status(404).json({ message: 'Trip not found' });
       }
-      
+      //adding this comment so that i can commit 
       // Only organizer can delete trip
       if (trip.organizer !== user.id) {
         return res.status(403).json({ message: 'Only the trip organizer can delete the trip' });
