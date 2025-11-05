@@ -20,6 +20,7 @@ export default function ConfirmEmail() {
   const [error, setError] = useState<string>("");
   const [showResend, setShowResend] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [pendingInvitation, setPendingInvitation] = useState<string | null>(null);
   const { toast } = useToast();
   const [, navigate] = useLocation();
 
@@ -43,10 +44,25 @@ export default function ConfirmEmail() {
         if (response.ok) {
           const data = await response.json();
           setIsSuccess(true);
-          toast({
-            title: "Email confirmed successfully! 🎉",
-            description: `Welcome ${data.username}! Your email has been confirmed. You can now log in to your account.`,
-          });
+          
+          // Check for pending invitation
+          const invitationToken = localStorage.getItem('pendingInvitation');
+          if (invitationToken) {
+            setPendingInvitation(invitationToken);
+            toast({
+              title: "Email confirmed successfully! 🎉",
+              description: `Welcome ${data.username}! Your email has been confirmed. Redirecting to your trip invitation...`,
+            });
+            // Small delay to show success message, then redirect
+            setTimeout(() => {
+              navigate(`/invite/${invitationToken}`);
+            }, 2000);
+          } else {
+            toast({
+              title: "Email confirmed successfully! 🎉",
+              description: `Welcome ${data.username}! Your email has been confirmed. You can now log in to your account.`,
+            });
+          }
         } else {
           const errorData = await response.json();
           setError(errorData.message || "Failed to confirm email");
@@ -161,15 +177,26 @@ export default function ConfirmEmail() {
               </CardDescription>
             </CardHeader>
             <CardContent className="text-center">
-              <p className="text-sm text-gray-600 mb-4">
-                You can now log in to your account and start using Navigator.
-              </p>
+              {pendingInvitation ? (
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600 mb-4">
+                    Redirecting you to your trip invitation...
+                  </p>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-600 mb-4">
+                  You can now log in to your account and start using Navigator.
+                </p>
+              )}
             </CardContent>
-            <CardFooter className="flex justify-center">
-              <Button asChild className="w-full">
-                <Link href="/login">Go to Login</Link>
-              </Button>
-            </CardFooter>
+            {!pendingInvitation && (
+              <CardFooter className="flex justify-center">
+                <Button asChild className="w-full">
+                  <Link href="/login">Go to Login</Link>
+                </Button>
+              </CardFooter>
+            )}
           </Card>
         </div>
       </div>

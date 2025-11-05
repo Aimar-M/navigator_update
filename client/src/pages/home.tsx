@@ -88,8 +88,16 @@ export default function Home() {
             localStorage.setItem('auth_token', data.token);
             console.log('✅ Permanent token stored:', data.token);
             
-            // Force a re-render to trigger auth check
-            window.location.reload();
+            // Check for pending invitation before reloading
+            const pendingInvitation = localStorage.getItem('pendingInvitation');
+            if (pendingInvitation) {
+              console.log('🔗 Found pending invitation, redirecting to invitation page...');
+              window.location.href = `/invite/${pendingInvitation}`;
+            } else {
+              // Force a re-render to trigger auth check
+              console.log('🔗 No pending invitation, reloading page...');
+              window.location.reload();
+            }
           } else {
             console.error(`❌ OAuth token validation failed (attempt ${retryCount + 1}):`, response.status);
             

@@ -36,6 +36,18 @@ interface RegisterData {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper function to handle pending invitation redirects
+const handlePendingInvitationRedirect = (navigate: Function): boolean => {
+  const pendingInvitation = localStorage.getItem('pendingInvitation');
+  if (pendingInvitation) {
+    // Don't remove it here - let it be removed after successful RSVP
+    // This allows it to persist through email confirmation
+    navigate(`/invite/${pendingInvitation}`);
+    return true; // Indicates redirect happened
+  }
+  return false; // No redirect needed
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -83,7 +95,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               
               if (data.user) {
                 wsClient.connect(data.user.id, []);
+                
+                // Track user identification with FullStory
+                fullstory.identifyUser(data.user.id.toString(), {
+                  email: data.user.email,
+                  name: data.user.name,
+                  username: data.user.username,
+                });
               }
+              
+              // Check for pending invitation after OAuth authentication
+              handlePendingInvitationRedirect(navigate);
               
               setIsLoading(false);
               return;
@@ -121,6 +143,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               });
               wsClient.connect(userData.id, []);
             }
+            
+            // Check for pending invitation after authentication
+            handlePendingInvitationRedirect(navigate);
+            
             setIsLoading(false);
             return;
           } else {
@@ -151,6 +177,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 username: userData.username,
               });
               wsClient.connect(userData.id, []);
+              
+              // Check for pending invitation after session authentication
+              handlePendingInvitationRedirect(navigate);
             }
           }
         } catch (sessionError) {
@@ -194,12 +223,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Connect WebSocket after login
       wsClient.connect(userData.id, []);
       
-      // Check if there's a pending invitation
-      const pendingInvitation = localStorage.getItem('pendingInvitation');
-      if (pendingInvitation) {
-        // Redirect back to invitation page to RSVP
-        navigate(`/invite/${pendingInvitation}`);
-      } else {
+      // Check if there's a pending invitation and redirect if needed
+      if (!handlePendingInvitationRedirect(navigate)) {
         // Otherwise redirect to home page
         navigate("/");
       }
@@ -224,6 +249,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Check if email confirmation is required
       if (newUser.requiresEmailConfirmation) {
         // Don't log in the user - they need to confirm email first
+        // Note: pendingInvitation is preserved in localStorage and will be checked
+        // after email confirmation in confirm-email.tsx
         setIsLoading(false);
         return newUser; // Return the user data for the confirmation page
       }
@@ -252,12 +279,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Connect WebSocket after registration
       wsClient.connect(newUser.id, []);
       
-      // Check if there's a pending invitation
-      const pendingInvitation = localStorage.getItem('pendingInvitation');
-      if (pendingInvitation) {
-        // Redirect back to invitation page to RSVP
-        navigate(`/invite/${pendingInvitation}`);
-      } else {
+      // Check if there's a pending invitation and redirect if needed
+      if (!handlePendingInvitationRedirect(navigate)) {
         // Otherwise redirect to home page
         navigate("/");
       }

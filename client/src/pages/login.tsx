@@ -87,10 +87,18 @@ export default function Login() {
             
             // Store the permanent token
             localStorage.setItem('auth_token', data.token);
-            console.log('✅ Permanent token stored, redirecting to homepage...');
+            console.log('✅ Permanent token stored, checking for pending invitation...');
             
-            // Redirect to homepage with permanent token
-      navigate('/');
+            // Check for pending invitation before redirecting
+            const pendingInvitation = localStorage.getItem('pendingInvitation');
+            if (pendingInvitation) {
+              console.log('🔗 Found pending invitation, redirecting to invitation page...');
+              navigate(`/invite/${pendingInvitation}`);
+            } else {
+              // Redirect to homepage with permanent token
+              console.log('🔗 No pending invitation, redirecting to homepage...');
+              navigate('/');
+            }
           } else {
             console.error(`❌ OAuth token validation failed (attempt ${retryCount + 1}):`, response.status);
             
