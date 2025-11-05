@@ -1251,6 +1251,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Only the trip organizer can delete the trip' });
       }
       
+      // Check for unsettled balances (same check as leave trip)
+      const dbStorage = storage as any;
+      if (typeof dbStorage.analyzeMemberRemovalEligibility === 'function') {
+        const eligibility = await dbStorage.analyzeMemberRemovalEligibility(tripId, user.id);
+        
+        if (!eligibility.canRemove) {
+          return res.status(400).json({ 
+            message: eligibility.reason || 'Cannot delete trip due to unsettled balances',
+            balance: eligibility.balance,
+            manualExpenseBalance: eligibility.manualExpenseBalance,
+            prepaidActivityBalance: eligibility.prepaidActivityBalance,
+            prepaidActivitiesOwed: eligibility.prepaidActivitiesOwed,
+            suggestions: eligibility.suggestions
+          });
+        }
+      }
+      
       await storage.deleteTrip(tripId);
       res.json({ message: 'Trip deleted successfully' });
     } catch (error) {
