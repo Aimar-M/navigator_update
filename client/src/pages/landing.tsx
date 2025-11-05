@@ -6,6 +6,7 @@ import { fullstory } from "@/lib/fullstory";
 import { useEffect } from "react";
 import backgroundVideo from "@/assets/IMG_4795_1758657014573.mov";
 import navigatorLogo from "@/assets/ab_Navigator2-02.png";
+import navigatorLogoMobile from "@/assets/ab_Navigator2-08.png";
 import FullStoryDebug from "@/components/FullStoryDebug";
 
 export default function Landing() {
@@ -95,10 +96,18 @@ export default function Landing() {
         <div className="text-center px-4 sm:px-6 lg:px-8">
           {/* Navigator Logo */}
           <div className="mb-8">
+            {/* Mobile Logo (phone screens) */}
+            <img 
+              src={navigatorLogoMobile} 
+              alt="Navigator Logo" 
+              className="h-72 mx-auto filter brightness-0 invert opacity-90 md:hidden"
+              data-testid="navigator-logo-mobile"
+            />
+            {/* Desktop/Tablet Logo (tablets and PCs) */}
             <img 
               src={navigatorLogo} 
               alt="Navigator Logo" 
-              className="h-72 mx-auto filter brightness-0 invert opacity-90"
+              className="hidden md:block h-72 mx-auto filter brightness-0 invert opacity-90"
               data-testid="navigator-logo"
             />
           </div>
