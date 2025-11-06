@@ -710,16 +710,20 @@ function ProfileCompletionBar({ formData }: { formData: any }) {
         ></div>
       </div>
       <ul className="text-xs text-gray-600 space-y-1">
-        {fields.map(f => (
-          <li key={f.key} className="flex items-center gap-2">
-            {formData[f.key] && formData[f.key].trim() !== '' ? (
-              <span className="inline-block w-3 h-3 bg-green-500 rounded-full"></span>
-            ) : (
-              <span className="inline-block w-3 h-3 bg-gray-300 rounded-full"></span>
-            )}
-            {f.label}
-          </li>
-        ))}
+        {fields.filter(f => f.key !== 'password').map(f => {
+          const isCompleted = formData[f.key] && formData[f.key].trim() !== '';
+          
+          return (
+            <li key={f.key} className="flex items-center gap-2">
+              {isCompleted ? (
+                <span className="inline-block w-3 h-3 bg-green-500 rounded-full"></span>
+              ) : (
+                <span className="inline-block w-3 h-3 bg-gray-300 rounded-full"></span>
+              )}
+              {f.label}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
