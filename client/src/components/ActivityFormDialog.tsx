@@ -195,7 +195,7 @@ export default function ActivityFormDialog(props: ActivityFormDialogProps) {
 
             <div>
               <Label htmlFor="activity-cost">
-                Cost {["free", "included"].includes(formData.paymentType) ? "(optional)" : "*"}
+                Cost {formData.paymentType === "prepaid" ? "*" : "(optional)"}
               </Label>
               <Input
                 id="activity-cost"
@@ -204,12 +204,12 @@ export default function ActivityFormDialog(props: ActivityFormDialogProps) {
                 step="0.01"
                 value={formData.cost}
                 onChange={(e) => setFormData(prev => ({ ...prev, cost: e.target.value }))}
-                placeholder={["free", "included"].includes(formData.paymentType) ? "0.00" : "Enter cost amount"}
-                required={!["free", "included"].includes(formData.paymentType)}
-                className={!["free", "included"].includes(formData.paymentType) && !formData.cost ? "border-red-300" : ""}
+                placeholder={formData.paymentType === "prepaid" ? "Enter cost amount" : "0.00"}
+                required={formData.paymentType === "prepaid"}
+                className={formData.paymentType === "prepaid" && !formData.cost ? "border-red-300" : ""}
               />
-              {!["free", "included"].includes(formData.paymentType) && !formData.cost && (
-                <p className="text-sm text-red-600 mt-1">Cost is required for paid activities</p>
+              {formData.paymentType === "prepaid" && !formData.cost && (
+                <p className="text-sm text-red-600 mt-1">Cost is required for split payment activities</p>
               )}
             </div>
           </div>

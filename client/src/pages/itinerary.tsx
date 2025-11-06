@@ -344,11 +344,11 @@ function Itinerary() {
       }
     }
 
-    // Validate cost is required when payment type is not free or included
-    if (!["free", "included"].includes(activityFormData.paymentType) && (!activityFormData.cost || parseFloat(activityFormData.cost) <= 0)) {
+    // Validate cost is required only for prepaid (split payment) activities
+    if (activityFormData.paymentType === "prepaid" && (!activityFormData.cost || parseFloat(activityFormData.cost) <= 0)) {
       toast({
         title: "Cost required",
-        description: "Please provide a cost when the activity is not free or included",
+        description: "Please provide a cost for split payment activities",
         variant: "destructive"
       });
       return;

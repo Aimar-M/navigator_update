@@ -421,11 +421,11 @@ export default function ActivityDetails() {
 
     // For now, do not send date fields via PUT (server does not coerce strings to Date)
 
-    // Validate cost if required
-    if (!["free", "included"].includes(editFormData.paymentType) && (!editFormData.cost || parseFloat(editFormData.cost) <= 0)) {
+    // Validate cost is required only for prepaid (split payment) activities
+    if (editFormData.paymentType === "prepaid" && (!editFormData.cost || parseFloat(editFormData.cost) <= 0)) {
       toast({
         title: "Cost required",
-        description: "Please provide a valid cost for paid activities",
+        description: "Please provide a valid cost for split payment activities",
         variant: "destructive"
       });
       return;
