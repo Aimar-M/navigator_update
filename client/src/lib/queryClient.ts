@@ -23,11 +23,13 @@ async function throwIfResNotOk(res: Response) {
       (error as any).requiresRSVP = true;
       (error as any).rsvpStatus = errorData.rsvpStatus;
     }
-    // Attach all error data for account deletion blocking trips
+    // Attach all error data for account deletion blocking trips and downpayment confirmation
     if (errorData) {
       (error as any).message = errorData.message || errorText;
       (error as any).blockingTrips = errorData.blockingTrips;
       (error as any).details = errorData.details;
+      (error as any).requiresConfirmation = errorData.requiresConfirmation;
+      (error as any).errorData = errorData;
     }
     throw error;
   }

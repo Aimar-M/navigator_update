@@ -87,7 +87,9 @@ export default function TripDetails() {
     startDate: '',
     endDate: '',
     accommodationLinks: [''],
-    airportGateway: ''
+    airportGateway: '',
+    requiresDownPayment: false,
+    downPaymentAmount: ''
   });
   const [memberToRemove, setMemberToRemove] = useState<TripMember | null>(null);
   const [removeActivities, setRemoveActivities] = useState(false);
@@ -171,6 +173,8 @@ export default function TripDetails() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/expenses`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/expenses/balances`] });
       setIsEditing(false);
       toast({
         title: "Trip updated",
@@ -178,6 +182,32 @@ export default function TripDetails() {
       });
     },
     onError: (error: any) => {
+      // Check if this is a settlement confirmation error
+      if (error.requiresConfirmation || error.errorData?.requiresConfirmation) {
+        const errorMessage = error.errorData?.message || error.message || "Cannot change down payment settings because settlements exist.";
+        const confirmChange = window.confirm(
+          errorMessage + "\n\nDo you want to proceed anyway? This may affect existing financial records."
+        );
+        if (confirmChange) {
+          // Retry with confirmation flag - rebuild the data properly
+          const startDate = new Date(editForm.startDate);
+          const endDate = new Date(editForm.endDate);
+          const updatedData = {
+            name: editForm.name.trim(),
+            destination: editForm.destination.trim(),
+            description: editForm.description.trim(),
+            startDate: startDate,
+            endDate: endDate,
+            accommodationLinks: editForm.accommodationLinks.filter(link => link.trim() !== ''),
+            airportGateway: editForm.airportGateway.trim() || null,
+            requiresDownPayment: editForm.requiresDownPayment,
+            downPaymentAmount: editForm.requiresDownPayment ? editForm.downPaymentAmount.trim() : null,
+            confirmDownPaymentChange: true
+          };
+          updateTripMutation.mutate(updatedData);
+          return;
+        }
+      }
       toast({
         title: "Update failed",
         description: error.message || "Failed to update trip details",
@@ -322,7 +352,9 @@ export default function TripDetails() {
         startDate: trip.startDate.split('T')[0], // Convert to YYYY-MM-DD format
         endDate: trip.endDate.split('T')[0],
         accommodationLinks: trip.accommodationLinks && trip.accommodationLinks.length > 0 ? trip.accommodationLinks : [''],
-        airportGateway: trip.airportGateway || ''
+        airportGateway: trip.airportGateway || '',
+        requiresDownPayment: trip.requiresDownPayment || false,
+        downPaymentAmount: trip.downPaymentAmount || ''
       });
     }
   };
@@ -375,6 +407,19 @@ export default function TripDetails() {
       return;
     }
 
+    // Validate downpayment: if requiresDownPayment is true, amount must be provided and > 0
+    if (editForm.requiresDownPayment) {
+      const amount = parseFloat(editForm.downPaymentAmount);
+      if (!editForm.downPaymentAmount.trim() || isNaN(amount) || amount <= 0) {
+        toast({
+          title: "Validation error",
+          description: "Please enter a valid down payment amount greater than 0",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
     const updatedData = {
       name: editForm.name.trim(),
       destination: editForm.destination.trim(),
@@ -382,7 +427,9 @@ export default function TripDetails() {
       startDate: startDate,
       endDate: endDate,
       accommodationLinks: editForm.accommodationLinks.filter(link => link.trim() !== ''),
-      airportGateway: editForm.airportGateway.trim() || null
+      airportGateway: editForm.airportGateway.trim() || null,
+      requiresDownPayment: editForm.requiresDownPayment,
+      downPaymentAmount: editForm.requiresDownPayment ? editForm.downPaymentAmount.trim() : null
     };
 
     updateTripMutation.mutate(updatedData);
@@ -764,6 +811,59 @@ export default function TripDetails() {
                         </div>
                       ) : (
                         <p className="text-gray-500 text-sm italic">No airport recommendations set</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Down Payment */}
+              <div className="flex items-start space-x-3">
+                <Info className="h-5 w-5 text-gray-500 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="font-medium">Down Payment</h3>
+                  {isEditing ? (
+                    <div className="mt-1 space-y-3">
+                      <label className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          checked={editForm.requiresDownPayment}
+                          onChange={(e) => setEditForm(prev => ({ ...prev, requiresDownPayment: e.target.checked }))}
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <span className="text-sm font-medium text-gray-700">
+                          Require down payment before RSVP confirmation
+                        </span>
+                      </label>
+                      {editForm.requiresDownPayment && (
+                        <div className="ml-7">
+                          <label htmlFor="downPaymentAmount" className="block text-sm font-medium text-gray-700 mb-1">
+                            Down Payment Amount ($)
+                          </label>
+                          <Input
+                            type="number"
+                            id="downPaymentAmount"
+                            value={editForm.downPaymentAmount}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, downPaymentAmount: e.target.value }))}
+                            placeholder="0.00"
+                            step="0.01"
+                            min="0"
+                            className="w-full max-w-xs"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            Members must submit payment before their RSVP is confirmed.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="mt-2">
+                      {trip.requiresDownPayment && trip.downPaymentAmount ? (
+                        <p className="text-gray-600">
+                          ${trip.downPaymentAmount} required before RSVP confirmation
+                        </p>
+                      ) : (
+                        <p className="text-gray-500 text-sm italic">No down payment required</p>
                       )}
                     </div>
                   )}

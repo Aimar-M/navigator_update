@@ -15,6 +15,7 @@ import {
   User
 } from "@shared/schema";
 import { expenses } from "@shared/schema";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import bcrypt from 'bcrypt';
 import { sendEmail, getEmailStatus } from './email';
@@ -1178,6 +1179,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('Received trip update data:', req.body);
       
+      // Check if downpayment is being changed
+      const isDownPaymentChanging = req.body.requiresDownPayment !== undefined || req.body.downPaymentAmount !== undefined;
+      const newRequiresDownPayment = req.body.requiresDownPayment !== undefined ? req.body.requiresDownPayment : trip.requiresDownPayment;
+      const newDownPaymentAmount = req.body.downPaymentAmount !== undefined ? req.body.downPaymentAmount : trip.downPaymentAmount;
+      const wasRequiringDownPayment = trip.requiresDownPayment || false;
+      const wasDownPaymentAmount = trip.downPaymentAmount || null;
+      
+      // If downpayment is being changed/removed, check for settlements
+      if (isDownPaymentChanging && (wasRequiringDownPayment || newRequiresDownPayment)) {
+        const settlements = await storage.getSettlementsByTrip(tripId);
+        if (settlements.length > 0) {
+          // Check if user explicitly confirmed the change
+          if (!req.body.confirmDownPaymentChange) {
+            return res.status(400).json({ 
+              message: 'Cannot change down payment settings because settlements exist for this trip. This would corrupt financial records. Please confirm this change explicitly.',
+              requiresConfirmation: true,
+              hasSettlements: true
+            });
+          }
+        }
+      }
+      
       // Convert string dates to Date objects before validation
       const bodyWithDates = {
         ...req.body,
@@ -1187,12 +1210,156 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const tripData = insertTripSchema.partial().parse(bodyWithDates);
       console.log('Parsed trip data:', tripData);
+      
+      // Handle downpayment expense creation/deletion before updating trip
+      if (isDownPaymentChanging) {
+        // Get all trip members
+        const allMembers = await storage.getTripMembers(tripId);
+        // Get confirmed members (excluding organizer)
+        const confirmedMembers = allMembers.filter(m => 
+          m.rsvpStatus === 'confirmed' && m.userId !== trip.organizer
+        );
+        
+        // Find existing downpayment expenses
+        const allExpenses = await storage.getExpensesByTrip(tripId);
+        const downPaymentExpenses = allExpenses.filter(exp => 
+          exp.title && exp.title.toLowerCase().includes('down payment')
+        );
+        
+        // Scenario: Removing downpayment
+        if (wasRequiringDownPayment && !newRequiresDownPayment) {
+          // Delete all downpayment expenses
+          for (const expense of downPaymentExpenses) {
+            await storage.deleteExpense(expense.id);
+          }
+          
+          // Send notifications to confirmed members
+          for (const member of confirmedMembers) {
+            await storage.createNotification({
+              userId: member.userId,
+              type: 'downpayment_removed',
+              title: 'Down Payment Removed',
+              message: `The down payment requirement has been removed for ${trip.name}.`,
+              data: { tripId, tripName: trip.name }
+            });
+          }
+        }
+        // Scenario: Adding downpayment
+        else if (!wasRequiringDownPayment && newRequiresDownPayment && newDownPaymentAmount) {
+          // Create expenses for each confirmed member
+          for (const member of confirmedMembers) {
+            const expense = await storage.createExpense({
+              tripId,
+              title: `Down Payment - ${trip.name}`,
+              amount: newDownPaymentAmount.toString(),
+              currency: 'USD',
+              category: 'other',
+              description: `Down payment required for ${trip.name}`,
+              paidBy: trip.organizer,
+              date: new Date()
+            });
+            
+            // Create expense split - each member owes the full amount
+            await storage.createExpenseSplit({
+              expenseId: expense.id,
+              userId: member.userId,
+              amount: newDownPaymentAmount.toString()
+            });
+            
+            // Send notification
+            await storage.createNotification({
+              userId: member.userId,
+              type: 'downpayment_required',
+              title: 'Down Payment Required',
+              message: `A down payment of $${newDownPaymentAmount} is required for ${trip.name}.`,
+              data: { tripId, tripName: trip.name, amount: newDownPaymentAmount }
+            });
+            
+            // Update member payment info
+            await storage.updateTripMemberPaymentInfo(tripId, member.userId, {
+              paymentStatus: 'not_required',
+              paymentAmount: newDownPaymentAmount.toString()
+            });
+          }
+        }
+        // Scenario: Updating downpayment amount
+        else if (wasRequiringDownPayment && newRequiresDownPayment && newDownPaymentAmount && newDownPaymentAmount !== wasDownPaymentAmount) {
+          // Update existing expenses or create new ones
+          if (downPaymentExpenses.length > 0) {
+            // Update existing expenses
+            for (const expense of downPaymentExpenses) {
+              // Update expense amount
+              await db.update(expenses)
+                .set({ 
+                  amount: newDownPaymentAmount.toString(),
+                  updatedAt: new Date()
+                })
+                .where(eq(expenses.id, expense.id));
+              
+              // Update expense splits
+              await db.update(expenseSplits)
+                .set({ amount: newDownPaymentAmount.toString() })
+                .where(eq(expenseSplits.expenseId, expense.id));
+            }
+            
+            // Send notifications to confirmed members
+            for (const member of confirmedMembers) {
+              await storage.createNotification({
+                userId: member.userId,
+                type: 'downpayment_updated',
+                title: 'Down Payment Updated',
+                message: `The down payment amount for ${trip.name} has been updated to $${newDownPaymentAmount}.`,
+                data: { tripId, tripName: trip.name, amount: newDownPaymentAmount }
+              });
+              
+              // Update member payment info
+              await storage.updateTripMemberPaymentInfo(tripId, member.userId, {
+                paymentAmount: newDownPaymentAmount.toString()
+              });
+            }
+          } else {
+            // No existing expenses, create new ones (same as adding)
+            for (const member of confirmedMembers) {
+              const expense = await storage.createExpense({
+                tripId,
+                title: `Down Payment - ${trip.name}`,
+                amount: newDownPaymentAmount.toString(),
+                currency: 'USD',
+                category: 'other',
+                description: `Down payment required for ${trip.name}`,
+                paidBy: trip.organizer,
+                date: new Date()
+              });
+              
+              await storage.createExpenseSplit({
+                expenseId: expense.id,
+                userId: member.userId,
+                amount: newDownPaymentAmount.toString()
+              });
+              
+              await storage.createNotification({
+                userId: member.userId,
+                type: 'downpayment_required',
+                title: 'Down Payment Required',
+                message: `A down payment of $${newDownPaymentAmount} is required for ${trip.name}.`,
+                data: { tripId, tripName: trip.name, amount: newDownPaymentAmount }
+              });
+              
+              await storage.updateTripMemberPaymentInfo(tripId, member.userId, {
+                paymentStatus: 'not_required',
+                paymentAmount: newDownPaymentAmount.toString()
+              });
+            }
+          }
+        }
+      }
+      
       const updatedTrip = await storage.updateTrip(tripId, tripData);
       
       res.json(updatedTrip);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in PUT /api/trips/:id:', error);
-      res.status(500).json({ message: error.message || 'Server error', error });
+      res.status(500).json({ message: error?.message || 'Server error', error });
     }
   });
 
