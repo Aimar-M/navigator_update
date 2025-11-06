@@ -355,13 +355,14 @@ export default function Register() {
                   />
                   <label htmlFor="agreeTerms" className="text-sm text-gray-600">
                     I agree to the{" "}
-                    <Link 
+                    <a 
                       href="/legal" 
-                      className="text-blue-600 hover:text-blue-700 underline"
                       target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-700 underline"
                     >
                       Terms and Conditions and Privacy Policy
-                    </Link>
+                    </a>
                   </label>
                 </div>
                 {errors.agreeTerms && (
