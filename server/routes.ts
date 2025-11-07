@@ -2798,39 +2798,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const rsvps = await storage.getActivityRSVPs(activityId);
       const existingRsvp = rsvps.find(rsvp => rsvp.userId === user.id);
       
-      // CRITICAL: Prevent RSVP changes if there are settlements and activity has expenses
-      // This protects financial integrity when users try to change participation
-      if ((status === 'not going' && existingRsvp?.status === 'going') || 
-          (status === 'going' && existingRsvp?.status === 'not going')) {
-        const settlements = await storage.getSettlementsByTrip(activity.tripId);
-        if (settlements.length > 0) {
-          // Check if activity has expenses
-          const existingExpenses = await storage.getExpensesByTrip(activity.tripId);
-          const activityExpenses = existingExpenses.filter(expense => expense.activityId === activityId);
-          
-          if (activityExpenses.length > 0) {
-            // Check if any expense existed before settlements
-            const oldestSettlement = Math.min(...settlements.map(s => new Date(s.createdAt).getTime()));
-            const hasOldExpenses = activityExpenses.some(expense => 
-              new Date(expense.createdAt).getTime() < oldestSettlement
-            );
-            
-            if (hasOldExpenses) {
-              return res.status(403).json({ 
-                message: `Cannot change RSVP status because this activity's expenses were included in settlement calculations. Changing your participation would corrupt the financial records. Please contact the trip organizer.` 
-              });
-            }
-            
-            // Also check if there are confirmed settlements
-            const confirmedSettlements = settlements.filter(s => s.status === 'confirmed');
-            if (confirmedSettlements.length > 0) {
-              return res.status(403).json({ 
-                message: `Cannot change RSVP status because confirmed settlements exist for this trip. Changing your participation would corrupt the financial records.` 
-              });
-            }
-          }
-        }
-      }
+      // Track the previous status for expense handling
+      const previousStatus = existingRsvp?.status;
       
       // Check registration cap if user is trying to RSVP as "going"
       if (status === 'going' && activity.maxParticipants) {
@@ -2860,148 +2829,192 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Auto-create expense for prepaid activities when user confirms attendance
-      if (status === 'going' && activity.paymentType === 'prepaid' && activity.cost && parseFloat(activity.cost) > 0) {
+      // Handle expense updates for prepaid (group split) activities
+      if (activity.paymentType === 'prepaid' && activity.cost && parseFloat(activity.cost) > 0) {
         try {
-          // Check if expense already exists for this activity
           const existingExpenses = await storage.getExpensesByTrip(activity.tripId);
           let existingActivityExpense = existingExpenses.find(expense => 
             expense.activityId === activityId
           );
 
-          if (!existingActivityExpense) {
-            // Find the activity creator (who is paying for the activity)
-            const activityCreatorId = activity.createdBy || user.id;
+          // If user is changing from "going" to "not going"
+          if (status === 'not going' && previousStatus === 'going' && existingActivityExpense) {
+            // Get current splits to check if expense is settled
+            const currentSplits = await storage.getExpenseSplits(existingActivityExpense.id);
+            const userSplit = currentSplits.find(split => split.userId === user.id);
             
-            // Create expense for the activity
-            const expense = await storage.createExpense({
-              tripId: activity.tripId,
-              title: `Activity: ${activity.name}`,
-              amount: activity.cost,
-              currency: 'USD',
-              category: 'activities',
-              description: `Prepaid activity expense for ${activity.name}`,
-              paidBy: activityCreatorId,
-              activityId: activityId,
-              date: new Date()
-            });
-
-            existingActivityExpense = expense;
+            if (userSplit) {
+              // Check if expense is settled (isSettled flag or has confirmed settlements)
+              const isExpenseSettled = existingActivityExpense.isSettled;
+              const settlements = await storage.getSettlementsByTrip(activity.tripId);
+              const confirmedSettlements = settlements.filter(s => s.status === 'confirmed');
+              const hasConfirmedSettlements = confirmedSettlements.length > 0;
+              
+              // Remove user's split from the expense
+              await storage.removeUserFromExpenseSplit(existingActivityExpense.id, user.id);
+              
+              // Get updated RSVPs after the change (RSVP is already saved above)
+              const updatedRsvps = await storage.getActivityRSVPs(activityId);
+              const goingUserIds = updatedRsvps
+                .filter(rsvp => rsvp.status === 'going')
+                .map(rsvp => rsvp.userId);
+              
+              // Recalculate splits for remaining participants
+              if (goingUserIds.length > 0) {
+                const costPerPerson = parseFloat(activity.cost) / goingUserIds.length;
+                
+                // Remove all remaining splits and recreate with updated amounts
+                await storage.removeExpenseSplits(existingActivityExpense.id);
+                
+                for (const userId of goingUserIds) {
+                  await storage.createExpenseSplit({
+                    expenseId: existingActivityExpense.id,
+                    userId: userId,
+                    amount: costPerPerson.toFixed(2)
+                  });
+                }
+              } else {
+                // No one is going anymore - remove all splits but keep expense for history
+                // (especially if settled, to preserve financial records)
+                await storage.removeExpenseSplits(existingActivityExpense.id);
+              }
+              
+              // Note: If expense was settled, the user is now owed money
+              // The balance calculation will automatically show they're owed their share
+              // because they paid (expense.paidBy) but no longer have a split
+            }
           }
-
-          // Get all users who have RSVP'd "going" to this activity
-          const allRsvps = await storage.getActivityRSVPs(activityId);
-          const goingUserIds = allRsvps.filter(rsvp => rsvp.status === 'going').map(rsvp => rsvp.userId);
-          
-          // Include the current user if they're confirming and not already in the list
-          if (!goingUserIds.includes(user.id)) {
-            goingUserIds.push(user.id);
-          }
-
-          // Calculate cost per person
-          const costPerPerson = parseFloat(activity.cost) / goingUserIds.length;
-
-          // Remove existing splits and recreate them with updated amounts
-          await storage.removeExpenseSplits(existingActivityExpense.id);
-
-          // Create expense splits for all going users
-          for (const userId of goingUserIds) {
-            await storage.createExpenseSplit({
-              expenseId: existingActivityExpense.id,
-              userId: userId,
-              amount: costPerPerson.toFixed(2)
-            });
-          }
-        } catch (expenseError) {
-          console.error('Error creating activity expense:', expenseError);
-          // Don't fail the RSVP if expense creation fails
-        }
-      }
-
-      // Auto-create individual expense for prepaid per person activities when user confirms attendance
-      if (status === 'going' && activity.paymentType === 'prepaid_per_person' && activity.cost && parseFloat(activity.cost) > 0) {
-        try {
-          // Find the activity creator (who paid for the activity)
-          const activityCreatorId = activity.createdBy || user.id;
-          
-          // Only create expense if the user RSVPing is NOT the activity creator
-          // The creator shouldn't owe themselves money
-          if (user.id !== activityCreatorId) {
-            // Check if expense already exists for this specific user and activity
-            const existingExpenses = await storage.getExpensesByTrip(activity.tripId);
-            const existingUserExpense = existingExpenses.find(expense => 
-              expense.activityId === activityId && 
-              expense.description?.includes(`for ${user.username || user.name || `User ${user.id}`}`)
-            );
-
-            if (!existingUserExpense) {
-              // Create individual expense for this user
-              const expense = await storage.createExpense({
+          // If user is changing from "not going" to "going" or is new
+          else if (status === 'going' && previousStatus !== 'going') {
+            // Create expense if it doesn't exist
+            if (!existingActivityExpense) {
+              const activityCreatorId = activity.createdBy || user.id;
+              
+              existingActivityExpense = await storage.createExpense({
                 tripId: activity.tripId,
                 title: `Activity: ${activity.name}`,
                 amount: activity.cost,
                 currency: 'USD',
                 category: 'activities',
-                description: `Prepaid per-person activity expense for ${user.username || user.name || `User ${user.id}`} - ${activity.name}`,
+                description: `Prepaid activity expense for ${activity.name}`,
                 paidBy: activityCreatorId,
                 activityId: activityId,
                 date: new Date()
               });
+            }
 
-              // Create expense split for just this user (full amount)
+            // Get all users who have RSVP'd "going" (including current user after update)
+            const updatedRsvps = await storage.getActivityRSVPs(activityId);
+            const goingUserIds = updatedRsvps
+              .filter(rsvp => rsvp.status === 'going')
+              .map(rsvp => rsvp.userId);
+            
+            // Ensure current user is included
+            if (!goingUserIds.includes(user.id)) {
+              goingUserIds.push(user.id);
+            }
+
+            // Calculate cost per person
+            const costPerPerson = parseFloat(activity.cost) / goingUserIds.length;
+
+            // Remove existing splits and recreate them with updated amounts
+            await storage.removeExpenseSplits(existingActivityExpense.id);
+
+            // Create expense splits for all going users
+            for (const userId of goingUserIds) {
               await storage.createExpenseSplit({
-                expenseId: expense.id,
-                userId: user.id,
-                amount: activity.cost
+                expenseId: existingActivityExpense.id,
+                userId: userId,
+                amount: costPerPerson.toFixed(2)
               });
             }
           }
         } catch (expenseError) {
-          console.error('Error creating individual activity expense:', expenseError);
-          // Don't fail the RSVP if expense creation fails
+          console.error('Error handling prepaid activity expense:', expenseError);
+          // Don't fail the RSVP if expense handling fails
         }
       }
 
-      // Handle cancellation for prepaid per person activities
-      if (status === 'not going' && activity.paymentType === 'prepaid_per_person' && activity.cost && parseFloat(activity.cost) > 0) {
+      // Handle expense updates for prepaid_per_person activities
+      if (activity.paymentType === 'prepaid_per_person' && activity.cost && parseFloat(activity.cost) > 0) {
         try {
-          // Find and remove the individual expense for this user
+          const activityCreatorId = activity.createdBy || user.id;
           const existingExpenses = await storage.getExpensesByTrip(activity.tripId);
           const userExpense = existingExpenses.find(expense => 
             expense.activityId === activityId && 
             expense.description?.includes(`for ${user.username || user.name || `User ${user.id}`}`)
           );
 
-          if (userExpense) {
-            // CRITICAL: Check for settlements before deleting expense
-            const settlements = await storage.getSettlementsByTrip(activity.tripId);
-            if (settlements.length > 0) {
-              const oldestSettlement = Math.min(...settlements.map(s => new Date(s.createdAt).getTime()));
-              const expenseCreatedAt = new Date(userExpense.createdAt).getTime();
-              
-              if (expenseCreatedAt < oldestSettlement) {
-                return res.status(403).json({ 
-                  message: `Cannot change RSVP to "not going" because your expense for this activity was included in settlement calculations. Changing your RSVP would corrupt the financial records. Please contact the trip organizer.` 
-                });
-              }
-              
-              // Also check if there are confirmed settlements
+          // If user is changing from "going" to "not going"
+          if (status === 'not going' && previousStatus === 'going' && userExpense) {
+            // Get current splits to check if expense is settled
+            const currentSplits = await storage.getExpenseSplits(userExpense.id);
+            const userSplit = currentSplits.find(split => split.userId === user.id);
+            
+            if (userSplit) {
+              // Check if expense is settled (isSettled flag or has confirmed settlements)
+              const isExpenseSettled = userExpense.isSettled;
+              const settlements = await storage.getSettlementsByTrip(activity.tripId);
               const confirmedSettlements = settlements.filter(s => s.status === 'confirmed');
-              if (confirmedSettlements.length > 0) {
-                return res.status(403).json({ 
-                  message: `Cannot change RSVP to "not going" because confirmed settlements exist for this trip. Changing your RSVP would corrupt the financial records.` 
-                });
+              const hasConfirmedSettlements = confirmedSettlements.length > 0;
+              
+              // If expense is settled, just remove the split (user is now owed money)
+              // The balance calculation will automatically show they're owed the amount
+              if (isExpenseSettled || hasConfirmedSettlements) {
+                // Remove user's split - they're now owed the amount they paid
+                await storage.removeUserFromExpenseSplit(userExpense.id, user.id);
+                // Keep the expense for financial history
+              } else {
+                // Expense not settled - can safely delete the entire expense
+                await storage.removeExpenseSplits(userExpense.id);
+                await storage.deleteExpense(userExpense.id);
               }
             }
-            
-            // Remove the expense splits first
-            await storage.removeExpenseSplits(userExpense.id);
-            // Then remove the expense itself
-            await storage.deleteExpense(userExpense.id);
+          }
+          // If user is changing from "not going" to "going" or is new
+          else if (status === 'going' && previousStatus !== 'going') {
+            // Only create expense if the user is NOT the activity creator
+            // The creator shouldn't owe themselves money
+            if (user.id !== activityCreatorId) {
+              // Check if expense already exists for this user
+              if (!userExpense) {
+                // Create individual expense for this user
+                const expense = await storage.createExpense({
+                  tripId: activity.tripId,
+                  title: `Activity: ${activity.name}`,
+                  amount: activity.cost,
+                  currency: 'USD',
+                  category: 'activities',
+                  description: `Prepaid per-person activity expense for ${user.username || user.name || `User ${user.id}`} - ${activity.name}`,
+                  paidBy: activityCreatorId,
+                  activityId: activityId,
+                  date: new Date()
+                });
+
+                // Create expense split for just this user (full amount)
+                await storage.createExpenseSplit({
+                  expenseId: expense.id,
+                  userId: user.id,
+                  amount: activity.cost
+                });
+              } else {
+                // Expense exists but user wasn't in it - add them back
+                const existingSplits = await storage.getExpenseSplits(userExpense.id);
+                const hasUserSplit = existingSplits.some(split => split.userId === user.id);
+                
+                if (!hasUserSplit) {
+                  await storage.createExpenseSplit({
+                    expenseId: userExpense.id,
+                    userId: user.id,
+                    amount: activity.cost
+                  });
+                }
+              }
+            }
           }
         } catch (expenseError) {
-          console.error('Error removing individual activity expense:', expenseError);
-          // Don't fail the RSVP if expense removal fails
+          console.error('Error handling prepaid_per_person activity expense:', expenseError);
+          // Don't fail the RSVP if expense handling fails
         }
       }
       
