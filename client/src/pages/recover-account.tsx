@@ -21,7 +21,6 @@ export default function RecoverAccount() {
   const [token, setToken] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [emailInput, setEmailInput] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [isValidating, setIsValidating] = useState(true);
   const [isValid, setIsValid] = useState(false);
@@ -51,7 +50,7 @@ export default function RecoverAccount() {
     } else if (oauthDeleted) {
       // OAuth login detected deleted account - show message
       setIsValidating(false);
-      setError("Your Google account is linked to a deleted Navigator account. Please enter your email and password to recover it.");
+      setError("Your Google account is linked to a deleted Navigator account. Please enter your email to recover it.");
     } else {
       // No token/email - show email input form
       setIsValidating(false);
@@ -94,10 +93,6 @@ export default function RecoverAccount() {
       setError("Please enter a valid email address");
       return;
     }
-    if (!password) {
-      setError("Password is required to verify your identity");
-      return;
-    }
 
     setIsRequesting(true);
     setError("");
@@ -109,8 +104,7 @@ export default function RecoverAccount() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: emailInput,
-          password: password
+          email: emailInput
         }),
       });
 
@@ -236,7 +230,7 @@ export default function RecoverAccount() {
             <CardHeader>
               <CardTitle className="text-center">Recover Your Account</CardTitle>
               <CardDescription className="text-center">
-                Enter your email and password to receive a recovery link
+                Enter your email to receive a recovery link
               </CardDescription>
             </CardHeader>
             <form onSubmit={handleRequestRecovery}>
@@ -256,20 +250,6 @@ export default function RecoverAccount() {
                     onChange={(e) => setEmailInput(e.target.value)}
                     required
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                  <p className="text-xs text-gray-500">
-                    We need your password to verify your identity
-                  </p>
                 </div>
               </CardContent>
               <CardFooter className="flex flex-col space-y-2">

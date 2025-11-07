@@ -6170,30 +6170,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Account recovery request endpoint
   router.post('/auth/recover-account/request', async (req: Request, res: Response) => {
     try {
-      const { email, password } = req.body;
-      if (!email || !password) {
-        return res.status(400).json({ message: 'Email and password are required' });
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ message: 'Email is required' });
       }
 
       // Find user by email
       const user = await storage.getUserByEmail(email);
       if (!user) {
         // Don't reveal if email exists for security
-        return res.json({ 
-          message: 'If an account with that email exists and was deleted, a recovery email has been sent.' 
-        });
-      }
-
-      // Verify password
-      let isMatch = false;
-      if (user.password && user.password.startsWith('$2')) {
-        isMatch = await bcrypt.compare(password, user.password);
-      } else {
-        isMatch = password === user.password;
-      }
-
-      if (!isMatch) {
-        // Don't reveal if account exists for security
         return res.json({ 
           message: 'If an account with that email exists and was deleted, a recovery email has been sent.' 
         });
