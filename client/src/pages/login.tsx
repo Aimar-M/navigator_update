@@ -2,7 +2,16 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useFullStory } from "@/hooks/use-fullstory";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Card,
   CardContent,
@@ -38,8 +47,13 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ identifier?: string; password?: string }>({});
+  const [showRecoveryPrompt, setShowRecoveryPrompt] = useState(false);
+  const [recoveryEmail, setRecoveryEmail] = useState("");
+  const [recoveryLoading, setRecoveryLoading] = useState(false);
+  const [recoverySent, setRecoverySent] = useState(false);
   const { login, isLoading, user } = useAuth();
   const [, navigate] = useLocation();
+  const { toast } = useToast();
 
   // Handle OAuth redirect with temporary token
   useEffect(() => {
@@ -180,7 +194,16 @@ export default function Login() {
     try {
       const loginData = { identifier, password };
       console.log("Attempting to log in with:", identifier);
-      await login(loginData);
+      const result = await login(loginData);
+      
+      // Check if account requires recovery
+      if (result && result.requiresRecovery) {
+        console.log("Account requires recovery:", result);
+        setRecoveryEmail(result.email || identifier);
+        setShowRecoveryPrompt(true);
+        return;
+      }
+      
       console.log("Login successful");
     } catch (error) {
       console.error("Login error:", error);
@@ -189,6 +212,48 @@ export default function Login() {
         ...errors,
         identifier: "Login failed. Please check your credentials."
       });
+    }
+  };
+
+  const handleRecoveryRequest = async () => {
+    setRecoveryLoading(true);
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || '';
+      const response = await fetch(`${API_BASE}/api/auth/recover-account/request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: recoveryEmail,
+          password: password
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        setRecoverySent(true);
+        toast({
+          title: "Recovery email sent",
+          description: data.message || "Please check your inbox and click the link to restore your account.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: data.message || "Failed to send recovery email. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Recovery request error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send recovery email. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setRecoveryLoading(false);
     }
   };
 
@@ -384,6 +449,55 @@ export default function Login() {
 
         
       </div>
+
+      {/* Recovery Prompt Dialog */}
+      <Dialog open={showRecoveryPrompt} onOpenChange={setShowRecoveryPrompt}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Account Recovery</DialogTitle>
+            <DialogDescription>
+              {recoverySent ? (
+                <>
+                  Recovery email sent! Please check your inbox at <strong>{recoveryEmail}</strong> and click the link to restore your account.
+                </>
+              ) : (
+                <>
+                  This account was deleted. We'll send a recovery email to verify it's you.
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          {!recoverySent && (
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowRecoveryPrompt(false)}
+                disabled={recoveryLoading}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleRecoveryRequest}
+                disabled={recoveryLoading}
+              >
+                {recoveryLoading ? "Sending..." : "Send Recovery Email"}
+              </Button>
+            </DialogFooter>
+          )}
+          {recoverySent && (
+            <DialogFooter>
+              <Button onClick={() => {
+                setShowRecoveryPrompt(false);
+                setRecoverySent(false);
+                setIdentifier("");
+                setPassword("");
+              }}>
+                Close
+              </Button>
+            </DialogFooter>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

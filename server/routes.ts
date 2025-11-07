@@ -542,6 +542,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Login failed: Invalid username/email or password');
         return res.status(401).json({ message: 'Invalid username/email or password' });
       }
+      
+      // Check if account is deleted - trigger recovery flow
+      if (user.deletedAt) {
+        console.log('🔍 Login attempt for deleted account:', user.id);
+        return res.status(200).json({
+          requiresRecovery: true,
+          deletedAt: user.deletedAt,
+          message: 'This account was deleted. We\'ll send a recovery email to verify it\'s you.',
+          email: user.email // Send email for recovery request
+        });
+      }
+      
       // Block login if email is not confirmed
       if (!user.emailConfirmed) {
         return res.status(403).json({ message: 'Please confirm your email before logging in.' });
@@ -601,13 +613,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log('🔍 Auth check: OAuth token detected, userId:', userId);
           
           if (!isNaN(userId)) {
-            const user = await storage.getUser(userId);
-            if (user) {
-              console.log('🔍 Auth check: OAuth user found:', user.username);
-              // Don't send password in the response
-              const { password, ...userWithoutPassword } = user;
-              return res.json(userWithoutPassword);
-            } else {
+          const user = await storage.getUser(userId);
+          if (user) {
+            console.log('🔍 Auth check: OAuth user found:', user.username);
+            // Don't send password in the response
+            const { password, ...userWithoutPassword } = user;
+            // Note: We still return deleted users here so frontend can handle display
+            // But isAuthenticated middleware will block them from accessing resources
+            return res.json(userWithoutPassword);
+          } else {
               console.log('❌ Auth check: OAuth user not found in database for userId:', userId);
             }
           } else {
@@ -624,6 +638,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log('🔍 Auth check: JWT user found:', user.username);
             // Don't send password in the response
             const { password, ...userWithoutPassword } = user;
+            // Note: We still return deleted users here so frontend can handle display
+            // But isAuthenticated middleware will block them from accessing resources
             return res.json(userWithoutPassword);
           } else {
             console.log('❌ Auth check: JWT user not found in database for userId:', userId);
@@ -654,6 +670,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🔍 Auth check: Session user found:', user.username);
       // Don't send password in the response
       const { password, ...userWithoutPassword } = user;
+      // Note: We still return deleted users here so frontend can handle display
+      // But isAuthenticated middleware will block them from accessing resources
       
       res.json(userWithoutPassword);
     } catch (error) {
@@ -682,6 +700,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const user = await storage.getUser(userId);
               if (user) {
                 console.log('🔍 Middleware: OAuth user found:', user.username);
+                // Check if account is deleted
+                if (user.deletedAt) {
+                  return res.status(403).json({ 
+                    message: 'This account has been deleted. Please recover it to continue.',
+                    accountDeleted: true,
+                    requiresRecovery: true
+                  });
+                }
                 // Check if email is confirmed
                 if (!user.emailConfirmed) {
                   return res.status(403).json({ 
@@ -702,6 +728,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const user = await storage.getUser(userId);
             if (user) {
               console.log('🔍 Middleware: JWT user found:', user.username);
+              // Check if account is deleted
+              if (user.deletedAt) {
+                return res.status(403).json({ 
+                  message: 'This account has been deleted. Please recover it to continue.',
+                  accountDeleted: true,
+                  requiresRecovery: true
+                });
+              }
               // Check if email is confirmed
               if (!user.emailConfirmed) {
                 return res.status(403).json({ 
@@ -721,6 +755,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.session && req.session.userId) {
         const user = await storage.getUser(req.session.userId);
         if (user) {
+          // Check if account is deleted
+          if (user.deletedAt) {
+            return res.status(403).json({ 
+              message: 'This account has been deleted. Please recover it to continue.',
+              accountDeleted: true,
+              requiresRecovery: true
+            });
+          }
           // Check if email is confirmed
           if (!user.emailConfirmed) {
             return res.status(403).json({ 
@@ -794,7 +836,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
   
-  // Delete user account endpoint
+  // Delete user account endpoint (now uses anonymization)
   router.delete('/auth/delete-account', isAuthenticated, async (req: Request, res: Response) => {
     try {
       const userId = req.user?.id;
@@ -816,6 +858,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check all trips the user is part of for unsettled balances
+      // (We still block deletion if there are unsettled balances)
       const dbStorage = storage as any;
       const userTrips = await storage.getTripsByUser(userId);
       console.log('🔍 Delete account - User trips:', userTrips.length);
@@ -824,17 +867,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const blockingReasons = [];
 
       for (const trip of userTrips) {
-        // Check if user is organizer - they cannot delete account if they're organizing trips
-        if (trip.organizer === userId) {
-          blockingTrips.push({
-            tripId: trip.id,
-            tripName: trip.name,
-            reason: 'You are the organizer of this trip. Please transfer organizer role or delete the trip first.'
-          });
-          blockingReasons.push(`Organizer of trip: ${trip.name}`);
-          continue;
-        }
-
         // Check for unsettled balances using the same logic as leave trip
         if (typeof dbStorage.analyzeMemberRemovalEligibility === 'function') {
           const eligibility = await dbStorage.analyzeMemberRemovalEligibility(trip.id, userId);
@@ -855,9 +887,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (blockingTrips.length > 0) {
-        console.log('❌ Delete account - Blocked by trips:', blockingTrips);
+        console.log('❌ Delete account - Blocked by unsettled balances:', blockingTrips);
         return res.status(400).json({
-          message: `Cannot delete account. You have unsettled balances or are organizing trips. Please resolve the following issues: ${blockingReasons.join('; ')}`,
+          message: `Cannot delete account. You have unsettled balances. Please resolve the following issues: ${blockingReasons.join('; ')}`,
           blockingTrips: blockingTrips,
           details: {
             totalBlockingTrips: blockingTrips.length,
@@ -866,12 +898,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      console.log('🔍 Delete account - Starting user deletion process...');
-      const success = await storage.deleteUser(userId);
-      console.log('🔍 Delete account - Deletion result:', success);
+      console.log('🔍 Delete account - Starting user anonymization process...');
+      // Use anonymizeUserAccount which handles trip organizer transfer and anonymization
+      const success = await (storage as any).anonymizeUserAccount(userId);
+      console.log('🔍 Delete account - Anonymization result:', success);
       
       if (success) {
-        console.log('✅ Delete account - User deleted successfully');
+        console.log('✅ Delete account - User anonymized successfully');
         // Destroy the session
         req.session.destroy((err) => {
           if (err) {
@@ -879,9 +912,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         });
         
-        return res.json({ message: 'Account deleted successfully' });
+        return res.json({ message: 'Account deleted successfully. You can recover it by logging in again.' });
       } else {
-        console.log('❌ Delete account - Deletion failed');
+        console.log('❌ Delete account - Anonymization failed');
         return res.status(500).json({ message: 'Failed to delete user' });
       }
     } catch (error) {
@@ -6144,6 +6177,208 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: 'Password reset successfully' });
     } catch (error) {
       console.error('Reset password error:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
+  // Account recovery request endpoint
+  router.post('/auth/recover-account/request', async (req: Request, res: Response) => {
+    try {
+      const { email, password } = req.body;
+      if (!email || !password) {
+        return res.status(400).json({ message: 'Email and password are required' });
+      }
+
+      // Find user by email
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        // Don't reveal if email exists for security
+        return res.json({ 
+          message: 'If an account with that email exists and was deleted, a recovery email has been sent.' 
+        });
+      }
+
+      // Verify password
+      let isMatch = false;
+      if (user.password && user.password.startsWith('$2')) {
+        isMatch = await bcrypt.compare(password, user.password);
+      } else {
+        isMatch = password === user.password;
+      }
+
+      if (!isMatch) {
+        // Don't reveal if account exists for security
+        return res.json({ 
+          message: 'If an account with that email exists and was deleted, a recovery email has been sent.' 
+        });
+      }
+
+      // Check if account is actually deleted
+      if (!user.deletedAt) {
+        return res.json({ message: 'This account is not deleted. You can log in normally.' });
+      }
+
+      // Generate recovery token
+      const recoveryToken = generateToken();
+      const recoveryExpires = new Date();
+      recoveryExpires.setDate(recoveryExpires.getDate() + 7); // 7 days expiration
+
+      // Update user with recovery token
+      await storage.updateUser(user.id, {
+        accountRecoveryToken: recoveryToken,
+        accountRecoveryExpires: recoveryExpires
+      });
+
+      // Send recovery email
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      const recoveryUrl = `${frontendUrl}/recover-account?token=${recoveryToken}&email=${encodeURIComponent(email)}`;
+      
+      const emailSubject = 'Recover Your Navigator Account';
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px;">
+            Recover Your Account
+          </h2>
+          
+          <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p style="color: #374151; line-height: 1.6;">
+              We received a request to recover your Navigator account that was deleted on ${new Date(user.deletedAt).toLocaleDateString()}.
+            </p>
+            <p style="color: #374151; line-height: 1.6;">
+              Click the button below to restore your account and regain access to all your trips and data.
+            </p>
+          </div>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${recoveryUrl}" 
+               style="display: inline-block; background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+              Recover Account
+            </a>
+          </div>
+          
+          <p style="color: #6b7280; font-size: 14px; line-height: 1.6;">
+            Or copy and paste this link into your browser:<br>
+            <a href="${recoveryUrl}" style="color: #2563eb; word-break: break-all;">${recoveryUrl}</a>
+          </p>
+          
+          <div style="margin-top: 30px; padding: 15px; background-color: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px;">
+            <p style="color: #92400e; font-size: 14px; margin: 0;">
+              <strong>Security Note:</strong> This link will expire in 7 days. If you didn't request this, you can safely ignore this email.
+            </p>
+          </div>
+        </div>
+      `;
+
+      await sendEmail(user.email, emailSubject, emailHtml);
+
+      console.log(`✅ Recovery email sent to ${email}`);
+      res.json({ 
+        message: 'Recovery email sent. Please check your inbox and click the link to restore your account.' 
+      });
+    } catch (error) {
+      console.error('Recovery request error:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
+  // Account recovery confirmation endpoint (GET - for validation)
+  router.get('/auth/recover-account/confirm', async (req: Request, res: Response) => {
+    try {
+      const { token, email } = req.query;
+      if (!token || !email) {
+        return res.status(400).json({ message: 'Token and email are required' });
+      }
+
+      const user = await storage.getUserByEmail(email as string);
+      if (!user) {
+        return res.status(400).json({ message: 'Invalid recovery link' });
+      }
+
+      // Check if account is deleted
+      if (!user.deletedAt) {
+        return res.status(400).json({ message: 'This account is not deleted' });
+      }
+
+      // Check if token matches
+      if (user.accountRecoveryToken !== token) {
+        return res.status(400).json({ message: 'Invalid recovery token' });
+      }
+
+      // Check if token has expired
+      if (user.accountRecoveryExpires && new Date() > user.accountRecoveryExpires) {
+        return res.status(400).json({ message: 'Recovery link has expired. Please request a new one.' });
+      }
+
+      // Token is valid - return success (frontend will show confirmation page)
+      res.json({ 
+        valid: true,
+        message: 'Recovery link is valid. You can proceed with account recovery.',
+        deletedAt: user.deletedAt
+      });
+    } catch (error) {
+      console.error('Recovery confirmation error:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
+  // Account recovery confirmation endpoint (POST - actually recovers account)
+  router.post('/auth/recover-account/confirm', async (req: Request, res: Response) => {
+    try {
+      const { token, email } = req.body;
+      if (!token || !email) {
+        return res.status(400).json({ message: 'Token and email are required' });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(400).json({ message: 'Invalid recovery link' });
+      }
+
+      // Check if account is deleted
+      if (!user.deletedAt) {
+        return res.status(400).json({ message: 'This account is not deleted' });
+      }
+
+      // Check if token matches
+      if (user.accountRecoveryToken !== token) {
+        return res.status(400).json({ message: 'Invalid recovery token' });
+      }
+
+      // Check if token has expired
+      if (user.accountRecoveryExpires && new Date() > user.accountRecoveryExpires) {
+        return res.status(400).json({ message: 'Recovery link has expired. Please request a new one.' });
+      }
+
+      // Recover the account - clear deletedAt and recovery tokens
+      await storage.updateUser(user.id, {
+        deletedAt: null,
+        accountRecoveryToken: null,
+        accountRecoveryExpires: null
+      });
+
+      console.log(`✅ Account recovered for user ${user.id}`);
+
+      // Don't send password in response
+      const { password: _, ...userWithoutPassword } = user;
+
+      // Set session
+      if (req.session) {
+        req.session.userId = user.id;
+      }
+
+      // Generate token for frontend
+      const authToken = `${user.id}_${generateToken()}`;
+
+      res.json({
+        message: 'Account recovered successfully',
+        user: {
+          ...userWithoutPassword,
+          deletedAt: null, // Make sure it's cleared in response
+          token: authToken
+        }
+      });
+    } catch (error) {
+      console.error('Recovery confirmation error:', error);
       res.status(500).json({ message: 'Server error' });
     }
   });

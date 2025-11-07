@@ -2,12 +2,14 @@ import { formatTime } from "@/lib/utils";
 import UserAvatar from "@/components/user-avatar";
 import LinkifyText from "@/components/linkify-text";
 import { useAuth } from "@/hooks/use-auth";
+import { getDisplayName } from "@/lib/user-utils";
 
 interface User {
   id: number;
   name?: string;
   username?: string;
   avatar?: string;
+  deletedAt?: string | null;
 }
 
 interface MessageProps {
@@ -37,7 +39,7 @@ export default function ChatMessage({ id, content, timestamp, user }: MessagePro
       <div className="max-w-[80%]">
         {!isCurrentUser && (
           <p className="text-xs font-medium text-gray-900 mb-1">
-            {user.name || user.username || `User ${user.id}`}
+            {getDisplayName(user)}
           </p>
         )}
         <div

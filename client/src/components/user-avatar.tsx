@@ -1,11 +1,13 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn, getInitials } from "@/lib/utils";
+import { getDisplayName, isUserDeleted } from "@/lib/user-utils";
 
 interface User {
   id: number;
   name?: string;
   username?: string;
   avatar?: string | null;
+  deletedAt?: string | null;
 }
 
 interface UserAvatarProps {
@@ -23,9 +25,10 @@ export default function UserAvatar({
   fallbackClassName,
   size = "md",
 }: UserAvatarProps) {
-  // Get display name, prioritize name, then username, then use id as fallback
-  const displayName = user?.name || user?.username || `User ${user?.id}`;
+  // Get display name using helper (handles deleted users)
+  const displayName = getDisplayName(user);
   const initials = displayName ? getInitials(displayName) : fallback || "?";
+  const isDeleted = isUserDeleted(user);
   
   // Size classes
   const sizeClasses = {
@@ -36,7 +39,8 @@ export default function UserAvatar({
   };
 
   const getAvatarSrc = () => {
-    if (!user?.avatar) return undefined;
+    // Don't show avatar for deleted users
+    if (isDeleted || !user?.avatar) return undefined;
     // Support data URLs, absolute URLs, or relative URLs
     if (user.avatar.startsWith("data:")) return user.avatar;
     if (user.avatar.startsWith("http")) return user.avatar;

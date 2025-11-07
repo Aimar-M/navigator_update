@@ -28,7 +28,14 @@ export async function loginUser(credentials: { identifier: string; password: str
     }
 
     const data = await response.json();
-    console.log('Login successful, received data:', { ...data, token: '***' });
+    console.log('Login response data:', { ...data, token: data.token ? '***' : undefined });
+    
+    // Check if account requires recovery
+    if (data.requiresRecovery) {
+      // Return recovery data instead of throwing error
+      return data;
+    }
+    
     return data;
   } catch (error) {
     console.error('Login request failed:', error);

@@ -10,7 +10,7 @@ import {
   messages, surveyQuestions, surveyResponses, expenses, expenseSplits, settlements,
   polls, pollVotes, invitationLinks, userTripSettings, flightInfo, notifications
 } from "@shared/schema";
-import { eq, and, or, desc, sql, ilike, inArray, isNotNull, lt, ne } from "drizzle-orm";
+import { eq, and, or, desc, sql, ilike, inArray, isNotNull, lt, ne, asc } from "drizzle-orm";
 export class DatabaseStorage {
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -146,28 +146,116 @@ export class DatabaseStorage {
     return user || undefined;
   }
 
-  async deleteUser(id: number): Promise<boolean> {
+  /**
+   * Get the earliest member of a trip (excluding a specific user)
+   * Used for transferring organizer role when a user deletes their account
+   */
+  async getEarliestTripMember(tripId: number, excludeUserId: number): Promise<TripMember | undefined> {
+    const [member] = await db
+      .select()
+      .from(tripMembers)
+      .where(
+        and(
+          eq(tripMembers.tripId, tripId),
+          ne(tripMembers.userId, excludeUserId)
+        )
+      )
+      .orderBy(asc(tripMembers.joinedAt))
+      .limit(1);
+    
+    return member || undefined;
+  }
+
+  /**
+   * Anonymize a user account (soft delete)
+   * Sets deletedAt timestamp, clears avatar, but keeps all other data for recovery
+   */
+  async anonymizeUser(userId: number): Promise<boolean> {
     try {
-      console.log('🔍 deleteUser - Starting deletion for user ID:', id);
+      console.log('🔍 anonymizeUser - Starting anonymization for user ID:', userId);
       
-      // Simple approach: just delete the user and let the database handle constraints
-      console.log('🔍 deleteUser - Deleting user from database...');
       const result = await db
-        .delete(users)
-        .where(eq(users.id, id));
+        .update(users)
+        .set({
+          deletedAt: sql`NOW()`,
+          avatar: null,
+          // Keep name in database, but display will show "User not found" in frontend
+        })
+        .where(eq(users.id, userId));
       
-      console.log('🔍 deleteUser - User deletion result:', result.rowCount > 0);
+      console.log('🔍 anonymizeUser - Anonymization result:', result.rowCount > 0);
+      
+      // Delete all sessions for this user
+      // Sessions store user data in sess JSON, so we need to delete by checking the session data
+      // This is a bit tricky - we'll delete expired sessions and let active ones expire naturally
+      // Or we can delete all sessions and let them re-login after recovery
+      await db.execute(sql`
+        DELETE FROM sessions 
+        WHERE sess::text LIKE ${`%"userId":${userId}%`}
+      `);
+      
       return result.rowCount > 0;
     } catch (error) {
-      console.error('❌ deleteUser - Error:', error);
-      console.error('❌ deleteUser - Error details:', {
-        message: error.message,
-        code: error.code,
-        constraint: error.constraint,
-        table: error.table
-      });
+      console.error('❌ anonymizeUser - Error:', error);
       return false;
     }
+  }
+
+  /**
+   * Anonymize user account and handle trip relationships
+   * - Transfers organizer role if user is organizer and other members exist
+   * - Never deletes trips (for account recovery)
+   * - Always anonymizes the user
+   */
+  async anonymizeUserAccount(userId: number): Promise<boolean> {
+    try {
+      console.log('🔍 anonymizeUserAccount - Starting account anonymization for user ID:', userId);
+      
+      // Get all trips user is part of (as organizer or member)
+      const userTrips = await this.getTripsByUser(userId);
+      console.log('🔍 anonymizeUserAccount - User trips:', userTrips.length);
+
+      // Process each trip
+      for (const trip of userTrips) {
+        // Get all members of this trip
+        const allMembers = await this.getTripMembers(trip.id);
+        const otherMembers = allMembers.filter(m => m.userId !== userId);
+        
+        console.log(`🔍 anonymizeUserAccount - Trip ${trip.id}: ${allMembers.length} total members, ${otherMembers.length} other members`);
+        
+        // If user is organizer and there are other members, transfer organizer role
+        if (trip.organizer === userId && otherMembers.length > 0) {
+          const earliestMember = await this.getEarliestTripMember(trip.id, userId);
+          
+          if (earliestMember) {
+            console.log(`🔍 anonymizeUserAccount - Transferring organizer from user ${userId} to user ${earliestMember.userId} for trip ${trip.id}`);
+            await db
+              .update(trips)
+              .set({ organizer: earliestMember.userId })
+              .where(eq(trips.id, trip.id));
+          } else {
+            console.log(`⚠️ anonymizeUserAccount - No other members found to transfer organizer role for trip ${trip.id}`);
+            // Keep user as organizer (will show as "User not found" in UI)
+          }
+        }
+        // If user is organizer but no other members, keep them as organizer (trip will show "User not found")
+        // If user is just a member, no action needed - they'll just be anonymized
+      }
+
+      // Anonymize the user
+      return await this.anonymizeUser(userId);
+    } catch (error) {
+      console.error('❌ anonymizeUserAccount - Error:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Legacy method - kept for backwards compatibility
+   * Now calls anonymizeUserAccount instead of hard delete
+   */
+  async deleteUser(id: number): Promise<boolean> {
+    return this.anonymizeUserAccount(id);
   }
 
   async createTrip(insertTrip: InsertTrip): Promise<Trip> {

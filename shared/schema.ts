@@ -41,6 +41,10 @@ export const users = pgTable("users", {
   googleName: text("google_name"),
   googlePicture: text("google_picture"),
   isOAuthUser: boolean("is_oauth_user").default(false),
+  // Account deletion and recovery fields
+  deletedAt: timestamp("deleted_at"),
+  accountRecoveryToken: text("account_recovery_token"),
+  accountRecoveryExpires: timestamp("account_recovery_expires"),
 });
 
 export const usersRelations = relations(users, ({ many }) => ({
