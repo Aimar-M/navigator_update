@@ -233,7 +233,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ tripId, currentUserId, isOrga
               Add Expense
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[550px]">
+          <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Add a New Expense</DialogTitle>
               <DialogDescription>
@@ -349,7 +349,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ tripId, currentUserId, isOrga
       {/* Edit Expense Dialog */}
       {selectedExpense && (
         <Dialog open={isEditExpenseOpen} onOpenChange={setIsEditExpenseOpen}>
-          <DialogContent className="sm:max-w-[550px]">
+          <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Edit Expense</DialogTitle>
               <DialogDescription>
