@@ -857,47 +857,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'User not found' });
       }
 
-      // Check all trips the user is part of for unsettled balances
-      // (We still block deletion if there are unsettled balances)
-      const dbStorage = storage as any;
-      const userTrips = await storage.getTripsByUser(userId);
-      console.log('🔍 Delete account - User trips:', userTrips.length);
-
-      const blockingTrips = [];
-      const blockingReasons = [];
-
-      for (const trip of userTrips) {
-        // Check for unsettled balances using the same logic as leave trip
-        if (typeof dbStorage.analyzeMemberRemovalEligibility === 'function') {
-          const eligibility = await dbStorage.analyzeMemberRemovalEligibility(trip.id, userId);
-          
-          if (!eligibility.canRemove) {
-            blockingTrips.push({
-              tripId: trip.id,
-              tripName: trip.name,
-              reason: eligibility.reason || 'Cannot delete account due to unsettled balances',
-              balance: eligibility.balance,
-              manualExpenseBalance: eligibility.manualExpenseBalance,
-              prepaidActivityBalance: eligibility.prepaidActivityBalance,
-              suggestions: eligibility.suggestions
-            });
-            blockingReasons.push(`${trip.name}: ${eligibility.reason || 'Unsettled balances'}`);
-          }
-        }
-      }
-
-      if (blockingTrips.length > 0) {
-        console.log('❌ Delete account - Blocked by unsettled balances:', blockingTrips);
-        return res.status(400).json({
-          message: `Cannot delete account. You have unsettled balances. Please resolve the following issues: ${blockingReasons.join('; ')}`,
-          blockingTrips: blockingTrips,
-          details: {
-            totalBlockingTrips: blockingTrips.length,
-            reasons: blockingReasons
-          }
-        });
-      }
-
+      // Note: We no longer check for unsettled balances when deleting account
+      // The user will be anonymized (become a "ghost user") in all trips regardless of settlements
+      // Settlement checks only apply when leaving individual trips, not when deleting account
       console.log('🔍 Delete account - Starting user anonymization process...');
       // Use anonymizeUserAccount which handles trip organizer transfer and anonymization
       const success = await (storage as any).anonymizeUserAccount(userId);
