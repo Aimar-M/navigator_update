@@ -10,8 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, MapPin, Clock, DollarSign, Users, CheckIcon, XIcon, Trash2, ExternalLink, UserCheck, MoreHorizontal, Edit3, Save, X } from "lucide-react";
+import { ArrowLeft, MapPin, Clock, DollarSign, Users, CheckIcon, XIcon, Trash2, ExternalLink, UserCheck, MoreHorizontal, Edit3, Save, X, AlertTriangle } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
@@ -85,6 +86,7 @@ export default function ActivityDetails() {
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
   const [editCapDialogOpen, setEditCapDialogOpen] = useState(false);
   const [newMaxParticipants, setNewMaxParticipants] = useState<string>("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
@@ -560,16 +562,12 @@ export default function ActivityDetails() {
                         </DropdownMenuItem>
                       )}
                       <DropdownMenuItem 
-                        onSelect={() => {
-                          if (confirm("Are you sure you want to delete this activity? This will also remove any associated expenses.")) {
-                            deleteMutation.mutate();
-                          }
-                        }}
+                        onSelect={() => setDeleteDialogOpen(true)}
                         className="text-red-600 focus:text-red-600"
                         disabled={deleteMutation.isPending}
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
-                        {deleteMutation.isPending ? "Deleting..." : "Delete Activity"}
+                        Delete Activity
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -787,6 +785,59 @@ export default function ActivityDetails() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Activity Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              Delete Activity
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              <div className="space-y-3 mt-2">
+                <p>Are you sure you want to delete this activity?</p>
+                {activity && (
+                  <div className="bg-gray-50 p-3 rounded-md border">
+                    <p className="font-medium text-gray-900">{activity.name}</p>
+                    {activity.date && (
+                      <p className="text-sm text-gray-600 mt-1">
+                        {formatDate(activity.date)}
+                        {activity.startTime && ` at ${activity.startTime}`}
+                      </p>
+                    )}
+                  </div>
+                )}
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-3">
+                  <p className="text-sm text-red-800 font-medium">
+                    <strong>Warning:</strong> This action cannot be undone. This will permanently delete:
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-red-700 mt-2 ml-2">
+                    <li>The activity and all its details</li>
+                    <li>All RSVPs and participant responses</li>
+                    <li>All associated expenses</li>
+                  </ul>
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                deleteMutation.mutate();
+                setDeleteDialogOpen(false);
+              }}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete Activity"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Participants Lists */}
       {!isEditing && (
