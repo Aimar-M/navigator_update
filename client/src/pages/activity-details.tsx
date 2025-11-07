@@ -475,36 +475,6 @@ export default function ActivityDetails() {
           Back to Itinerary
         </Button>
         
-        <div className="flex items-center gap-2">
-          {/* Edit button - show for activity creator or admins when admin-only mode is enabled */}
-          {currentUser && canEditActivity && (activity.createdBy === currentUser.id || isCurrentUserAdmin) && (
-                <Button
-                  variant="outline"
-                  size="sm"
-              onClick={() => setIsEditing(true)}
-                  className="flex items-center gap-2"
-                >
-                  <Edit3 className="h-4 w-4" />
-                  Edit Activity
-                </Button>
-          )}
-          
-          {/* Delete button - show for activity creator or admins when admin-only mode is enabled */}
-          {currentUser && canEditActivity && (activity.createdBy === currentUser.id || isCurrentUserAdmin) && !isEditing && (
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => {
-                if (confirm("Are you sure you want to delete this activity? This will also remove any associated expenses.")) {
-                  deleteMutation.mutate();
-                }
-              }}
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? "Deleting..." : "Delete Activity"}
-            </Button>
-          )}
-        </div>
       </div>
 
       {/* Activity Details Card */}
@@ -557,68 +527,9 @@ export default function ActivityDetails() {
                   </Badge>
                   {activity.maxParticipants ? (
                     <>
-                      {isCurrentUserAdmin ? (
-                        <Dialog open={editCapDialogOpen} onOpenChange={setEditCapDialogOpen}>
-                          <DialogTrigger asChild>
-                            <Badge 
-                              variant="secondary" 
-                              className="text-xs cursor-pointer hover:bg-blue-200 transition-colors"
-                              onClick={() => {
-                                setNewMaxParticipants(activity.maxParticipants?.toString() || "unlimited");
-                                setEditCapDialogOpen(true);
-                              }}
-                            >
-                              Cap: {activity.maxParticipants} (click to edit)
-                            </Badge>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Edit Participant Cap</DialogTitle>
-                              <DialogDescription>
-                                Update the maximum number of participants for this activity.
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4">
-                              <div>
-                                <label className="text-sm font-medium">Participant Limit</label>
-                                <Select
-                                  value={newMaxParticipants}
-                                  onValueChange={setNewMaxParticipants}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Choose participant limit..." />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {participantOptions.map((option, index) => (
-                                      <SelectItem key={index} value={option.value}>
-                                        {option.label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </div>
-                            <DialogFooter>
-                              <Button
-                                variant="outline"
-                                onClick={() => setEditCapDialogOpen(false)}
-                              >
-                                Cancel
-                              </Button>
-                              <Button
-                                onClick={() => updateCapMutation.mutate(newMaxParticipants)}
-                                disabled={updateCapMutation.isPending}
-                              >
-                                {updateCapMutation.isPending ? "Updating..." : "Update Cap"}
-                              </Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
-                      ) : (
-                        <Badge variant="secondary" className="text-xs">
-                          Cap: {activity.maxParticipants}
-                        </Badge>
-                      )}
+                      <Badge variant="secondary" className="text-xs">
+                        Cap: {activity.maxParticipants}
+                      </Badge>
                       <Badge 
                         variant={spotsLeft === 0 ? "destructive" : spotsLeft && spotsLeft <= 3 ? "default" : "outline"}
                         className="text-xs"
@@ -626,70 +537,11 @@ export default function ActivityDetails() {
                         {spotsLeft && spotsLeft > 0 ? `${spotsLeft} spots left` : "Full"}
                       </Badge>
                     </>
-                  ) : (
-                    isCurrentUserAdmin && (
-                      <Dialog open={editCapDialogOpen} onOpenChange={setEditCapDialogOpen}>
-                        <DialogTrigger asChild>
-                          <Badge 
-                            variant="outline" 
-                            className="text-xs cursor-pointer hover:bg-blue-100 transition-colors border-dashed"
-                            onClick={() => {
-                              setNewMaxParticipants("unlimited");
-                              setEditCapDialogOpen(true);
-                            }}
-                          >
-                            + Add cap
-                          </Badge>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Add Participant Cap</DialogTitle>
-                            <DialogDescription>
-                              Set a maximum number of participants for this activity.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div>
-                              <label className="text-sm font-medium">Participant Limit</label>
-                              <Select
-                                value={newMaxParticipants}
-                                onValueChange={setNewMaxParticipants}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Choose participant limit..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {participantOptions.map((option, index) => (
-                                    <SelectItem key={index} value={option.value}>
-                                      {option.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-                          <DialogFooter>
-                            <Button
-                              variant="outline"
-                              onClick={() => setEditCapDialogOpen(false)}
-                            >
-                              Cancel
-                            </Button>
-                            <Button
-                              onClick={() => updateCapMutation.mutate(newMaxParticipants)}
-                              disabled={updateCapMutation.isPending}
-                            >
-                              {updateCapMutation.isPending ? "Adding..." : "Add Cap"}
-                            </Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
-                    )
-                  )}
+                  ) : null}
                 </div>
                 
-                {/* Admin actions dropdown */}
-                {isCurrentUserAdmin && (
+                {/* Actions dropdown - show for users who can edit */}
+                {currentUser && canEditActivity && (activity.createdBy === currentUser.id || isCurrentUserAdmin) && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -697,21 +549,28 @@ export default function ActivityDetails() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuItem onSelect={() => setIsEditing(true)}>
+                        <Edit3 className="mr-2 h-4 w-4" />
+                        Edit Activity
+                      </DropdownMenuItem>
                       {currentUser && activity.createdBy === currentUser.id && (
                         <DropdownMenuItem onSelect={() => setTransferDialogOpen(true)}>
                           <UserCheck className="mr-2 h-4 w-4" />
                           Transfer Ownership
                         </DropdownMenuItem>
                       )}
-                      {canEditActivity && (
-                        <DropdownMenuItem 
-                          onSelect={() => deleteMutation.mutate()}
-                          className="text-red-600 focus:text-red-600"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete Activity
-                        </DropdownMenuItem>
-                      )}
+                      <DropdownMenuItem 
+                        onSelect={() => {
+                          if (confirm("Are you sure you want to delete this activity? This will also remove any associated expenses.")) {
+                            deleteMutation.mutate();
+                          }
+                        }}
+                        className="text-red-600 focus:text-red-600"
+                        disabled={deleteMutation.isPending}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        {deleteMutation.isPending ? "Deleting..." : "Delete Activity"}
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 )}
@@ -808,18 +667,6 @@ export default function ActivityDetails() {
                 </Button>
               )}
               
-              {/* Show delete button for activity creators */}
-              {currentUser && activity.createdBy === currentUser.id && (
-                <Button
-                  variant="destructive"
-                  onClick={() => deleteMutation.mutate()}
-                  disabled={isSubmitting}
-                  className="flex items-center gap-2"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Delete Activity
-                </Button>
-              )}
             </div>
             
             {/* Show message for prepaid activity creators - moved below button container */}
@@ -888,6 +735,54 @@ export default function ActivityDetails() {
               disabled={!selectedNewOwner || transferOwnershipMutation.isPending}
             >
               {transferOwnershipMutation.isPending ? "Transferring..." : "Transfer Ownership"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Cap Dialog */}
+      <Dialog open={editCapDialogOpen} onOpenChange={setEditCapDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{activity.maxParticipants ? "Edit Participant Cap" : "Add Participant Cap"}</DialogTitle>
+            <DialogDescription>
+              {activity.maxParticipants 
+                ? "Update the maximum number of participants for this activity."
+                : "Set a maximum number of participants for this activity."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Participant Limit</label>
+              <Select
+                value={newMaxParticipants}
+                onValueChange={setNewMaxParticipants}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose participant limit..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {participantOptions.map((option, index) => (
+                    <SelectItem key={index} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setEditCapDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => updateCapMutation.mutate(newMaxParticipants)}
+              disabled={updateCapMutation.isPending}
+            >
+              {updateCapMutation.isPending ? (activity.maxParticipants ? "Updating..." : "Adding...") : (activity.maxParticipants ? "Update Cap" : "Add Cap")}
             </Button>
           </DialogFooter>
         </DialogContent>
