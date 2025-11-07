@@ -29,9 +29,10 @@ export default function UserProfile() {
   const [, setLocation] = useLocation();
   const userId = params?.userId;
 
-  const { data: profile, isLoading: profileLoading } = useQuery<UserProfileData>({
+  const { data: profile, isLoading: profileLoading, error: profileError } = useQuery<UserProfileData>({
     queryKey: [`${API_BASE}/api/users/${userId}`],
     enabled: !!userId,
+    retry: false, // Don't retry on 404
   });
 
   const { data: stats, isLoading: statsLoading } = useQuery<UserStats>({
@@ -61,7 +62,8 @@ export default function UserProfile() {
     );
   }
 
-  if (!profile) {
+  // Show "User not found" if profile doesn't exist or is deleted
+  if (!profile || profileError) {
     return (
       <div className="min-h-screen bg-gray-50 p-4">
         <div className="max-w-2xl mx-auto">

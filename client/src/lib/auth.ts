@@ -21,16 +21,22 @@ export async function loginUser(credentials: { identifier: string; password: str
 
     console.log('Login response status:', response.status);
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Login error response:', errorText);
-      throw new Error(errorText || 'Failed to login');
-    }
-
     const data = await response.json();
     console.log('Login response data:', { ...data, token: data.token ? '***' : undefined });
     
-    // Check if account requires recovery
+    // Check if account requires recovery (403 status with ACCOUNT_DELETED code)
+    if (!response.ok && data.code === 'ACCOUNT_DELETED') {
+      // Return recovery data instead of throwing error
+      return data;
+    }
+    
+    if (!response.ok) {
+      const errorText = JSON.stringify(data);
+      console.error('Login error response:', errorText);
+      throw new Error(errorText || 'Failed to login');
+    }
+    
+    // Check if account requires recovery (even if response is ok)
     if (data.requiresRecovery) {
       // Return recovery data instead of throwing error
       return data;
@@ -57,12 +63,20 @@ export async function registerUser(userData: {
     body: JSON.stringify(userData),
   });
 
+  const data = await response.json();
+
+  // Check if account requires recovery (403 status with ACCOUNT_DELETED code)
+  if (!response.ok && data.code === 'ACCOUNT_DELETED') {
+    // Return recovery data instead of throwing error
+    return data;
+  }
+
   if (!response.ok) {
-    const error = await response.text();
+    const error = JSON.stringify(data);
     throw new Error(error || 'Failed to register');
   }
 
-  return response.json();
+  return data;
 }
 
 export async function logoutUser() {

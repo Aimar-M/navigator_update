@@ -363,6 +363,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if email already exists
       const existingEmail = await storage.getUserByEmail(userData.email);
       if (existingEmail) {
+        // Check if account is deleted - redirect to recovery
+        if (existingEmail.deletedAt) {
+          return res.status(403).json({
+            code: 'ACCOUNT_DELETED',
+            requiresRecovery: true,
+            message: 'This email was used for a deleted account. Please recover it to continue.',
+            email: existingEmail.email
+          });
+        }
         return res.status(400).json({ message: 'Email already registered' });
       }
       // Hash the password before saving
@@ -543,13 +552,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'Invalid username/email or password' });
       }
       
-      // Check if account is deleted - trigger recovery flow
+      // Check if account is deleted - block login and require recovery
       if (user.deletedAt) {
         console.log('🔍 Login attempt for deleted account:', user.id);
-        return res.status(200).json({
+        return res.status(403).json({
+          code: 'ACCOUNT_DELETED',
           requiresRecovery: true,
           deletedAt: user.deletedAt,
-          message: 'This account was deleted. We\'ll send a recovery email to verify it\'s you.',
+          message: 'This account was deleted. Please recover it to continue.',
           email: user.email // Send email for recovery request
         });
       }
@@ -5247,6 +5257,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
+      // Check if account is deleted - return 404 to show as ghost user
+      if (user.deletedAt) {
+        return res.status(404).json({ message: "User not found", deleted: true });
+      }
+
       // Return public profile data (exclude sensitive info)
       const publicProfile = {
         id: user.id,
@@ -5271,6 +5286,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = parseInt(req.params.userId);
       if (isNaN(userId)) {
         return res.status(400).json({ message: "Invalid user ID" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Check if account is deleted - return 404 to show as ghost user
+      if (user.deletedAt) {
+        return res.status(404).json({ message: "User not found", deleted: true });
       }
 
       const memberships = await storage.getTripMembershipsByUser(userId);

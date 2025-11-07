@@ -217,8 +217,21 @@ export default function Register() {
       
       // Show success message about email confirmation
       // The register function should handle the redirect or show confirmation message
-    } catch (error) {
+    } catch (error: any) {
       console.error("Registration error:", error);
+      
+      // Check if error is about deleted account
+      try {
+        const errorData = typeof error === 'string' ? JSON.parse(error) : error;
+        if (errorData?.code === 'ACCOUNT_DELETED' || errorData?.requiresRecovery) {
+          const email = errorData.email || formData.email;
+          navigate(`/recover-account?email=${encodeURIComponent(email)}`);
+          return;
+        }
+      } catch (parseError) {
+        // Not JSON, continue with normal error handling
+      }
+      
       // Remove stored email if registration failed
       localStorage.removeItem('pendingEmailConfirmation');
     }

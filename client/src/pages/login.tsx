@@ -199,14 +199,28 @@ export default function Login() {
       // Check if account requires recovery
       if (result && result.requiresRecovery) {
         console.log("Account requires recovery:", result);
-        setRecoveryEmail(result.email || identifier);
-        setShowRecoveryPrompt(true);
+        // Redirect to recovery page with email
+        const email = result.email || (identifier.includes('@') ? identifier : '');
+        navigate(`/recover-account?email=${encodeURIComponent(email)}`);
         return;
       }
       
       console.log("Login successful");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error);
+      
+      // Check if error is about deleted account
+      try {
+        const errorData = typeof error === 'string' ? JSON.parse(error) : error;
+        if (errorData?.code === 'ACCOUNT_DELETED' || errorData?.requiresRecovery) {
+          const email = errorData.email || (identifier.includes('@') ? identifier : '');
+          navigate(`/recover-account?email=${encodeURIComponent(email)}`);
+          return;
+        }
+      } catch (parseError) {
+        // Not JSON, continue with normal error handling
+      }
+      
       // Display login error directly on the page for easier debugging
       setErrors({
         ...errors,

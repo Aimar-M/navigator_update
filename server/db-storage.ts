@@ -223,18 +223,17 @@ export class DatabaseStorage {
         
         console.log(`🔍 anonymizeUserAccount - Trip ${trip.id}: ${allMembers.length} total members, ${otherMembers.length} other members`);
         
-        // If user is organizer and there are other members, transfer organizer role
+        // If user is organizer and there are other members, make earliest member an admin
+        // Keep deleted user as organizer (will show as "User not found" in UI)
         if (trip.organizer === userId && otherMembers.length > 0) {
           const earliestMember = await this.getEarliestTripMember(trip.id, userId);
           
           if (earliestMember) {
-            console.log(`🔍 anonymizeUserAccount - Transferring organizer from user ${userId} to user ${earliestMember.userId} for trip ${trip.id}`);
-            await db
-              .update(trips)
-              .set({ organizer: earliestMember.userId })
-              .where(eq(trips.id, trip.id));
+            console.log(`🔍 anonymizeUserAccount - Making earliest member ${earliestMember.userId} an admin for trip ${trip.id} (keeping deleted user ${userId} as organizer)`);
+            // Make the earliest member an admin instead of transferring organizer role
+            await this.updateTripMemberAdminStatus(trip.id, earliestMember.userId, true);
           } else {
-            console.log(`⚠️ anonymizeUserAccount - No other members found to transfer organizer role for trip ${trip.id}`);
+            console.log(`⚠️ anonymizeUserAccount - No other members found to make admin for trip ${trip.id}`);
             // Keep user as organizer (will show as "User not found" in UI)
           }
         }
