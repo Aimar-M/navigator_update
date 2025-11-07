@@ -86,6 +86,8 @@ export default function ActivityDetails() {
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
   const [editCapDialogOpen, setEditCapDialogOpen] = useState(false);
   const [newMaxParticipants, setNewMaxParticipants] = useState<string>("");
+  const [customCapValue, setCustomCapValue] = useState<string>("");
+  const [isCustomCapSelected, setIsCustomCapSelected] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   
   // Edit mode state
@@ -138,14 +140,16 @@ export default function ActivityDetails() {
   ).length;
 
   // Generate participant cap options
-  const generateParticipantOptions = (totalMembers: number) => {
+  const generateParticipantOptions = (totalMembers: number, minValue: number = 0) => {
     const options = [];
     
     // Add "No cap" option
     options.push({ value: 'unlimited', label: 'No cap' });
     
-    // Add numbers from 1 to totalMembers
-    for (let i = 1; i <= totalMembers; i++) {
+    // Add numbers from max(1, minValue) to totalMembers
+    // This ensures we don't show options below the minimum required
+    const startValue = Math.max(1, minValue);
+    for (let i = startValue; i <= totalMembers; i++) {
       options.push({ 
         value: i.toString(), 
         label: i.toString()
@@ -739,7 +743,15 @@ export default function ActivityDetails() {
       </Dialog>
 
       {/* Edit Cap Dialog */}
-      <Dialog open={editCapDialogOpen} onOpenChange={setEditCapDialogOpen}>
+      <Dialog open={editCapDialogOpen} onOpenChange={(open) => {
+        setEditCapDialogOpen(open);
+        if (open && activity) {
+          // Initialize with current value
+          setNewMaxParticipants(activity.maxParticipants?.toString() || "");
+          setCustomCapValue("");
+          setIsCustomCapSelected(false);
+        }
+      }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{activity.maxParticipants ? "Edit Participant Cap" : "Add Participant Cap"}</DialogTitle>
@@ -747,26 +759,55 @@ export default function ActivityDetails() {
               {activity.maxParticipants 
                 ? "Update the maximum number of participants for this activity."
                 : "Set a maximum number of participants for this activity."}
+              {goingRSVPs.length > 0 && (
+                <span className="block mt-1 text-amber-600">
+                  Note: {goingRSVPs.length} {goingRSVPs.length === 1 ? 'person has' : 'people have'} already confirmed attendance. The cap cannot be set below this number.
+                </span>
+              )}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium">Participant Limit</label>
               <Select
-                value={newMaxParticipants}
-                onValueChange={setNewMaxParticipants}
+                value={isCustomCapSelected ? "custom" : (newMaxParticipants || "")}
+                onValueChange={(value) => {
+                  if (value === "custom") {
+                    setIsCustomCapSelected(true);
+                    setNewMaxParticipants(customCapValue || "");
+                  } else {
+                    setIsCustomCapSelected(false);
+                    setNewMaxParticipants(value);
+                    setCustomCapValue("");
+                  }
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Choose participant limit..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {participantOptions.map((option, index) => (
+                  {generateParticipantOptions(confirmedMembersCount, goingRSVPs.length).map((option, index) => (
                     <SelectItem key={index} value={option.value}>
                       {option.label}
                     </SelectItem>
                   ))}
+                  <SelectItem value="custom">Custom</SelectItem>
                 </SelectContent>
               </Select>
+              {isCustomCapSelected && (
+                <Input
+                  type="number"
+                  min={goingRSVPs.length}
+                  value={customCapValue}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setCustomCapValue(val);
+                    setNewMaxParticipants(val);
+                  }}
+                  placeholder={`Enter custom number (min: ${goingRSVPs.length})`}
+                  className="mt-2"
+                />
+              )}
             </div>
           </div>
           <DialogFooter>
@@ -777,7 +818,18 @@ export default function ActivityDetails() {
               Cancel
             </Button>
             <Button
-              onClick={() => updateCapMutation.mutate(newMaxParticipants)}
+              onClick={() => {
+                const capValue = newMaxParticipants === 'unlimited' ? null : parseInt(newMaxParticipants);
+                if (capValue !== null && capValue < goingRSVPs.length) {
+                  toast({
+                    title: "Invalid Cap",
+                    description: `The cap cannot be set below ${goingRSVPs.length} (the number of people already going).`,
+                    variant: "destructive"
+                  });
+                  return;
+                }
+                updateCapMutation.mutate(newMaxParticipants);
+              }}
               disabled={updateCapMutation.isPending}
             >
               {updateCapMutation.isPending ? (activity.maxParticipants ? "Updating..." : "Adding...") : (activity.maxParticipants ? "Update Cap" : "Add Cap")}
@@ -931,6 +983,7 @@ export default function ActivityDetails() {
         onSubmit={handleSaveEdit}
         tripDays={tripDays}
         participantOptions={participantOptions}
+        disablePaymentFields={isOrganizer}
       />
     </div>
   );

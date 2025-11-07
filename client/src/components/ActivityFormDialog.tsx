@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import GooglePlacesAutocomplete from "@/components/google-places-autocomplete";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export type ActivityFormData = {
   name: string;
@@ -44,11 +44,31 @@ interface ActivityFormDialogProps {
   onSubmit: () => void;
   tripDays: TripDay[];
   participantOptions: ParticipantOption[];
+  disablePaymentFields?: boolean;
 }
 
 export default function ActivityFormDialog(props: ActivityFormDialogProps) {
-  const { open, onOpenChange, title = "Itinerary Item", submitLabel, isSubmitting, formData, setFormData, onSubmit, tripDays, participantOptions } = props;
+  const { open, onOpenChange, title = "Itinerary Item", submitLabel, isSubmitting, formData, setFormData, onSubmit, tripDays, participantOptions, disablePaymentFields = false } = props;
   const [showMoreDetails, setShowMoreDetails] = useState(false);
+  const [customCapValue, setCustomCapValue] = useState<string>("");
+  const [isCustomCapSelected, setIsCustomCapSelected] = useState(false);
+  
+  // Check if current selection is custom (not in predefined options)
+  const isCustomCap = formData.maxParticipants && 
+    formData.maxParticipants !== 'unlimited' && 
+    formData.maxParticipants !== '' &&
+    !participantOptions.some(opt => opt.value === formData.maxParticipants);
+  
+  // Initialize custom cap value when formData has a custom value
+  useEffect(() => {
+    if (isCustomCap) {
+      setCustomCapValue(formData.maxParticipants);
+      setIsCustomCapSelected(true);
+    } else if (formData.maxParticipants === 'unlimited' || formData.maxParticipants === '') {
+      setCustomCapValue("");
+      setIsCustomCapSelected(false);
+    }
+  }, [formData.maxParticipants, isCustomCap]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -179,6 +199,7 @@ export default function ActivityFormDialog(props: ActivityFormDialogProps) {
               <Select 
                 value={formData.paymentType} 
                 onValueChange={(value) => setFormData(prev => ({ ...prev, paymentType: value }))}
+                disabled={disablePaymentFields}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select payment type" />
@@ -206,6 +227,7 @@ export default function ActivityFormDialog(props: ActivityFormDialogProps) {
                 onChange={(e) => setFormData(prev => ({ ...prev, cost: e.target.value }))}
                 placeholder={formData.paymentType === "prepaid" ? "Enter cost amount" : "0.00"}
                 required={formData.paymentType === "prepaid"}
+                disabled={disablePaymentFields}
                 className={formData.paymentType === "prepaid" && !formData.cost ? "border-red-300" : ""}
               />
               {formData.paymentType === "prepaid" && !formData.cost && (
@@ -280,8 +302,21 @@ export default function ActivityFormDialog(props: ActivityFormDialogProps) {
                   Registration cap (optional)
                 </Label>
                 <Select
-                  value={formData.maxParticipants}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, maxParticipants: value }))}
+                  value={isCustomCapSelected || isCustomCap ? "custom" : (formData.maxParticipants || "")}
+                  onValueChange={(value) => {
+                    if (value === "custom") {
+                      setIsCustomCapSelected(true);
+                      // Keep existing value if it's already a custom value, otherwise clear it
+                      if (!isCustomCap) {
+                        setFormData(prev => ({ ...prev, maxParticipants: "" }));
+                        setCustomCapValue("");
+                      }
+                    } else {
+                      setIsCustomCapSelected(false);
+                      setFormData(prev => ({ ...prev, maxParticipants: value }));
+                      setCustomCapValue("");
+                    }
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Choose participant limit..." />
@@ -292,8 +327,24 @@ export default function ActivityFormDialog(props: ActivityFormDialogProps) {
                         {option.label}
                       </SelectItem>
                     ))}
+                    <SelectItem value="custom">Custom</SelectItem>
                   </SelectContent>
                 </Select>
+                {(isCustomCapSelected || isCustomCap) && (
+                  <Input
+                    id="activity-custom-cap"
+                    type="number"
+                    min="1"
+                    value={customCapValue}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setCustomCapValue(val);
+                      setFormData(prev => ({ ...prev, maxParticipants: val }));
+                    }}
+                    placeholder="Enter custom number"
+                    className="mt-2"
+                  />
+                )}
               </div>
             </div>
           </div>
