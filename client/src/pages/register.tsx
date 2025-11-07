@@ -210,6 +210,19 @@ export default function Register() {
       
       const result = await register(registerData);
       
+      // Check if account requires recovery (deleted account with same email)
+      if (result && result.requiresRecovery) {
+        console.log("Account requires recovery:", result);
+        // Redirect to recovery page with email
+        const email = result.email || formData.email;
+        if (email) {
+          navigate(`/recover-account?email=${encodeURIComponent(email)}`);
+        } else {
+          navigate('/recover-account');
+        }
+        return;
+      }
+      
       // Check if registration requires email confirmation
       if (result && result.requiresEmailConfirmation) {
         setRegisteredEmail(formData.email);
@@ -230,13 +243,16 @@ export default function Register() {
     } catch (error: any) {
       console.error("Registration error:", error);
       
-      // Check if error is about deleted account - show warning dialog instead of redirecting
+      // Check if error is about deleted account - redirect to recovery
       try {
         const errorData = typeof error === 'string' ? JSON.parse(error) : error;
         if (errorData?.code === 'ACCOUNT_DELETED' || errorData?.requiresRecovery) {
           const email = errorData.email || formData.email;
-          setDeletedAccountEmail(email);
-          setShowDeletedAccountDialog(true);
+          if (email) {
+            navigate(`/recover-account?email=${encodeURIComponent(email)}`);
+          } else {
+            navigate('/recover-account');
+          }
           return;
         }
       } catch (parseError) {

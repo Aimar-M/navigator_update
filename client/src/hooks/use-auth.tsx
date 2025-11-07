@@ -205,6 +205,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const userData = await loginUser(credentials);
       
+      // Check if account requires recovery (deleted account)
+      if (userData && userData.requiresRecovery) {
+        console.log("Account requires recovery, returning recovery data");
+        setIsLoading(false);
+        return userData; // Return recovery data for page to handle redirect
+      }
+      
       // Store the token
       if (userData.token) {
         setAuthToken(userData.token);
@@ -245,6 +252,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     try {
       const newUser = await registerUser(userData);
+      
+      // Check if account requires recovery (deleted account with same email)
+      if (newUser && newUser.requiresRecovery) {
+        console.log("Account requires recovery, returning recovery data");
+        setIsLoading(false);
+        return newUser; // Return recovery data for page to handle redirect
+      }
       
       // Check if email confirmation is required
       if (newUser.requiresEmailConfirmation) {

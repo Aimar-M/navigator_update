@@ -196,15 +196,21 @@ export default function Login() {
       console.log("Attempting to log in with:", identifier);
       const result = await login(loginData);
       
-      // Check if account requires recovery
+      // Check if account requires recovery (deleted account)
       if (result && result.requiresRecovery) {
         console.log("Account requires recovery:", result);
         // Redirect to recovery page with email
         const email = result.email || (identifier.includes('@') ? identifier : '');
-        navigate(`/recover-account?email=${encodeURIComponent(email)}`);
+        if (email) {
+          navigate(`/recover-account?email=${encodeURIComponent(email)}`);
+        } else {
+          navigate('/recover-account');
+        }
         return;
       }
       
+      // If no recovery needed and no error, login was successful
+      // (redirect is handled by use-auth hook)
       console.log("Login successful");
     } catch (error: any) {
       console.error("Login error:", error);
@@ -214,7 +220,11 @@ export default function Login() {
         const errorData = typeof error === 'string' ? JSON.parse(error) : error;
         if (errorData?.code === 'ACCOUNT_DELETED' || errorData?.requiresRecovery) {
           const email = errorData.email || (identifier.includes('@') ? identifier : '');
-          navigate(`/recover-account?email=${encodeURIComponent(email)}`);
+          if (email) {
+            navigate(`/recover-account?email=${encodeURIComponent(email)}`);
+          } else {
+            navigate('/recover-account');
+          }
           return;
         }
       } catch (parseError) {
@@ -453,6 +463,13 @@ export default function Login() {
                   <Link href="/forgot-password">
                     <span className="text-primary-600 hover:text-primary-700 font-medium cursor-pointer">
                       Forgot your password?
+                    </span>
+                  </Link>
+                </p>
+                <p>
+                  <Link href="/recover-account">
+                    <span className="text-primary-600 hover:text-primary-700 font-medium cursor-pointer">
+                      Recover your account
                     </span>
                   </Link>
                 </p>

@@ -76,6 +76,12 @@ export async function registerUser(userData: {
     throw new Error(error || 'Failed to register');
   }
 
+  // Check if account requires recovery (even if response is ok)
+  if (data.requiresRecovery) {
+    // Return recovery data instead of throwing error
+    return data;
+  }
+
   return data;
 }
 

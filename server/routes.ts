@@ -363,14 +363,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if email already exists
       const existingEmail = await storage.getUserByEmail(userData.email);
       if (existingEmail) {
-        // Check if account is deleted - return special code for frontend to show dialog
+        // Check if account is deleted - trigger recovery flow
         if (existingEmail.deletedAt) {
-          return res.status(403).json({
-            code: 'ACCOUNT_DELETED',
+          return res.status(200).json({
             requiresRecovery: true,
-            message: 'This email was used for a deleted account. You can recover it or create a new account.',
-            email: existingEmail.email,
-            allowNewAccount: true // Allow user to choose to create new account
+            deletedAt: existingEmail.deletedAt,
+            message: 'This email was used for a deleted account. You can recover it to continue.',
+            email: existingEmail.email
           });
         }
         return res.status(400).json({ message: 'Email already registered' });
@@ -553,14 +552,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'Invalid username/email or password' });
       }
       
-      // Check if account is deleted - block login and require recovery
+      // Check if account is deleted - trigger recovery flow
       if (user.deletedAt) {
         console.log('🔍 Login attempt for deleted account:', user.id);
-        return res.status(403).json({
-          code: 'ACCOUNT_DELETED',
+        return res.status(200).json({
           requiresRecovery: true,
           deletedAt: user.deletedAt,
-          message: 'This account was deleted. Please recover it to continue.',
+          message: 'This account was deleted. We\'ll send a recovery email to verify it\'s you.',
           email: user.email // Send email for recovery request
         });
       }
