@@ -1,4 +1,4 @@
-import express, { type Express, Request, Response } from "express";
+import express, { type Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import session from "express-session";
@@ -363,13 +363,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if email already exists
       const existingEmail = await storage.getUserByEmail(userData.email);
       if (existingEmail) {
-        // Check if account is deleted - redirect to recovery
+        // Check if account is deleted - return special code for frontend to show dialog
         if (existingEmail.deletedAt) {
           return res.status(403).json({
             code: 'ACCOUNT_DELETED',
             requiresRecovery: true,
-            message: 'This email was used for a deleted account. Please recover it to continue.',
-            email: existingEmail.email
+            message: 'This email was used for a deleted account. You can recover it or create a new account.',
+            email: existingEmail.email,
+            allowNewAccount: true // Allow user to choose to create new account
           });
         }
         return res.status(400).json({ message: 'Email already registered' });
@@ -6621,7 +6622,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   router.get('/auth/google/callback', 
-    passport.authenticate('google', { failureRedirect: '/login' }),
+    (req: Request, res: Response, next: NextFunction) => {
+      passport.authenticate('google', (err: any, user: any, info: any) => {
+        if (err) {
+          console.error('❌ OAuth authentication error:', err);
+          // Check if error is about deleted account
+          if (err.message === 'ACCOUNT_DELETED') {
+            const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://navigator-update.vercel.app';
+            console.log('🔍 Redirecting deleted account to recovery page');
+            return res.redirect(302, `${frontendUrl}/recover-account?oauth_deleted=true`);
+          }
+          const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://navigator-update.vercel.app';
+          return res.redirect(302, `${frontendUrl}/login?error=oauth_failed`);
+        }
+        if (!user) {
+          console.error('❌ No user object in OAuth callback');
+          const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://navigator-update.vercel.app';
+          return res.redirect(302, `${frontendUrl}/login?error=oauth_failed`);
+        }
+        // User is authenticated, continue to next handler
+        req.login(user, (loginErr) => {
+          if (loginErr) {
+            console.error('❌ Error logging in user:', loginErr);
+            const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://navigator-update.vercel.app';
+            return res.redirect(302, `${frontendUrl}/login?error=oauth_failed`);
+          }
+          next();
+        });
+      })(req, res, next);
+    },
     (req: Request, res: Response) => {
       try {
         console.log('🎯 Google OAuth callback reached');

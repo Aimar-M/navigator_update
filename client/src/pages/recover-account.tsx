@@ -37,6 +37,7 @@ export default function RecoverAccount() {
     const urlParams = new URLSearchParams(window.location.search);
     const tokenParam = urlParams.get('token');
     const emailParam = urlParams.get('email');
+    const oauthDeleted = urlParams.get('oauth_deleted');
     
     // If token and email are in URL, validate the recovery link
     if (tokenParam && emailParam) {
@@ -47,6 +48,10 @@ export default function RecoverAccount() {
       // If only email is provided, show email input form pre-filled
       setEmailInput(decodeURIComponent(emailParam));
       setIsValidating(false);
+    } else if (oauthDeleted) {
+      // OAuth login detected deleted account - show message
+      setIsValidating(false);
+      setError("Your Google account is linked to a deleted Navigator account. Please enter your email and password to recover it.");
     } else {
       // No token/email - show email input form
       setIsValidating(false);

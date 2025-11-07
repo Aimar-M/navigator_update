@@ -33,6 +33,13 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.
     if (user) {
       console.log('✅ Existing Google user found:', user.username);
       console.log('🔍 User details:', { id: user.id, email: user.email, googleId: user.googleId });
+      
+      // Check if account is deleted - block OAuth login and require recovery
+      if (user.deletedAt) {
+        console.log('🔍 Google OAuth login attempt for deleted account:', user.id);
+        return done(new Error('ACCOUNT_DELETED'), null);
+      }
+      
       return done(null, user);
     }
 
@@ -42,6 +49,12 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.
       user = await storage.getUserByEmail(profile.emails[0].value);
       
       if (user) {
+        // Check if account is deleted - block OAuth login and require recovery
+        if (user.deletedAt) {
+          console.log('🔍 Google OAuth login attempt for deleted account:', user.id);
+          return done(new Error('ACCOUNT_DELETED'), null);
+        }
+        
         // Link existing account with Google
         console.log('🔗 Linking existing account with Google:', user.username);
         console.log('🔍 Updating user with Google OAuth data...');

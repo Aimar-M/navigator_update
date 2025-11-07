@@ -11,6 +11,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import navigatorLogo from "@/assets/ab_Navigator2-11_1749673314519.png";
@@ -40,6 +48,8 @@ export default function Register() {
   const [registeredEmail, setRegisteredEmail] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showDeletedAccountDialog, setShowDeletedAccountDialog] = useState(false);
+  const [deletedAccountEmail, setDeletedAccountEmail] = useState("");
   const { register, isLoading, user } = useAuth();
   const [, navigate] = useLocation();
 
@@ -220,12 +230,13 @@ export default function Register() {
     } catch (error: any) {
       console.error("Registration error:", error);
       
-      // Check if error is about deleted account
+      // Check if error is about deleted account - show warning dialog instead of redirecting
       try {
         const errorData = typeof error === 'string' ? JSON.parse(error) : error;
         if (errorData?.code === 'ACCOUNT_DELETED' || errorData?.requiresRecovery) {
           const email = errorData.email || formData.email;
-          navigate(`/recover-account?email=${encodeURIComponent(email)}`);
+          setDeletedAccountEmail(email);
+          setShowDeletedAccountDialog(true);
           return;
         }
       } catch (parseError) {
@@ -235,6 +246,20 @@ export default function Register() {
       // Remove stored email if registration failed
       localStorage.removeItem('pendingEmailConfirmation');
     }
+  };
+
+  const handleRecoverAccount = () => {
+    setShowDeletedAccountDialog(false);
+    navigate(`/recover-account?email=${encodeURIComponent(deletedAccountEmail)}`);
+  };
+
+  const handleCreateNewAccount = () => {
+    setShowDeletedAccountDialog(false);
+    // Show message that they need to use a different email
+    // The email is already taken by a deleted account, so they can't use the same email
+    setErrors({
+      email: "This email was previously used. Please use a different email address to create a new account, or recover your existing account."
+    });
   };
 
   return (
@@ -455,6 +480,47 @@ export default function Register() {
           </form>
         </Card>
       </div>
+
+      {/* Deleted Account Warning Dialog */}
+      <Dialog open={showDeletedAccountDialog} onOpenChange={setShowDeletedAccountDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Account Recovery Available</DialogTitle>
+            <DialogDescription>
+              This email ({deletedAccountEmail}) was previously used for an account that was deleted. 
+              You have two options:
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm text-blue-800">
+                <strong>Option 1:</strong> Recover your existing account to restore all your trips and data.
+              </p>
+            </div>
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              <p className="text-sm text-gray-700">
+                <strong>Option 2:</strong> Create a new account. Note: You'll need to use a different email address 
+                since this one is associated with a deleted account.
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={handleRecoverAccount}
+              className="w-full sm:w-auto"
+            >
+              Recover My Account
+            </Button>
+            <Button
+              onClick={handleCreateNewAccount}
+              className="w-full sm:w-auto"
+            >
+              Create New Account
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
