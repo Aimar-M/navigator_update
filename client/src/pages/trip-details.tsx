@@ -175,6 +175,7 @@ export default function TripDetails() {
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}`] });
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/expenses`] });
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/expenses/balances`] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/members`] });
       setIsEditing(false);
       toast({
         title: "Trip updated",
@@ -941,9 +942,16 @@ export default function TripDetails() {
                       return false;
                     }
                     
-                    // For trips requiring down payment, only show confirmed participants
+                    // For trips requiring down payment, show:
+                    // - Members with confirmed payment status, OR
+                    // - Members who were already confirmed (by status/rsvp) even if payment isn't confirmed yet
+                    //   (this handles the case when downpayment is added to an existing trip with confirmed members)
                     if (trip.requiresDownPayment) {
-                      return member.paymentStatus === 'confirmed';
+                      return member.paymentStatus === 'confirmed' || 
+                             member.status === 'confirmed' || 
+                             member.rsvpStatus === 'confirmed' ||
+                             member.paymentStatus === 'pending' ||
+                             member.paymentStatus === 'submitted';
                     }
                     
                     // For trips without payment requirements, show confirmed and pending members
