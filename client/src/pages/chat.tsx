@@ -318,40 +318,31 @@ export default function Chat() {
       {!isFromChatsPage && <Header />}
       
       <main className={`flex-1 flex flex-col min-h-0 ${isFromChatsPage ? '' : ''}`}>
-        {/* Trip Header - Commented out as it's unnecessary - users already know what chat they're in */}
-        {/* 
-        <div className="bg-white border-b border-gray-200 p-3 md:p-4">
-          <div className="flex items-center justify-between relative">
-            {isFromChatsPage && (
+        {/* Mobile Header with Back Button - only show when coming from chats page */}
+        {isFromChatsPage && (
+          <div className="bg-white border-b border-gray-200 p-3 md:hidden">
+            <div className="flex items-center">
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="p-1 h-8 w-8 absolute left-0" 
+                className="p-1 h-8 w-8 mr-2" 
                 onClick={() => navigate("/chats")}
               >
                 <ArrowLeft className="h-5 w-5" />
                 <span className="sr-only">Back to chats</span>
               </Button>
-            )}
-            <div 
-              className={`${isFromChatsPage ? "cursor-pointer mx-auto" : "ml-0"} text-center`}
-              onClick={isFromChatsPage ? () => navigate(`/trips/${tripId}`) : undefined}
-            >
-              <h2 className="text-lg md:text-xl font-bold text-gray-900">{trip.name}</h2>
-              <p className="text-xs md:text-sm text-gray-600">
-                {isFromChatsPage ? "Tap to see trip details" : "Group Chat"}
-              </p>
+              <div className="flex-1">
+                <h2 className="text-lg font-bold text-gray-900 truncate">{trip.name}</h2>
+              </div>
             </div>
-            {isFromChatsPage && <div className="w-8"></div>}
           </div>
-        </div>
-        */}
+        )}
 
         {/* Tab Navigation - only show when not coming from chats page */}
         {!isFromChatsPage && <TripTabs tripId={tripId} />}
 
         {/* Chat Content - Clean design with minimal padding */}
-        <div className="flex-1 overflow-y-auto p-2 md:p-4 pb-20 md:pb-4 bg-white min-h-0">
+        <div className={`flex-1 overflow-y-auto p-2 md:p-4 pb-20 md:pb-4 bg-white min-h-0 ${isFromChatsPage ? 'pt-2' : ''}`}>
           {isMessagesLoading ? (
             <div className="space-y-4 py-2">
               {[1, 2, 3].map((i) => (
