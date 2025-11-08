@@ -1074,17 +1074,14 @@ export class DatabaseStorage {
       })
     );
 
-    // Add confirmed and rejected settlements as settlement transactions
+    // Add only confirmed settlements as settlement transactions (rejected settlements are excluded)
     const processedSettlements = await db
       .select()
       .from(settlements)
       .where(
         and(
           eq(settlements.tripId, tripId),
-          or(
-            eq(settlements.status, 'confirmed'),
-            eq(settlements.status, 'rejected')
-          )
+          eq(settlements.status, 'confirmed')
         )
       )
       .orderBy(desc(settlements.updatedAt));
@@ -1100,7 +1097,7 @@ export class DatabaseStorage {
           title: `Payment: ${payer?.name || payer?.username || 'Unknown'} → ${payee?.name || payee?.username || 'Unknown'}`,
           amount: parseFloat(settlement.amount),
           category: 'settlement',
-          date: settlement.status === 'confirmed' ? (settlement.confirmedAt?.toISOString() || new Date().toISOString()) : (settlement.rejectedAt?.toISOString() || new Date().toISOString()),
+          date: settlement.confirmedAt?.toISOString() || new Date().toISOString(),
           description: settlement.notes || `${settlement.paymentMethod ? settlement.paymentMethod.charAt(0).toUpperCase() + settlement.paymentMethod.slice(1) : 'Cash'} payment settlement`,
           paidBy: settlement.payerId,
           paidByUser: {
