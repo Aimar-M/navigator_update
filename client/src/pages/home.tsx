@@ -169,6 +169,7 @@ export default function Home() {
   console.log("Before useQuery: user", user, "token", token);
   const { data: trips, isLoading } = useQuery({
     queryKey: [`${API_BASE}/api/trips`,user?.id,token],
+    refetchInterval: 15000, // Poll every 15 seconds for trip updates
     queryFn: async () => {
       // // if (!user || !token) return [];
 

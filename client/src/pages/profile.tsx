@@ -39,12 +39,14 @@ export default function Profile() {
   const { data: profile, isLoading: isProfileLoading } = useQuery({
     queryKey: [`${API_BASE}/api/auth/me`],
     enabled: !!user,
+    refetchInterval: 30000, // Poll every 30 seconds for profile updates
   });
 
   // Fetch user's trip statistics
   const { data: tripStats, isLoading: isStatsLoading } = useQuery({
     queryKey: [`${API_BASE}/api/users/stats`],
     enabled: !!user,
+    refetchInterval: 30000, // Poll every 30 seconds for stats updates
   });
 
   // Profile update mutation with optimistic updates

@@ -33,11 +33,13 @@ export default function UserProfile() {
     queryKey: [`${API_BASE}/api/users/${userId}`],
     enabled: !!userId,
     retry: false, // Don't retry on 404
+    refetchInterval: 30000, // Poll every 30 seconds for profile updates
   });
 
   const { data: stats, isLoading: statsLoading } = useQuery<UserStats>({
     queryKey: [`${API_BASE}/api/users/${userId}/stats`],
     enabled: !!userId,
+    refetchInterval: 30000, // Poll every 30 seconds for stats updates
   });
 
   if (profileLoading || statsLoading) {

@@ -58,6 +58,7 @@ export default function Chat() {
   // Fetch trip details
   const { data: trip, isLoading: isTripLoading } = useQuery({
     queryKey: [`${API_BASE}/api/trips/${tripId}`],
+    refetchInterval: 15000, // Poll every 15 seconds for trip updates
     queryFn: async () => {
       // Get auth token for our token-based authentication
       const token = localStorage.getItem('auth_token');
@@ -101,6 +102,7 @@ export default function Chat() {
   const { data: members = [] } = useQuery({
     queryKey: [`${API_BASE}/api/trips/${tripId}/members`],
     enabled: !!tripId && !!user,
+    refetchInterval: 10000, // Poll every 10 seconds for member updates
   });
 
   // Fetch polls for this trip to display in chat

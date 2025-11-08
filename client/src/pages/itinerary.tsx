@@ -74,12 +74,14 @@ function Itinerary() {
   const { data: trip, isLoading: isTripLoading } = useQuery<Trip>({
     queryKey: [`${API_BASE}/api/trips/${tripId}`],
     enabled: !!tripId && !!user,
+    refetchInterval: 15000, // Poll every 15 seconds for trip updates
   });
 
   // Fetch trip members to check RSVP status
   const { data: members = [] } = useQuery<TripMember[]>({
     queryKey: [`${API_BASE}/api/trips/${tripId}/members`],
     enabled: !!tripId && !!user,
+    refetchInterval: 10000, // Poll every 10 seconds for member updates
   });
 
   // Check user's RSVP status and admin permissions
@@ -118,6 +120,7 @@ function Itinerary() {
   const { data: activities = [], isLoading: isActivitiesLoading } = useQuery({
     queryKey: [`${API_BASE}/api/trips/${tripId}/activities`],
     enabled: !!tripId && !!user,
+    refetchInterval: 10000, // Poll every 10 seconds for activity updates
   });
 
   // Expand accommodation activities across multiple days and add checkout notifications

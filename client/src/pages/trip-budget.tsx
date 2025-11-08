@@ -18,18 +18,21 @@ export default function TripBudget() {
   const { data: trip, isLoading: isLoadingTrip } = useQuery({
     queryKey: [`${API_BASE}/api/trips/${tripId}`],
     enabled: !!tripId,
+    refetchInterval: 15000, // Poll every 15 seconds for trip updates
   });
 
   // Get trip member count
   const { data: members } = useQuery({
     queryKey: [`${API_BASE}/api/trips/${tripId}/members`],
     enabled: !!tripId,
+    refetchInterval: 10000, // Poll every 10 seconds for member updates
   });
 
   // Fetch trip activities
   const { data: activities } = useQuery({
     queryKey: [`${API_BASE}/api/trips/${tripId}/activities`],
     enabled: !!tripId,
+    refetchInterval: 10000, // Poll every 10 seconds for activity updates
   });
 
   const memberCount = members?.length || 1;

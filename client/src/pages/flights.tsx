@@ -35,19 +35,22 @@ export default function Flights() {
   // Fetch flights for this trip
   const { data: flights = [], isLoading: isFlightsLoading, refetch: refetchFlights } = useQuery({
     queryKey: [`${API_BASE}/api/trips/${tripId}/flights`],
-    enabled: !!tripId
+    enabled: !!tripId,
+    refetchInterval: 15000, // Poll every 15 seconds for flight updates
   });
 
   // Fetch trip details
   const { data: trip } = useQuery({
     queryKey: [`${API_BASE}/api/trips/${tripId}`],
-    enabled: !!tripId
+    enabled: !!tripId,
+    refetchInterval: 15000, // Poll every 15 seconds for trip updates
   });
 
   // Fetch trip members to get user information
   const { data: members = [] } = useQuery({
     queryKey: [`${API_BASE}/api/trips/${tripId}/members`],
-    enabled: !!tripId
+    enabled: !!tripId,
+    refetchInterval: 10000, // Poll every 10 seconds for member updates
   });
 
   // Check user's RSVP status

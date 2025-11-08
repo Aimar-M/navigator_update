@@ -31,6 +31,7 @@ export default function RSVPNotification() {
   const { data: pendingTrips = [], isLoading } = useQuery<PendingTrip[]>({
     queryKey: [`${API_BASE}/api/trips/rsvp/pending`],
     enabled: !!user,
+    refetchInterval: 5000, // Poll every 5 seconds for new RSVP invitations
     select: (data) => {
       // Sort by joinedAt timestamp (newest first)
       return data.sort((a, b) => 

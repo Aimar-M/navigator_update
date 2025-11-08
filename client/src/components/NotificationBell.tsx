@@ -37,7 +37,7 @@ export function NotificationBell() {
   // Fetch pending settlements requiring user confirmation
   const { data: pendingSettlements = [], isLoading, error } = useQuery<PendingSettlement[]>({
     queryKey: [`${API_BASE}/api/settlements/pending`],
-    refetchInterval: 30000, // Poll every 30 seconds for new notifications
+    refetchInterval: 5000, // Poll every 5 seconds for new notifications
     enabled: true, // Always enable the query
     select: (data) => {
       console.log("Raw settlement data:", data);

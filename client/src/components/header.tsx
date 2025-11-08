@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Bell, ChevronDown, Menu, MessageCircle, CalendarPlus, UserPlus, PieChart } from "lucide-react";
+import { Bell, ChevronDown, Menu, MessageCircle, CalendarPlus, UserPlus, PieChart, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -53,10 +53,33 @@ export default function Header() {
     enabled: !!user && !!token,
     refetchInterval: 2000,
   });
+
+  // Fetch general notifications (downpayments, etc.)
+  const { data: generalNotifications = [] } = useQuery({
+    queryKey: [`${API_BASE}/api/notifications`, !!user, token],
+    queryFn: async () => {
+      if (!user || !token) return [];
+      
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${token}`
+      };
+      
+      try {
+        const response = await fetch(`${API_BASE}/api/notifications`, { headers });
+        if (!response.ok) return [];
+        return response.json();
+      } catch (error) {
+        console.error("Failed to fetch notifications", error);
+        return [];
+      }
+    },
+    enabled: !!user && !!token,
+    refetchInterval: 5000, // Poll every 5 seconds for new notifications
+  });
   
   // Update notifications when data changes
   useEffect(() => {
-    if (!pendingInvitations) return;
+    if (!pendingInvitations && !generalNotifications) return;
     
     // Get read notification IDs from localStorage
     const readIds = JSON.parse(localStorage.getItem('readNotifications') || '[]');
@@ -71,7 +94,7 @@ export default function Header() {
     }> = [];
     
     // Add trip invitation notifications
-    if (pendingInvitations.length > 0) {
+    if (pendingInvitations && pendingInvitations.length > 0) {
       pendingInvitations.forEach((invitation: any) => {
         // Create unique notification ID that includes user ID, trip ID, and timestamp
         // This ensures re-invitations after payment rejection trigger new notifications
@@ -88,6 +111,28 @@ export default function Header() {
         });
       });
     }
+
+    // Add general notifications (downpayments, etc.)
+    if (generalNotifications && generalNotifications.length > 0) {
+      generalNotifications.forEach((notif: any) => {
+        // Only show unread notifications and filter for relevant types
+        if (notif.isRead) return;
+        
+        // Handle downpayment notifications
+        if (notif.type === 'downpayment_required' || notif.type === 'downpayment_updated' || notif.type === 'downpayment_removed') {
+          const notifId = `notif-${notif.id}`;
+          newNotifications.push({
+            id: notifId,
+            type: notif.type,
+            title: notif.title,
+            message: notif.message,
+            time: notif.createdAt,
+            data: notif.data || {},
+            isRead: readIds.includes(notifId)
+          });
+        }
+      });
+    }
     
     // Sort notifications by time (newest first)
     newNotifications.sort((a, b) => 
@@ -97,11 +142,16 @@ export default function Header() {
     // Set has notifications flag
     setHasNotifications(newNotifications.some(n => !n.isRead));
     setNotifications(newNotifications);
-  }, [pendingInvitations]);
+  }, [pendingInvitations, generalNotifications]);
   
   const handleNotificationClick = (notification: any) => {
     if (notification.type === 'invite') {
       navigate(`/trips/${notification.data.trip.id}`);
+    } else if (notification.type === 'downpayment_required' || notification.type === 'downpayment_updated' || notification.type === 'downpayment_removed') {
+      // Navigate to trip if tripId is available in notification data
+      if (notification.data?.tripId) {
+        navigate(`/trips/${notification.data.tripId}`);
+      }
     }
     // Mark as read in localStorage
     const readIds = JSON.parse(localStorage.getItem('readNotifications') || '[]');
@@ -223,6 +273,9 @@ export default function Header() {
                             )}
                             {notification.type === 'activity' && (
                               <CalendarPlus className="h-4 w-4 text-blue-600" />
+                            )}
+                            {(notification.type === 'downpayment_required' || notification.type === 'downpayment_updated' || notification.type === 'downpayment_removed') && (
+                              <DollarSign className="h-4 w-4 text-blue-600" />
                             )}
                           </div>
                           <div className="flex-1 space-y-1">

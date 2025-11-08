@@ -146,6 +146,7 @@ export default function TripDetails() {
   // Fetch trip details
   const { data: trip, isLoading } = useQuery<Trip>({
     queryKey: [`${API_BASE}/api/trips/${tripId}`],
+    refetchInterval: 15000, // Poll every 15 seconds for trip updates
   });
 
   // Track page view when trip data is loaded
@@ -164,6 +165,7 @@ export default function TripDetails() {
   const { data: members = [], isLoading: isMembersLoading } = useQuery<TripMember[]>({
     queryKey: [`${API_BASE}/api/trips/${tripId}/members`],
     enabled: !!tripId,
+    refetchInterval: 10000, // Poll every 10 seconds for member updates
   });
 
   // Trip update mutation

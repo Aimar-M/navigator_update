@@ -100,18 +100,22 @@ export default function TripExpenses() {
 
   const { data: trip } = useQuery<any>({
     queryKey: [`${API_BASE}/api/trips/${tripId}`],
+    refetchInterval: 15000, // Poll every 15 seconds for trip updates
   });
 
   const { data: members = [] } = useQuery<any[]>({
     queryKey: [`${API_BASE}/api/trips/${tripId}/members`],
+    refetchInterval: 10000, // Poll every 10 seconds for member updates
   });
 
   const { data: expenses = [] } = useQuery<Expense[]>({
     queryKey: [`${API_BASE}/api/trips/${tripId}/expenses`],
+    refetchInterval: 10000, // Poll every 10 seconds for expense updates
   });
 
   const { data: balances = [] } = useQuery<Balance[]>({
     queryKey: [`${API_BASE}/api/trips/${tripId}/expenses/balances`],
+    refetchInterval: 10000, // Poll every 10 seconds for balance updates
   });
 
   // Get trip members to check admin status (using same data as members)

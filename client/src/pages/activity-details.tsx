@@ -110,22 +110,26 @@ export default function ActivityDetails() {
 
   const { data: activity, isLoading } = useQuery<ActivityDetail>({
     queryKey: [`${API_BASE}/api/activities/${activityId}`],
+    refetchInterval: 10000, // Poll every 10 seconds for activity updates
   });
 
   const { data: currentUser } = useQuery<{ id: number; name: string; email: string }>({
     queryKey: [`${API_BASE}/api/auth/me`],
+    refetchInterval: 30000, // Poll every 30 seconds for user updates
   });
 
   // Fetch trip details to check admin permissions
   const { data: trip } = useQuery<Trip>({
     queryKey: [`${API_BASE}/api/trips/${activity?.tripId}`],
     enabled: !!activity?.tripId,
+    refetchInterval: 15000, // Poll every 15 seconds for trip updates
   });
 
   // Fetch trip members to check admin status
   const { data: members = [] } = useQuery<TripMember[]>({
     queryKey: [`${API_BASE}/api/trips/${activity?.tripId}/members`],
     enabled: !!activity?.tripId,
+    refetchInterval: 10000, // Poll every 10 seconds for member updates
   });
 
   // Check if current user can edit/delete activities

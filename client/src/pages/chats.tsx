@@ -123,6 +123,7 @@ export default function Chats() {
   // Fetch all trips the user is a member of
   const { data: trips, isLoading: tripsLoading } = useQuery({
     queryKey: [`${API_BASE}/api/trips`],
+    refetchInterval: 15000, // Poll every 15 seconds for trip updates
     queryFn: async () => {
       if (!user) return null;
       
@@ -142,6 +143,7 @@ export default function Chats() {
   // Fetch last messages for all trips
   const { data: lastMessages, isLoading: messagesLoading } = useQuery({
     queryKey: [`${API_BASE}/api/messages`],
+    refetchInterval: 10000, // Poll every 10 seconds for new messages
     queryFn: async () => {
       if (!user) return [];
       

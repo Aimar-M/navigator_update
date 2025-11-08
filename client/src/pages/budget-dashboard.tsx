@@ -39,12 +39,14 @@ export default function BudgetDashboard() {
   const { data: trips, isLoading: tripsLoading } = useQuery({
     queryKey: ["/api/trips", "budget-dashboard"],
     enabled: !!user,
+    refetchInterval: 15000, // Poll every 15 seconds for trip updates
   });
 
   // Fetch budget data for all trips
   const { data: budgetData, isLoading: budgetLoading } = useQuery({
     queryKey: ["/api/budget/dashboard"],
     enabled: !!user,
+    refetchInterval: 15000, // Poll every 15 seconds for budget updates
   });
 
   // Process real budget data for dashboard visualization

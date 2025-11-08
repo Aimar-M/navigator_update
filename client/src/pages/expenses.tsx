@@ -102,25 +102,30 @@ export default function ExpensesPage() {
   // Fetch expenses
   const { data: expenses = [], isLoading: expensesLoading } = useQuery<Expense[]>({
     queryKey: [`${API_BASE}/api/trips/${tripId}/expenses`],
+    refetchInterval: 10000, // Poll every 10 seconds for expense updates
   });
 
   // Fetch trip members
   const { data: members = [], isLoading: membersLoading } = useQuery<any[]>({
     queryKey: [`${API_BASE}/api/trips/${tripId}/members`],
+    refetchInterval: 10000, // Poll every 10 seconds for member updates
   });
 
   // Fetch balances
   const { data: balances = [], isLoading: balancesLoading } = useQuery<Balance[]>({
     queryKey: [`${API_BASE}/api/trips/${tripId}/expenses/balances`],
+    refetchInterval: 10000, // Poll every 10 seconds for balance updates
   });
 
   const { data: currentUser } = useQuery<{ id: number; name: string }>({
     queryKey: [`${API_BASE}/api/auth/me`],
+    refetchInterval: 30000, // Poll every 30 seconds for user updates
   });
 
   // Check user's RSVP status  
   const { data: trip } = useQuery<any>({
     queryKey: [`${API_BASE}/api/trips/${tripId}`],
+    refetchInterval: 15000, // Poll every 15 seconds for trip updates
   });
   
   const isOrganizer = currentUser && trip && (trip as any).organizer === (currentUser as any).id;
