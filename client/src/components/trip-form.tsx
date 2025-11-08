@@ -192,6 +192,7 @@ export default function TripForm({ onComplete }: TripFormProps) {
                   name="endDate"
                   value={formData.endDate}
                   onChange={handleChange}
+                  min={formData.startDate || undefined}
                   required
                 />
               </div>
@@ -306,7 +307,6 @@ export default function TripForm({ onComplete }: TripFormProps) {
       case 1:
         return (
           formData.name.trim() !== "" &&
-          formData.destination.trim() !== "" &&
           formData.startDate !== "" &&
           formData.endDate !== ""
         );
