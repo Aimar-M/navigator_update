@@ -313,7 +313,7 @@ export default function Chat() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
+    <div className="h-screen h-[100dvh] flex flex-col bg-gray-50 overflow-hidden">
       {/* Only show header when not coming from chats page */}
       {!isFromChatsPage && <Header />}
       
@@ -351,7 +351,7 @@ export default function Chat() {
         {!isFromChatsPage && <TripTabs tripId={tripId} />}
 
         {/* Chat Content - Clean design with minimal padding */}
-        <div className="flex-1 overflow-y-auto p-2 md:p-4 pb-4 bg-white min-h-0">
+        <div className="flex-1 overflow-y-auto p-2 md:p-4 pb-20 md:pb-4 bg-white min-h-0">
           {isMessagesLoading ? (
             <div className="space-y-4 py-2">
               {[1, 2, 3].map((i) => (
@@ -501,7 +501,10 @@ export default function Chat() {
         </div>
 
         {/* Message Input - Always visible at bottom */}
-        <div className="bg-white border-t border-gray-200 p-2 md:p-3 flex-shrink-0 z-20">
+        <div 
+          className="bg-white border-t border-gray-200 p-2 md:p-3 flex-shrink-0 z-20 fixed bottom-0 left-0 right-0 md:relative md:bottom-auto md:left-auto md:right-auto"
+          style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
+        >
           {!isConfirmedMember ? (
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-center">
               <p className="text-sm text-amber-700">
