@@ -77,6 +77,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ tripId, expense, onSuccess })
   }>>({
     queryKey: [`${API_BASE}/api/trips/${tripId}/members`],
     enabled: !!tripId,
+    refetchInterval: 10000, // Poll every 10 seconds for member updates
   });
 
   // Initialize form with default values or existing expense data

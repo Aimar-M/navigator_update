@@ -39,6 +39,7 @@ const ExpenseSummary: React.FC<ExpenseSummaryProps> = ({ tripId, currentUserId }
   const { data: summary, isLoading, error } = useQuery({
     queryKey: [`${API_BASE}/api/trips`, tripId, 'expenses/summary'],
     enabled: !!tripId,
+    refetchInterval: 10000, // Poll every 10 seconds for expense summary updates
   });
 
   if (isLoading) {

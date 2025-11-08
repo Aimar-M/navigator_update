@@ -71,6 +71,7 @@ export function OptimizedSettlementWorkflow({
   const { data: settlementData, isLoading, error } = useQuery<OptimizedSettlementData>({
     queryKey: [`${API_BASE}/api/settlements/${tripId}/optimized`],
     enabled: isOpen,
+    refetchInterval: 10000, // Poll every 10 seconds for settlement plan updates
   });
 
   // Debug logging for settlement data
@@ -89,6 +90,7 @@ export function OptimizedSettlementWorkflow({
   const { data: userRecommendations } = useQuery<{ recommendations: OptimizedTransaction[] }>({
     queryKey: [`${API_BASE}/api/settlements/${tripId}/user-recommendations/${currentUserId}`],
     enabled: isOpen,
+    refetchInterval: 10000, // Poll every 10 seconds for recommendation updates
   });
 
   // Remove the old mutation and replace with settlement workflow trigger

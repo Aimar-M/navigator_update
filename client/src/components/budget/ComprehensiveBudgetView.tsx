@@ -53,6 +53,7 @@ const ComprehensiveBudgetView: React.FC<ComprehensiveBudgetViewProps> = ({ tripI
   const { data: activities } = useQuery({
     queryKey: [`${API_BASE}/api/trips', tripId, 'activities`],
     enabled: !!tripId,
+    refetchInterval: 10000, // Poll every 10 seconds for activity updates
   });
 
   // Expense form

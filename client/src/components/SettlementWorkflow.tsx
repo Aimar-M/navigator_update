@@ -51,6 +51,7 @@ export function SettlementWorkflow({ tripId, balance, isOpen, onClose }: Settlem
   const { data: settlementOptions = [], isLoading: optionsLoading, error: optionsError } = useQuery<SettlementOption[]>({
     queryKey: [`${API_BASE}/api/trips/${tripId}/settlement-options/${balance.userId}?amount=${amount}`],
     enabled: isOpen && owes, // Only fetch if user owes money
+    refetchInterval: 10000, // Poll every 10 seconds for settlement options updates
   });
 
   // Debug logging for balance calculation
@@ -70,6 +71,7 @@ export function SettlementWorkflow({ tripId, balance, isOpen, onClose }: Settlem
   const { data: existingSettlements = [] } = useQuery<any[]>({
     queryKey: [`${API_BASE}/api/trips/${tripId}/settlements`],
     enabled: isOpen,
+    refetchInterval: 10000, // Poll every 10 seconds for settlement updates
   });
 
   const initiateMutation = useMutation({

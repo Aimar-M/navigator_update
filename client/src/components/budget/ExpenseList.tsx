@@ -126,6 +126,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ tripId, currentUserId, isOrga
   const { data: expenses = [], isLoading, error } = useQuery<ExpenseWithUser[]>({
     queryKey: [`${API_BASE}/api/trips`, tripId, 'expenses'],
     enabled: !!tripId,
+    refetchInterval: 10000, // Poll every 10 seconds for expense updates
   });
 
   // Mutation for deleting an expense

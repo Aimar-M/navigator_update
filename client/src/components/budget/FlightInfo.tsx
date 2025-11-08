@@ -78,6 +78,7 @@ const FlightInfo: React.FC<FlightInfoProps> = ({ tripId, currentUserId }) => {
   const { data: flights, isLoading, error } = useQuery({
     queryKey: [`${API_BASE}/api/trips`, tripId, 'flights'],
     enabled: !!tripId,
+    refetchInterval: 15000, // Poll every 15 seconds for flight updates
   });
 
   // Mutation for deleting a flight

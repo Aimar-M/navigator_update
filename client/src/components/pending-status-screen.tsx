@@ -138,6 +138,7 @@ export default function PendingStatusScreen({ trip, member }: PendingStatusScree
   // Fetch settlement options for paying the trip organizer
   const { data: settlementOptions, isLoading: optionsLoading, error: optionsError } = useQuery({
     queryKey: [`${API_BASE}/api/trips/${trip.id}/settlement-options/${trip.organizer}`, trip.downPaymentAmount || member?.paymentAmount],
+    refetchInterval: 10000, // Poll every 10 seconds for settlement options updates
     queryFn: async () => {
       if (!trip.organizer) return [];
       
@@ -163,12 +164,14 @@ export default function PendingStatusScreen({ trip, member }: PendingStatusScree
   // Fetch trip members for the confirmed attendees section
   const { data: members } = useQuery({
     queryKey: [`${API_BASE}/api/trips/${trip.id}/members`],
+    refetchInterval: 10000, // Poll every 10 seconds for member updates
   });
 
   // Fetch activities preview for the trip
   const { data: activityPreview = [] } = useQuery<any[]>({
     queryKey: [`${API_BASE}/api/trips/${trip.id}/activities/preview`],
     enabled: !!trip.id,
+    refetchInterval: 10000, // Poll every 10 seconds for activity preview updates
   });
 
   const submitPaymentMutation = useMutation({
