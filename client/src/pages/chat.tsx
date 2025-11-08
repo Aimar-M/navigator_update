@@ -34,6 +34,7 @@ export default function Chat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isFromChatsPage, setIsFromChatsPage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const messageInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   
   // Check if we navigated from the chats page and update last visit timestamp
@@ -258,6 +259,11 @@ export default function Chat() {
       
       // Invalidate messages query to trigger refetch for all users
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/messages`] });
+      
+      // Refocus the input field after sending
+      setTimeout(() => {
+        messageInputRef.current?.focus();
+      }, 0);
     } catch (error) {
       console.error("Error sending message:", error);
     } finally {
@@ -295,11 +301,11 @@ export default function Chat() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
       {/* Only show header when not coming from chats page */}
       {!isFromChatsPage && <Header />}
       
-      <main className={`flex-1 flex flex-col overflow-hidden ${isFromChatsPage ? '' : ''}`}>
+      <main className={`flex-1 flex flex-col min-h-0 ${isFromChatsPage ? '' : ''}`}>
         {/* Trip Header - Commented out as it's unnecessary - users already know what chat they're in */}
         {/* 
         <div className="bg-white border-b border-gray-200 p-3 md:p-4">
@@ -333,7 +339,7 @@ export default function Chat() {
         {!isFromChatsPage && <TripTabs tripId={tripId} />}
 
         {/* Chat Content - Clean design with minimal padding */}
-        <div className="flex-1 overflow-y-auto p-2 md:p-4 pb-4 bg-white">
+        <div className="flex-1 overflow-y-auto p-2 md:p-4 pb-4 bg-white min-h-0">
           {isMessagesLoading ? (
             <div className="space-y-4 py-2">
               {[1, 2, 3].map((i) => (
@@ -482,8 +488,8 @@ export default function Chat() {
           )}
         </div>
 
-        {/* Message Input - Flush with bottom of screen */}
-        <div className="bg-white border-t border-gray-200 p-2 md:p-3 sticky bottom-0 z-20 mt-auto">
+        {/* Message Input - Always visible at bottom */}
+        <div className="bg-white border-t border-gray-200 p-2 md:p-3 flex-shrink-0 z-20">
           {!isConfirmedMember ? (
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-center">
               <p className="text-sm text-amber-700">
@@ -519,6 +525,7 @@ export default function Chat() {
                 </Popover>
               
               <Input
+                ref={messageInputRef}
                 type="text"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
