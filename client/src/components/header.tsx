@@ -152,7 +152,7 @@ export default function Header() {
               <img 
                 src={navigatorText} 
                 alt="Navigator" 
-                className="h-11 hidden md:block"
+                className="h-14 hidden md:block"
               />
             </div>
           </Link>

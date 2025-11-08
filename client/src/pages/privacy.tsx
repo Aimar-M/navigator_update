@@ -59,14 +59,14 @@ export default function Privacy() {
         Navigator Privacy Policy
       </h1>
       <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-        Please read this Privacy Policy carefully to understand how Navigator Technologies, Inc. collects, uses, and protects your information.
+        Please read this Privacy Policy carefully to understand how Navigator Technologies 1802, Inc. collects, uses, and protects your information.
       </p>
     </div>
 
     <div className="prose prose-lg max-w-none text-gray-700">
       <div className="bg-gray-50 rounded-lg p-8 mb-8">
-        <p><strong>Effective Date:</strong> October 24, 2025</p>
-        <p><strong>Provider:</strong> Navigator Technologies, Inc. (“Navigator,” “we,” “our,” or “us”)</p>
+        <p><strong>Effective Date:</strong> November 10, 2025</p>
+        <p><strong>Provider:</strong> Navigator Technologies 1802, Inc. (“Navigator,” “we,” “our,” or “us”)</p>
         <p><strong>Website:</strong> <a href="https://navigatortrips.com" className="text-blue-600 underline">https://navigatortrips.com</a></p>
         <p><strong>Contact:</strong> <a href="mailto:info@navigatortrips.com" className="text-blue-600 underline">info@navigatortrips.com</a></p>
       </div>
@@ -75,7 +75,7 @@ export default function Privacy() {
       <div className="bg-gray-50 rounded-lg p-8 mb-8">
         <h2 className="text-2xl font-semibold text-gray-900 mb-4">1. Overview</h2>
         <p>
-          Navigator Technologies, Inc. (“Navigator”) respects your privacy and is committed to protecting your personal information.
+          Navigator Technologies 1802, Inc. (“Navigator”) respects your privacy and is committed to protecting your personal information.
           This Privacy Policy explains how we collect, use, share, and protect information when you use the Navigator platform,
           including our mobile application and website at 
           <a href="https://navigatortrips.com" className="text-blue-600 underline"> https://navigatortrips.com</a>.
@@ -233,7 +233,7 @@ export default function Privacy() {
       <div className="bg-blue-50 rounded-lg p-8">
         <h2 className="text-2xl font-semibold text-gray-900 mb-4">14. Pre-Launch Notice</h2>
         <p>
-          Navigator Technologies, Inc. is currently operating the Navigator platform as an early-access (“beta”) release.
+          Navigator Technologies 1802, Inc. is currently operating the Navigator platform as an early-access (“beta”) release.
           While we take user privacy seriously, some data handling features may still be under refinement.
         </p>
         <p>

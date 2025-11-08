@@ -68,14 +68,14 @@ export default function Terms() {
           <div className="prose prose-lg max-w-none text-gray-700">
             <div className="bg-gray-50 rounded-lg p-8 mb-8">
               <h2 className="text-2xl font-semibold text-gray-900 mb-4">Navigator Terms of Service</h2>
-              <p><strong>Effective Date:</strong> October 24, 2025</p>
-              <p><strong>Provider:</strong> Navigator Technologies, Inc. (“Navigator,” “we,” “our,” “us”)</p>
+              <p><strong>Effective Date:</strong> November 10, 2025</p>
+              <p><strong>Provider:</strong> Navigator Technologies 1802, Inc. (“Navigator,” “we,” “our,” “us”)</p>
               <p><strong>Website:</strong> <a href="https://navigatortrips.com" className="text-blue-600 underline">https://navigatortrips.com</a></p>
               <p><strong>Contact:</strong> <a href="mailto:info@navigatortrips.com" className="text-blue-600 underline">info@navigatortrips.com</a></p>
 
               <h3 className="text-xl font-semibold mt-8 mb-4">Pre-Launch Notice</h3>
               <p>
-                Navigator Technologies, Inc. is currently operating the Navigator platform as a pre-release (“beta”) version.
+                Navigator Technologies 1802, Inc. is currently operating the Navigator platform as a pre-release (“beta”) version.
                 By using the Navigator app or website, you acknowledge that the platform is provided on a testing and early-access basis.
               </p>
 
@@ -136,7 +136,7 @@ export default function Terms() {
 
               <h3 className="text-xl font-semibold mt-8 mb-4">9. Intellectual Property</h3>
               <p>
-                All intellectual property on the platform belongs to Navigator Technologies, Inc. You may not copy or modify any portion of the service without consent.
+                All intellectual property on the platform belongs to Navigator Technologies 1802, Inc. You may not copy or modify any portion of the service without consent.
               </p>
 
               <h3 className="text-xl font-semibold mt-8 mb-4">10. Third-Party Services</h3>
@@ -151,7 +151,7 @@ export default function Terms() {
 
               <h3 className="text-xl font-semibold mt-8 mb-4">12. Indemnification</h3>
               <p>
-                You agree to defend and hold harmless Navigator Technologies, Inc. from any claims or expenses resulting from your misuse of the platform.
+                You agree to defend and hold harmless Navigator Technologies 1802, Inc. from any claims or expenses resulting from your misuse of the platform.
               </p>
 
               <h3 className="text-xl font-semibold mt-8 mb-4">13. Modifications to Terms</h3>
@@ -174,7 +174,7 @@ export default function Terms() {
             <div className="bg-gray-50 rounded-lg p-8">
               <h2 className="text-2xl font-semibold text-gray-900 mb-4">Navigator Privacy Policy</h2>
               <p><strong>Effective Date:</strong> [Insert Date]</p>
-              <p><strong>Provider:</strong> Navigator Technologies, Inc.</p>
+              <p><strong>Provider:</strong> Navigator Technologies 1802, Inc.</p>
               <p><strong>Website:</strong> <a href="https://navigatortrips.com" className="text-blue-600 underline">https://navigatortrips.com</a></p>
               <p><strong>Contact:</strong> <a href="mailto:info@navigatortrips.com" className="text-blue-600 underline">info@navigatortrips.com</a></p>
 
