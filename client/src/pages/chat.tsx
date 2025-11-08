@@ -331,9 +331,12 @@ export default function Chat() {
                 <ArrowLeft className="h-5 w-5" />
                 <span className="sr-only">Back to chats</span>
               </Button>
-              <div className="flex-1">
+              <button
+                onClick={() => navigate(`/trips/${tripId}`)}
+                className="flex-1 text-left cursor-pointer hover:opacity-80 transition-opacity"
+              >
                 <h2 className="text-lg font-bold text-gray-900 truncate">{trip.name}</h2>
-              </div>
+              </button>
             </div>
           </div>
         )}
