@@ -147,7 +147,7 @@ export default function Header() {
               <img 
                 src={navigatorLogo} 
                 alt="Navigator Logo" 
-                className="h-12 w-12 md:h-10 md:w-10"
+                className="h-12 w-12 block md:hidden"
               />
               <img 
                 src={navigatorText} 
