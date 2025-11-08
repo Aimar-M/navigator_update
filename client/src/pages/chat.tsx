@@ -35,6 +35,7 @@ export default function Chat() {
   const [isFromChatsPage, setIsFromChatsPage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
+  const wasSubmittingRef = useRef(false);
   const queryClient = useQueryClient();
   
   // Check if we navigated from the chats page and update last visit timestamp
@@ -175,6 +176,22 @@ export default function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Refocus input after message is sent (when isSubmitting becomes false)
+  useEffect(() => {
+    // Only refocus if we were submitting and now we're not (message was sent)
+    if (!isSubmitting && wasSubmittingRef.current && messageInputRef.current) {
+      // Use requestAnimationFrame to ensure DOM has updated
+      requestAnimationFrame(() => {
+        messageInputRef.current?.focus();
+      });
+      wasSubmittingRef.current = false;
+    }
+    // Track when we start submitting
+    if (isSubmitting) {
+      wasSubmittingRef.current = true;
+    }
+  }, [isSubmitting]);
+
   // WebSocket connection and message handler
   useEffect(() => {
     if (!user || !tripId) return;
@@ -259,11 +276,6 @@ export default function Chat() {
       
       // Invalidate messages query to trigger refetch for all users
       queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/trips/${tripId}/messages`] });
-      
-      // Refocus the input field after sending
-      setTimeout(() => {
-        messageInputRef.current?.focus();
-      }, 0);
     } catch (error) {
       console.error("Error sending message:", error);
     } finally {
@@ -539,6 +551,10 @@ export default function Chat() {
                 size="sm"
                 className="h-10 w-10 p-0 min-w-0 flex-shrink-0"
                 disabled={isSubmitting || isUploadingImage || !message.trim()}
+                onMouseDown={(e) => {
+                  // Prevent button from stealing focus from input
+                  e.preventDefault();
+                }}
               >
                 {isSubmitting ? (
                   <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
