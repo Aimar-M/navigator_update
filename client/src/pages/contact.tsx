@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
+import { SEO } from "@/components/SEO";
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -132,6 +133,7 @@ export default function Contact() {
   }
   return (
     <div className="min-h-screen bg-white">
+      <SEO page="contact" />
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

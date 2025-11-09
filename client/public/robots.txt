@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /account-settings
+Disallow: /profile
+Disallow: /trips/
+Disallow: /chats
+Disallow: /create-trip
+Disallow: /invite/
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /confirm-email
+Disallow: /recover-account
+Disallow: /airport-test
+
+# Sitemap
+Sitemap: https://navigatortrips.com/sitemap.xml
+

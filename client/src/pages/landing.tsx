@@ -8,6 +8,7 @@ import backgroundVideo from "@/assets/IMG_4795_1758657014573.mov";
 import navigatorLogo from "@/assets/ab_Navigator2-02.png";
 import navigatorLogoMobile from "@/assets/ab_Navigator2-08.png";
 import FullStoryDebug from "@/components/FullStoryDebug";
+import { SEO } from "@/components/SEO";
 
 export default function Landing() {
   const { user, isLoading } = useAuth();
@@ -52,6 +53,7 @@ export default function Landing() {
   }
   return (
     <div className="min-h-screen bg-black text-white relative overflow-hidden">
+      <SEO page="home" />
       <FullStoryDebug />
       {/* Background Video */}
       <div className="absolute inset-0 z-0">

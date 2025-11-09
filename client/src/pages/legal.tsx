@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { SEO } from "@/components/SEO";
 
 export default function Legal() {
   const { user, isLoading } = useAuth();
@@ -34,6 +35,7 @@ export default function Legal() {
 
   return (
     <div className="min-h-screen bg-white">
+      <SEO page="legal" />
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
