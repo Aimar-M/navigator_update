@@ -19,6 +19,9 @@ console.log('🔧 Port:', process.env.PORT || '5000');
 
 const app = express();
 
+// Trust proxy for proper cookie handling behind reverse proxy (Railway, etc.)
+app.set("trust proxy", 1);
+
 app.use(express.json({ limit: '10mb' })); // <-- Increased limit for large image uploads
 
 app.use(cors({
@@ -56,11 +59,11 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production', // Set to true if using HTTPS
+    secure: process.env.NODE_ENV === 'production', // true for HTTPS in production, false for HTTP in development
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     sameSite: 'none', // Allow cross-site cookies for OAuth
-    domain: process.env.NODE_ENV === 'production' ? '.railway.app' : undefined // Allow subdomain sharing
+    domain: process.env.NODE_ENV === 'production' ? '.navigatortrips.com' : undefined // Allow subdomain sharing between navigatortrips.com and api.navigatortrips.com
   }
 }));
 

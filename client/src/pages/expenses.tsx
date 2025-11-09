@@ -23,7 +23,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, DollarSign, Users, Receipt, Activity, CheckCircle, XCircle, BarChart3, Grid3X3, HandHeart, X } from "lucide-react";
+import { Plus, DollarSign, Users, Receipt, Activity, CheckCircle, XCircle, BarChart3, Grid3X3, HandHeart, X, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, ReferenceLine, Tooltip, LabelList } from "recharts";
 import { SettlementWorkflow } from "@/components/SettlementWorkflow";
@@ -88,6 +88,13 @@ export default function ExpensesPage() {
     balance: { userId: number; name: string; balance: number } | null;
   }>({ isOpen: false, balance: null });
   const [optimizedSettlementOpen, setOptimizedSettlementOpen] = useState(false);
+
+  // Check if we're in delete flow
+  const [fromDeleteFlow, setFromDeleteFlow] = useState(false);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setFromDeleteFlow(params.get('fromDeleteFlow') === 'true');
+  }, []);
   
   // Form state for manual expenses
   const [newExpense, setNewExpense] = useState({
@@ -282,6 +289,19 @@ export default function ExpensesPage() {
       isConfirmedMember={isConfirmedMember as boolean}
     >
       <div className="p-4 space-y-6">
+        {/* Back to Delete Account button */}
+        {fromDeleteFlow && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setLocation('/delete-account')}
+            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 mb-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to Delete Account</span>
+          </Button>
+        )}
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <h1 className="text-2xl font-bold">Group Expenses</h1>

@@ -93,23 +93,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const router = express.Router();
   const httpServer = createServer(app);
   
-  // Configure session middleware with PostgreSQL store
-  const PgSession = connectPgSimple(session);
-  app.use(session({
-    store: new PgSession({
-      pool: pool,
-      tableName: 'sessions',
-      createTableIfMissing: false
-    }),
-    secret: process.env.SESSION_SECRET || 'dev-secret-key',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: false, // Set to true if using HTTPS
-      httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
-  }));
+  // Note: Session middleware is already configured in server/index.ts
+  // Do not duplicate session configuration here as it will override the correct cookie domain settings
   
   // Helper function to check for authenticated user
   const ensureUser = (req: Request, res: Response): User | null => {
@@ -845,6 +830,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
   
+  // Get deletion status endpoint
+  router.get('/user/deletion-status', isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+
+      const deletionInProgress = await (storage as any).getDeletionInProgress(userId);
+      res.json({ deletionInProgress });
+    } catch (error) {
+      console.error('Error getting deletion status:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
+  // Update deletion status endpoint (for canceling deletion)
+  router.put('/user/deletion-status', isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+
+      const { deletionInProgress } = req.body;
+      if (typeof deletionInProgress !== 'boolean') {
+        return res.status(400).json({ message: 'deletionInProgress must be a boolean' });
+      }
+
+      const success = await (storage as any).setDeletionInProgress(userId, deletionInProgress);
+      if (success) {
+        res.json({ message: 'Deletion status updated successfully', deletionInProgress });
+      } else {
+        res.status(500).json({ message: 'Failed to update deletion status' });
+      }
+    } catch (error) {
+      console.error('Error updating deletion status:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
   // Delete user account endpoint (now uses anonymization)
   router.delete('/auth/delete-account', isAuthenticated, async (req: Request, res: Response) => {
     try {
@@ -866,10 +892,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'User not found' });
       }
 
-      // Note: We no longer check for unsettled balances when deleting account
-      // The user will be anonymized (become a "ghost user") in all trips regardless of settlements
-      // Settlement checks only apply when leaving individual trips, not when deleting account
-      console.log('🔍 Delete account - Starting user anonymization process...');
+      // Check deletion in progress status
+      const deletionInProgress = await (storage as any).getDeletionInProgress(userId);
+      console.log('🔍 Delete account - Deletion in progress:', deletionInProgress);
+
+      // Check for unsettled balances across all trips
+      console.log('🔍 Delete account - Checking for unsettled balances...');
+      const tripsWithBalances = await (storage as any).getTripsWithUnsettledBalances(userId);
+      
+      // If deletion not in progress, set it and return trips with balances
+      if (!deletionInProgress) {
+        console.log('🔍 Delete account - Setting deletion in progress to true');
+        await (storage as any).setDeletionInProgress(userId, true);
+        
+        return res.status(200).json({ 
+          message: 'Deletion process started. Please settle all balances.',
+          tripsWithBalances: tripsWithBalances,
+          deletionInProgress: true
+        });
+      }
+
+      // If deletion in progress, check if balances are settled
+      // User can delete if all balances are >= 0 (they can leave even if owed money)
+      const hasNegativeBalances = tripsWithBalances.some(trip => trip.balance < 0);
+      
+      if (hasNegativeBalances) {
+        console.log('❌ Delete account - User still has negative balances');
+        return res.status(400).json({ 
+          message: 'You cannot delete your account until you settle all debts (negative balances).',
+          tripsWithBalances: tripsWithBalances
+        });
+      }
+
+      // All clear - proceed with deletion
+      console.log('🔍 Delete account - No negative balances, starting user anonymization process...');
       // Use anonymizeUserAccount which handles trip organizer transfer and anonymization
       const success = await (storage as any).anonymizeUserAccount(userId);
       console.log('🔍 Delete account - Anonymization result:', success);
@@ -5741,6 +5797,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all trips where user has unsettled balances
+  router.get('/user/unsettled-balances', isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = ensureUser(req, res);
+      if (!user) return;
+
+      const tripsWithBalances = await (storage as any).getTripsWithUnsettledBalances(user.id);
+      res.json(tripsWithBalances);
+    } catch (error) {
+      console.error("Error fetching unsettled balances:", error);
+      res.status(500).json({ message: "Failed to fetch unsettled balances" });
+    }
+  });
+
   router.get('/trips/:id/settlement-options/:payeeId', isAuthenticated, async (req: Request, res: Response) => {
     try {
       const user = ensureUser(req, res);
@@ -6333,12 +6403,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Recovery link has expired. Please request a new one.' });
       }
 
-      // Recover the account - clear deletedAt and recovery tokens
-      await storage.updateUser(user.id, {
-        deletedAt: null,
-        accountRecoveryToken: null,
-        accountRecoveryExpires: null
-      });
+      // Recover the account - restore user and handle organizer status
+      await (storage as any).restoreUserOnRecovery(user.id);
 
       console.log(`✅ Account recovered for user ${user.id}`);
 

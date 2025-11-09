@@ -202,7 +202,37 @@ export class DatabaseStorage {
   }
 
   /**
+   * Set deletion in progress status for a user
+   */
+  async setDeletionInProgress(userId: number, inProgress: boolean): Promise<boolean> {
+    try {
+      await db
+        .update(users)
+        .set({ deletionInProgress: inProgress })
+        .where(eq(users.id, userId));
+      return true;
+    } catch (error) {
+      console.error('Error setting deletion in progress:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get deletion in progress status for a user
+   */
+  async getDeletionInProgress(userId: number): Promise<boolean> {
+    try {
+      const user = await this.getUser(userId);
+      return user?.deletionInProgress || false;
+    } catch (error) {
+      console.error('Error getting deletion in progress:', error);
+      return false;
+    }
+  }
+
+  /**
    * Anonymize user account and handle trip relationships
+   * - Stores original organizer ID before transferring
    * - Transfers organizer role if user is organizer and other members exist
    * - Never deletes trips (for account recovery)
    * - Always anonymizes the user
@@ -223,18 +253,25 @@ export class DatabaseStorage {
         
         console.log(`🔍 anonymizeUserAccount - Trip ${trip.id}: ${allMembers.length} total members, ${otherMembers.length} other members`);
         
-        // If user is organizer and there are other members, make earliest member an admin
-        // Keep deleted user as organizer (will show as "User not found" in UI)
+        // If user is organizer and there are other members, transfer organizer role
         if (trip.organizer === userId && otherMembers.length > 0) {
+          // Store original organizer ID before transferring
+          await db
+            .update(trips)
+            .set({ originalOrganizerId: userId })
+            .where(eq(trips.id, trip.id));
+
           const earliestMember = await this.getEarliestTripMember(trip.id, userId);
           
           if (earliestMember) {
-            console.log(`🔍 anonymizeUserAccount - Making earliest member ${earliestMember.userId} an admin for trip ${trip.id} (keeping deleted user ${userId} as organizer)`);
-            // Make the earliest member an admin instead of transferring organizer role
-            await this.updateTripMemberAdminStatus(trip.id, earliestMember.userId, true);
+            console.log(`🔍 anonymizeUserAccount - Transferring organizer role from ${userId} to ${earliestMember.userId} for trip ${trip.id}`);
+            // Transfer organizer role to earliest member
+            await db
+              .update(trips)
+              .set({ organizer: earliestMember.userId })
+              .where(eq(trips.id, trip.id));
           } else {
-            console.log(`⚠️ anonymizeUserAccount - No other members found to make admin for trip ${trip.id}`);
-            // Keep user as organizer (will show as "User not found" in UI)
+            console.log(`⚠️ anonymizeUserAccount - No other members found to transfer organizer for trip ${trip.id}`);
           }
         }
         // If user is organizer but no other members, keep them as organizer (trip will show "User not found")
@@ -245,6 +282,46 @@ export class DatabaseStorage {
       return await this.anonymizeUser(userId);
     } catch (error) {
       console.error('❌ anonymizeUserAccount - Error:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Restore user as regular member on account recovery
+   * If user was original organizer, they become regular member (current organizer stays)
+   */
+  async restoreUserOnRecovery(userId: number): Promise<boolean> {
+    try {
+      console.log('🔍 restoreUserOnRecovery - Restoring user ID:', userId);
+      
+      // Get all trips where user was original organizer
+      const tripsAsOriginalOrganizer = await db
+        .select()
+        .from(trips)
+        .where(eq(trips.originalOrganizerId, userId));
+
+      console.log(`🔍 restoreUserOnRecovery - User was original organizer of ${tripsAsOriginalOrganizer.length} trips`);
+
+      // User becomes regular member (current organizer stays as organizer)
+      // No need to change organizer - current organizer remains
+      // originalOrganizerId is kept for historical tracking
+
+      // Clear deletion in progress flag
+      await this.setDeletionInProgress(userId, false);
+
+      // Restore user account (clear deleted_at, etc.)
+      await db
+        .update(users)
+        .set({ 
+          deletedAt: null,
+          accountRecoveryToken: null,
+          accountRecoveryExpires: null
+        })
+        .where(eq(users.id, userId));
+
+      return true;
+    } catch (error) {
+      console.error('❌ restoreUserOnRecovery - Error:', error);
       return false;
     }
   }
@@ -1618,6 +1695,40 @@ export class DatabaseStorage {
     })));
     
     return results;
+  }
+
+  /**
+   * Get all trips where user has unsettled balances
+   * Returns array of trips with balance information
+   */
+  async getTripsWithUnsettledBalances(userId: number): Promise<Array<{ tripId: number; tripName: string; balance: number; message: string }>> {
+    try {
+      const userTrips = await this.getTripsByUser(userId);
+      const tripsWithBalances: Array<{ tripId: number; tripName: string; balance: number; message: string }> = [];
+
+      for (const trip of userTrips) {
+        const balances = await this.calculateExpenseBalances(trip.id);
+        const userBalance = balances.find(b => b.userId === userId);
+        
+        if (userBalance && Math.abs(userBalance.netBalance) >= 0.01) {
+          const message = userBalance.netBalance > 0
+            ? `You're owed $${Math.abs(userBalance.netBalance).toFixed(2)}. You can leave, but you'll lose this money.`
+            : `You owe $${Math.abs(userBalance.netBalance).toFixed(2)}. You must settle this before deleting your account.`;
+          
+          tripsWithBalances.push({
+            tripId: trip.id,
+            tripName: trip.name || 'Unnamed Trip',
+            balance: userBalance.netBalance,
+            message: message
+          });
+        }
+      }
+
+      return tripsWithBalances;
+    } catch (error) {
+      console.error('Error getting trips with unsettled balances:', error);
+      return [];
+    }
   }
 
   // Auto-archive all trips for a user where the end date is in the past and not already archived for the user.

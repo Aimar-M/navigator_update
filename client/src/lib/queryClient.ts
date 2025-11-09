@@ -27,6 +27,7 @@ async function throwIfResNotOk(res: Response) {
     if (errorData) {
       (error as any).message = errorData.message || errorText;
       (error as any).blockingTrips = errorData.blockingTrips;
+      (error as any).tripsWithBalances = errorData.tripsWithBalances;
       (error as any).details = errorData.details;
       (error as any).requiresConfirmation = errorData.requiresConfirmation;
       (error as any).errorData = errorData;

@@ -45,6 +45,7 @@ export const users = pgTable("users", {
   deletedAt: timestamp("deleted_at"),
   accountRecoveryToken: text("account_recovery_token"),
   accountRecoveryExpires: timestamp("account_recovery_expires"),
+  deletionInProgress: boolean("deletion_in_progress").default(false),
 });
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -104,6 +105,7 @@ export const trips = pgTable("trips", {
   downPaymentAmount: decimal("down_payment_amount", { precision: 10, scale: 2 }),
   adminOnlyItinerary: boolean("admin_only_itinerary").default(false),
   removalLogicVersion: integer("removal_logic_version").default(0),
+  originalOrganizerId: integer("original_organizer_id").references(() => users.id),
 });
 
 export const tripsRelations = relations(trips, ({ one, many }) => ({

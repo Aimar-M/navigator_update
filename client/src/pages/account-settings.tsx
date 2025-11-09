@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Trash2, AlertTriangle, Lock, Shield, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { queryClient } from "@/lib/queryClient";
@@ -28,6 +28,17 @@ export default function AccountSettings() {
   // Delete profile functionality
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
+
+  // Fetch deletion status
+  const { data: deletionStatus } = useQuery({
+    queryKey: [`${API_BASE}/api/user/deletion-status`],
+    queryFn: async () => {
+      return await apiRequest<{ deletionInProgress: boolean }>('GET', `${API_BASE}/api/user/deletion-status`);
+    },
+    enabled: !!user,
+  });
+
+  const deletionInProgress = deletionStatus?.deletionInProgress || false;
 
   // Password change mutation
   const changePasswordMutation = useMutation({
@@ -59,80 +70,33 @@ export default function AccountSettings() {
     mutationFn: async () => {
       return await apiRequest('DELETE', `${API_BASE}/api/auth/delete-account`);
     },
-    onSuccess: () => {
-      toast({
-        title: "Account Deleted",
-        description: "Your account has been permanently deleted.",
-      });
-      // Clear all data and redirect to landing page
-      queryClient.clear();
-      // Clear authentication state
-      localStorage.removeItem('auth_token');
-      sessionStorage.clear();
-      // Use window.location for a hard redirect to avoid race conditions
-      window.location.href = "/";
+    onSuccess: (data: any) => {
+      // Check if deletion was completed or just started
+      if (data.message && data.message.includes('deleted successfully')) {
+        toast({
+          title: "Account Deleted",
+          description: "Your account has been permanently deleted.",
+        });
+        // Clear all data and redirect to landing page
+        queryClient.clear();
+        // Clear authentication state
+        localStorage.removeItem('auth_token');
+        sessionStorage.clear();
+        // Use window.location for a hard redirect to avoid race conditions
+        window.location.href = "/";
+      } else {
+        // Deletion process started - redirect to delete account page
+        queryClient.invalidateQueries({ queryKey: [`${API_BASE}/api/user/deletion-status`] });
+        navigate('/delete-account');
+      }
     },
     onError: (error: any) => {
-      // Check if error has blocking trips information
-      const blockingTrips = error?.blockingTrips || [];
       const errorMessage = error?.message || "There was a problem deleting your account. Please try again.";
-      
-      if (blockingTrips.length > 0) {
-        // Group trips by reason type
-        const organizerTrips = blockingTrips.filter((trip: any) => trip.reason?.includes('organizer'));
-        const balanceTrips = blockingTrips.filter((trip: any) => !trip.reason?.includes('organizer'));
-        
-        // Create a more concise message
-        let description = "You cannot delete your account because:\n\n";
-        
-        if (organizerTrips.length > 0) {
-          const tripCount = organizerTrips.length;
-          if (tripCount <= 3) {
-            // Show all trips if 3 or fewer
-            const tripNames = organizerTrips.map((trip: any) => `• ${trip.tripName}`).join('\n');
-            description += `You are organizing ${tripCount} trip${tripCount > 1 ? 's' : ''}:\n${tripNames}\n\n`;
-          } else {
-            // Show first 3 and count if more
-            const tripNames = organizerTrips.slice(0, 3).map((trip: any) => `• ${trip.tripName}`).join('\n');
-            description += `You are organizing ${tripCount} trips:\n${tripNames}\n... and ${tripCount - 3} more trip${tripCount - 3 > 1 ? 's' : ''}\n\n`;
-          }
-          description += "To delete your account, you must first delete all trips you're organizing.\n\n";
-          description += "How to delete trips:\n";
-          description += "1. Go to each trip's detail page\n";
-          description += "2. Click the three-dot menu (⋮) in the top right\n";
-          description += "3. Select 'Delete Trip'\n";
-          description += "4. Type 'DELETE' to confirm\n\n";
-          description += "After deleting all trips, you can delete your account.";
-        }
-        
-        if (balanceTrips.length > 0) {
-          if (organizerTrips.length > 0) {
-            description += "\n\n";
-          }
-          const tripCount = balanceTrips.length;
-          if (tripCount <= 3) {
-            const tripNames = balanceTrips.map((trip: any) => `• ${trip.tripName}`).join('\n');
-            description += `You have unsettled balances in ${tripCount} trip${tripCount > 1 ? 's' : ''}:\n${tripNames}\n\n`;
-          } else {
-            const tripNames = balanceTrips.slice(0, 3).map((trip: any) => `• ${trip.tripName}`).join('\n');
-            description += `You have unsettled balances in ${tripCount} trips:\n${tripNames}\n... and ${tripCount - 3} more trip${tripCount - 3 > 1 ? 's' : ''}\n\n`;
-          }
-          description += "Please settle all balances before deleting your account.";
-        }
-        
-        toast({
-          title: "Cannot Delete Account",
-          description: description,
-          variant: "destructive",
-          duration: 20000, // Show for 20 seconds for longer messages
-        });
-      } else {
-        toast({
-          title: "Account Deletion Failed",
-          description: errorMessage,
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Account Deletion Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
     },
   });
 
@@ -338,20 +302,9 @@ export default function AccountSettings() {
                     <p className="text-sm font-medium text-yellow-800 mb-2">
                       Important: Account Deletion Requirements
                     </p>
-                    <p className="text-xs text-yellow-700 mb-2">
-                      You cannot delete your account if you have unsettled balances in any trip, are organizing trips, or have pending settlements.
-                    </p>
-                    <p className="text-xs font-medium text-yellow-800 mb-1">
-                      If you're organizing trips:
-                    </p>
-                    <ol className="text-xs text-yellow-700 list-decimal list-inside space-y-1 ml-2">
-                      <li>Go to each trip's detail page</li>
-                      <li>Click the three-dot menu (⋮) in the top right</li>
-                      <li>Select "Delete Trip"</li>
-                      <li>Type "DELETE" to confirm</li>
-                    </ol>
-                    <p className="text-xs text-yellow-700 mt-2">
-                      After deleting all trips and settling balances, you can delete your account.
+                    <p className="text-xs text-yellow-700">
+                      You cannot delete your account if you have unsettled balances in any trip. 
+                      If you try to delete with outstanding balances, you'll be redirected to a page where you can see all your settlements and settle up.
                     </p>
                   </div>
                 </div>
@@ -360,11 +313,11 @@ export default function AccountSettings() {
                   <Button
                     type="button"
                     variant="destructive"
-                    onClick={handleDeleteAccountClick}
+                    onClick={deletionInProgress ? () => navigate('/delete-account') : handleDeleteAccountClick}
                     className="bg-red-600 hover:bg-red-700"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Account
+                    {deletionInProgress ? "Continue Delete Flow" : "Delete Account"}
                   </Button>
                 </div>
               </div>

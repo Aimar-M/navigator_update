@@ -34,6 +34,7 @@ import ResetPassword from "@/pages/reset-password";
 import ConfirmEmail from "@/pages/confirm-email";
 import RecoverAccount from "@/pages/recover-account";
 import AirportTest from "@/pages/airport-test";
+import DeleteAccount from "@/pages/delete-account";
 
 function Router() {
   return (
@@ -66,6 +67,7 @@ function Router() {
       <Route path="/trips/:tripId/expenses/:expenseId" component={ExpenseDetails} />
       <Route path="/profile" component={Profile} />
       <Route path="/account-settings" component={AccountSettings} />
+      <Route path="/delete-account" component={DeleteAccount} />
       <Route path="/user/:userId" component={UserProfile} />
       <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/reset-password" component={ResetPassword} />
