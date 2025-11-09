@@ -103,6 +103,59 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
+    // Sitemap.xml endpoint for SEO (must be at root level, not under /api)
+    app.get('/sitemap.xml', (req: Request, res: Response) => {
+      const baseUrl = 'https://navigatortrips.com';
+      const currentDate = new Date().toISOString().split('T')[0];
+      
+      const publicPages = [
+        { path: '/', priority: '1.0', changefreq: 'weekly' },
+        { path: '/about', priority: '0.8', changefreq: 'monthly' },
+        { path: '/contact', priority: '0.7', changefreq: 'monthly' },
+        { path: '/terms', priority: '0.5', changefreq: 'yearly' },
+        { path: '/privacy', priority: '0.5', changefreq: 'yearly' },
+        { path: '/legal', priority: '0.5', changefreq: 'yearly' },
+      ];
+
+      const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${publicPages.map(page => `  <url>
+    <loc>${baseUrl}${page.path}</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>${page.changefreq}</changefreq>
+    <priority>${page.priority}</priority>
+  </url>`).join('\n')}
+</urlset>`;
+
+      res.setHeader('Content-Type', 'application/xml');
+      res.status(200).send(sitemap);
+    });
+
+    // Robots.txt endpoint for SEO (must be at root level)
+    app.get('/robots.txt', (req: Request, res: Response) => {
+      const robotsTxt = `User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /account-settings
+Disallow: /profile
+Disallow: /trips/
+Disallow: /chats
+Disallow: /create-trip
+Disallow: /invite/
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /confirm-email
+Disallow: /recover-account
+Disallow: /airport-test
+
+# Sitemap
+Sitemap: https://navigatortrips.com/sitemap.xml
+`;
+      res.setHeader('Content-Type', 'text/plain');
+      res.status(200).send(robotsTxt);
+    });
+
     console.log('🔧 Setting up routes...');
     const server = await registerRoutes(app);
 
