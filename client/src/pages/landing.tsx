@@ -103,22 +103,16 @@ export default function Landing() {
             {/* Mobile Logo (phone screens) */}
             <img 
               src={navigatorLogoMobile} 
-              alt="Navigator - Group Travel Planner for Planning Trips with Friends" 
+              alt="Navigator Logo" 
               className="h-72 mx-auto filter brightness-0 invert opacity-90 md:hidden"
               data-testid="navigator-logo-mobile"
-              loading="lazy"
-              width="288"
-              height="288"
             />
             {/* Desktop/Tablet Logo (tablets and PCs) */}
             <img 
               src={navigatorLogo} 
-              alt="Navigator - Group Travel Planner for Planning Trips with Friends" 
+              alt="Navigator Logo" 
               className="hidden md:block h-72 mx-auto filter brightness-0 invert opacity-90"
               data-testid="navigator-logo"
-              loading="lazy"
-              width="288"
-              height="288"
             />
           </div>
 
