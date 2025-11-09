@@ -28,7 +28,7 @@ export default function Contact() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Redirect authenticated users to dashboard
+  // Redirect authenticated users to dashboard (but render content first for SEO)
   useEffect(() => {
     if (!isLoading && user) {
       navigate("/dashboard");
@@ -115,20 +115,9 @@ export default function Contact() {
     }));
   };
 
-  // Show loading while checking authentication
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p>Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
   // Don't render contact page if user is authenticated (will redirect)
-  if (user) {
+  // But show content during loading for SEO/crawlers
+  if (!isLoading && user) {
     return null;
   }
   return (
