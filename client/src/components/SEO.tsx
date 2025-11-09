@@ -119,6 +119,11 @@ export function SEO({ page, path, noindex = false, nofollow = false }: SEOProps)
       <meta name="revisit-after" content="7 days" />
       <meta name="distribution" content="global" />
       <meta name="rating" content="general" />
+      
+      {/* Explicit favicon links for Google Search */}
+      <link rel="icon" href={`${SITE_CONFIG.url}/favicon.ico`} sizes="any" />
+      <link rel="icon" href={`${SITE_CONFIG.url}/android-chrome-192x192.png`} type="image/png" sizes="192x192" />
+      <link rel="icon" href={`${SITE_CONFIG.url}/android-chrome-512x512.png`} type="image/png" sizes="512x512" />
 
       {/* Structured Data - JSON-LD */}
       <script type="application/ld+json">
