@@ -11,7 +11,9 @@ interface SEOProps {
 export function SEO({ page, path, noindex = false, nofollow = false }: SEOProps) {
   const pageData = SEO_PAGES[page];
   const canonicalPath = path || pageData.path;
-  const canonicalUrl = `${SITE_CONFIG.url}${canonicalPath}`;
+  // Always use non-www URL for canonical (strip www if present)
+  const baseUrl = SITE_CONFIG.url.replace(/^https?:\/\/(www\.)?/, 'https://');
+  const canonicalUrl = `${baseUrl}${canonicalPath}`;
   const ogImage = SITE_CONFIG.ogImage;
 
   // Organization structured data
