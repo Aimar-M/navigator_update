@@ -19,7 +19,8 @@
         }
       ],
       "destination": "https://navigatortrips.com/$1",
-      "permanent": true
+      "permanent": true,
+      "statusCode": 301
     }
   ],
   "rewrites": [

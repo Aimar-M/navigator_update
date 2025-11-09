@@ -137,6 +137,7 @@ ${publicPages.map(page => `  <url>
 Allow: /
 Disallow: /api/
 Disallow: /dashboard
+Disallow: /home
 Disallow: /account-settings
 Disallow: /profile
 Disallow: /trips/
