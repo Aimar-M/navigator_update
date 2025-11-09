@@ -114,6 +114,11 @@ export function SEO({ page, path, noindex = false, nofollow = false }: SEOProps)
       <meta name="author" content={SITE_CONFIG.company} />
       <meta name="theme-color" content="#2563eb" />
       <meta name="image" content={`${SITE_CONFIG.url}/android-chrome-512x512.png`} />
+      <meta httpEquiv="content-language" content="en" />
+      <meta name="language" content="English" />
+      <meta name="revisit-after" content="7 days" />
+      <meta name="distribution" content="global" />
+      <meta name="rating" content="general" />
 
       {/* Structured Data - JSON-LD */}
       <script type="application/ld+json">

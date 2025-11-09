@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx server/index.ts",
     "build": "vite build && npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist --ignore-annotations",
+    "build:prerender": "vite build && npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist --ignore-annotations && node scripts/prerender.js",
+    "prerender": "node scripts/prerender.js",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc",
     "db:push": "drizzle-kit push",
@@ -126,6 +128,7 @@
     "drizzle-kit": "^0.30.4",
     "esbuild": "^0.25.0",
     "postcss": "^8.4.47",
+    "puppeteer": "^24.29.1",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.19.1",
     "typescript": "5.6.3",

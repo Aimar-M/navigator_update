@@ -64,6 +64,8 @@ export default function Landing() {
           playsInline
           className="w-full h-full object-cover"
           data-testid="background-video"
+          preload="metadata"
+          aria-label="Background video of travel destinations"
         >
           <source src={backgroundVideo} type="video/mp4" />
           <source src={backgroundVideo} type="video/quicktime" />
@@ -101,16 +103,22 @@ export default function Landing() {
             {/* Mobile Logo (phone screens) */}
             <img 
               src={navigatorLogoMobile} 
-              alt="Navigator Logo" 
+              alt="Navigator - Group Travel Planner for Planning Trips with Friends" 
               className="h-72 mx-auto filter brightness-0 invert opacity-90 md:hidden"
               data-testid="navigator-logo-mobile"
+              loading="lazy"
+              width="288"
+              height="288"
             />
             {/* Desktop/Tablet Logo (tablets and PCs) */}
             <img 
               src={navigatorLogo} 
-              alt="Navigator Logo" 
+              alt="Navigator - Group Travel Planner for Planning Trips with Friends" 
               className="hidden md:block h-72 mx-auto filter brightness-0 invert opacity-90"
               data-testid="navigator-logo"
+              loading="lazy"
+              width="288"
+              height="288"
             />
           </div>
 
@@ -121,6 +129,11 @@ export default function Landing() {
               Simple
             </span>
           </h1>
+
+          {/* SEO-Optimized Subheading (visible to users and search engines) */}
+          <p className="text-xl sm:text-2xl text-white/90 mb-8 max-w-3xl mx-auto px-4">
+            Navigator is the best group travel planner for planning trips with friends. Plan group trips, coordinate flights, split expenses, and chat — all in one place.
+          </p>
 
           {/* Action Button */}
           <div className="flex justify-center">
@@ -136,6 +149,37 @@ export default function Landing() {
           </div>
         </div>
       </div>
+
+      {/* SEO Content Section (below the fold, visible to search engines) */}
+      <section className="relative z-10 bg-black/60 backdrop-blur-sm py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto text-white">
+          <h2 className="text-3xl sm:text-4xl font-bold mb-6 text-center">
+            Navigator — Your Complete Group Travel Planner
+          </h2>
+          <div className="prose prose-lg prose-invert max-w-none">
+            <p className="text-lg mb-4">
+              <strong>Navigator</strong> is the ultimate <strong>group travel planner</strong> designed to make planning <strong>trips</strong> with friends effortless. Whether you're organizing a weekend getaway or a month-long adventure, Navigator helps you <strong>plan trips with friends</strong> seamlessly.
+            </p>
+            <p className="text-lg mb-4">
+              As a comprehensive <strong>travel planner</strong>, Navigator combines trip planning, expense splitting, flight coordination, and group chat into one powerful platform. <strong>Navigator 1802</strong> brings together all the tools you need for successful <strong>group travel</strong>.
+            </p>
+            <p className="text-lg mb-4">
+              With <strong>Navigator trips</strong>, you can create detailed itineraries, invite friends, split expenses fairly, coordinate flights, and stay connected through group chat. <strong>Navigatortrip</strong> planning has never been easier.
+            </p>
+            <h3 className="text-2xl font-bold mt-8 mb-4">Why Choose Navigator for Group Travel?</h3>
+            <ul className="list-disc list-inside space-y-2 text-lg mb-4">
+              <li><strong>Plan trips with friends</strong> using our intuitive trip planning tools</li>
+              <li>Split expenses automatically with our smart expense tracker</li>
+              <li>Coordinate flights and travel details in one place</li>
+              <li>Chat with your travel group in real-time</li>
+              <li>Vote on activities and make group decisions together</li>
+            </ul>
+            <p className="text-lg">
+              Start planning your next <strong>group travel</strong> adventure with <strong>Navigator</strong> today. <strong>Navigator 1802</strong> makes it simple to organize <strong>trips</strong>, coordinate with friends, and create unforgettable travel memories.
+            </p>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

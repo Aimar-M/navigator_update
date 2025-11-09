@@ -13,9 +13,9 @@ export const SITE_CONFIG = {
 
 export const SEO_PAGES = {
   home: {
-    title: "Navigator — Group Travel Made Simple",
-    description: "Plan group trips effortlessly with Navigator. Split expenses, coordinate flights, chat, and vote on plans — all in one place.",
-    keywords: "group travel app, trip planning, Navigator",
+    title: "Navigator — Group Travel Planner | Plan Trips with Friends | Navigator 1802",
+    description: "Navigator is the best group travel planner for planning trips with friends. Plan group trips, split expenses, coordinate flights, and chat — all in one place. Navigator 1802 makes travel planning simple.",
+    keywords: "navigator, group travel, travel planner, trips, navigator 1802, plan trips with friends, group travel planner, navigator trips, navigatortrip, navigator app, group travel app, trip planning app, travel organizer, collaborative travel planner",
     path: "/",
   },
   about: {
@@ -50,11 +50,20 @@ export const SEO_PAGES = {
   },
 } as const;
 
-// Primary keywords for the site
+// Primary keywords for the site (prioritized by user's target keywords)
 export const PRIMARY_KEYWORDS = [
+  // User's Priority Keywords
   "navigator",
-  "navigator app",
+  "group travel",
+  "travel planner",
+  "trips",
+  "navigator 1802",
+  "plan trips with friends",
+  "group travel planner",
   "navigator trips",
+  "navigatortrip",
+  // Additional high-value keywords
+  "navigator app",
   "navigator travel",
   "navigator group planner",
   "navigator journeys",
@@ -120,7 +129,6 @@ export const PRIMARY_KEYWORDS = [
   "travel diary",
   "nostalgic travel",
   "freedom to travel",
-  "travel with friends",
   "shared moments",
   "modern travel app",
   "effortless planning",
@@ -137,7 +145,6 @@ export const PRIMARY_KEYWORDS = [
   "travel startup",
   "ai travel planner",
   "social trip app",
-  "Navigator 1802",
   "1802",
 ];
 
