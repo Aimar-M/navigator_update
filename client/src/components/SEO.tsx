@@ -22,7 +22,13 @@ export function SEO({ page, path, noindex = false, nofollow = false }: SEOProps)
     "@type": "Organization",
     "name": SITE_CONFIG.company,
     "url": SITE_CONFIG.url,
-    "logo": `${SITE_CONFIG.url}${SITE_CONFIG.logo}`,
+    "logo": {
+      "@type": "ImageObject",
+      "url": `${SITE_CONFIG.url}/android-chrome-512x512.png`,
+      "width": 512,
+      "height": 512
+    },
+    "image": `${SITE_CONFIG.url}/android-chrome-512x512.png`,
     "description": SITE_CONFIG.description,
     "email": SITE_CONFIG.email,
     "sameAs": [] as string[], // Add social media URLs when available
@@ -42,9 +48,15 @@ export function SEO({ page, path, noindex = false, nofollow = false }: SEOProps)
     },
     "description": SITE_CONFIG.description,
     "url": SITE_CONFIG.url,
+    "image": `${SITE_CONFIG.url}/android-chrome-512x512.png`,
+    "screenshot": ogImage,
     "publisher": {
       "@type": "Organization",
       "name": SITE_CONFIG.company,
+      "logo": {
+        "@type": "ImageObject",
+        "url": `${SITE_CONFIG.url}/android-chrome-512x512.png`
+      }
     },
   } : null;
 
@@ -101,6 +113,7 @@ export function SEO({ page, path, noindex = false, nofollow = false }: SEOProps)
       {/* Additional Meta Tags */}
       <meta name="author" content={SITE_CONFIG.company} />
       <meta name="theme-color" content="#2563eb" />
+      <meta name="image" content={`${SITE_CONFIG.url}/android-chrome-512x512.png`} />
 
       {/* Structured Data - JSON-LD */}
       <script type="application/ld+json">
