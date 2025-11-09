@@ -126,7 +126,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             'Authorization': `Bearer ${token}`
           };
           
-          const response = await fetch(`${API_BASE}/api/auth/me`, { headers });
+          const response = await fetch(`${API_BASE}/api/auth/me`, { 
+            headers,
+            credentials: 'include' // Include cookies for session fallback
+          });
           console.log("Auth check: /api/auth/me response status:", response.status);
           
           if (response.ok) {

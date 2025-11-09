@@ -590,6 +590,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('🔍 /api/auth/me called');
       console.log('🔍 Request headers:', req.headers);
+      console.log('🔍 Cookie header:', req.headers.cookie);
+      console.log('🔍 Session ID:', req.sessionID);
+      console.log('🔍 Session exists:', !!req.session);
+      console.log('🔍 Session userId:', req.session?.userId);
       console.log('🔍 Authorization header:', req.headers.authorization);
       
       // Check for token-based authentication first
@@ -6611,6 +6615,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
   // OAuth token validation endpoint
+  // OAuth test endpoint (for frontend connectivity checks)
+  router.get('/auth/oauth/test', async (req: Request, res: Response) => {
+    try {
+      res.json({ message: 'OAuth backend is reachable', status: 'ok' });
+    } catch (error) {
+      console.error('OAuth test error:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
   router.post('/auth/oauth/validate', async (req: Request, res: Response) => {
     try {
       const { oauthToken, userId } = req.body;

@@ -48,6 +48,11 @@ app.options('*', cors()); // <-- Add this line
 // Removed static file serving to avoid file system dependencies
 
 // Configure session middleware with PostgreSQL store
+// Detect production environment: if not explicitly development, assume production
+// This ensures cookies work correctly even if NODE_ENV is not set in Railway
+const isProduction = process.env.NODE_ENV !== 'development';
+console.log('🔧 Production mode detected:', isProduction, '(NODE_ENV:', process.env.NODE_ENV, ')');
+
 const PgSession = connectPgSimple(session);
 app.use(session({
   store: new PgSession({
@@ -59,11 +64,11 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production', // true for HTTPS in production, false for HTTP in development
+    secure: isProduction, // true for HTTPS in production, false for HTTP in development
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     sameSite: 'none', // Allow cross-site cookies for OAuth
-    domain: process.env.NODE_ENV === 'production' ? '.navigatortrips.com' : undefined // Allow subdomain sharing between navigatortrips.com and api.navigatortrips.com
+    domain: isProduction ? '.navigatortrips.com' : undefined // Allow subdomain sharing between navigatortrips.com and api.navigatortrips.com
   }
 }));
 
