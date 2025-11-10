@@ -372,11 +372,11 @@ export default function TripDetails() {
 
   // Handle form submission
   const handleSaveChanges = () => {
-    // Basic validation
-    if (!editForm.name.trim() || !editForm.destination.trim() || !editForm.startDate || !editForm.endDate) {
+    // Basic validation - only name and dates are required, destination is optional
+    if (!editForm.name.trim() || !editForm.startDate || !editForm.endDate) {
       toast({
         title: "Validation error",
-        description: "Please fill in all required fields",
+        description: "Please fill in all required fields (name and dates)",
         variant: "destructive"
       });
       return;
@@ -426,7 +426,7 @@ export default function TripDetails() {
     // Convert dates to Date objects (will be serialized to ISO strings by JSON.stringify)
     const updatedData = {
       name: editForm.name.trim(),
-      destination: editForm.destination.trim(),
+      destination: editForm.destination.trim() || "", // Allow empty destination (optional)
       description: editForm.description.trim(),
       startDate: startDate, // Date object - will be converted to ISO string by JSON.stringify
       endDate: endDate, // Date object - will be converted to ISO string by JSON.stringify
@@ -437,22 +437,6 @@ export default function TripDetails() {
     };
 
     updateTripMutation.mutate(updatedData);
-  };
-
-  const isOrganizer = user && trip && trip.organizer === user.id;
-  
-  // Get current user's membership status
-  const currentUserMembership = members.find(member => member.userId === user?.id);
-  const isConfirmedMember = currentUserMembership?.rsvpStatus === 'confirmed' || isOrganizer;
-  const isPendingMember = currentUserMembership?.rsvpStatus === 'pending';
-  const isDeclinedMember = currentUserMembership?.rsvpStatus === 'declined';
-  const isCurrentUserAdmin = currentUserMembership?.isAdmin || isOrganizer;
-
-  // Helper function to check if a member can be demoted (ensure at least one admin remains)
-  const canDemoteMember = (userId: number) => {
-    const adminCount = members.filter(member => member.isAdmin || member.userId === trip?.organizer).length;
-    const isLastAdmin = adminCount <= 1 && (members.find(m => m.userId === userId)?.isAdmin || userId === trip?.organizer);
-    return !isLastAdmin;
   };
   
   if (isLoading || !trip) {
@@ -466,6 +450,23 @@ export default function TripDetails() {
       </TripDetailLayout>
     );
   }
+
+  // After early return, trip is guaranteed to be defined
+  const isOrganizer = Boolean(user && trip.organizer === user.id);
+  
+  // Get current user's membership status
+  const currentUserMembership = members.find(member => member.userId === user?.id);
+  const isConfirmedMember = currentUserMembership?.rsvpStatus === 'confirmed' || isOrganizer;
+  const isPendingMember = currentUserMembership?.rsvpStatus === 'pending';
+  const isDeclinedMember = currentUserMembership?.rsvpStatus === 'declined';
+  const isCurrentUserAdmin = currentUserMembership?.isAdmin || isOrganizer;
+
+  // Helper function to check if a member can be demoted (ensure at least one admin remains)
+  const canDemoteMember = (userId: number) => {
+    const adminCount = members.filter(member => member.isAdmin || member.userId === trip.organizer).length;
+    const isLastAdmin = adminCount <= 1 && (members.find(m => m.userId === userId)?.isAdmin || userId === trip.organizer);
+    return !isLastAdmin;
+  };
   
   // Show Pending Status Screen for users with pending RSVP status
   if (isPendingMember && currentUserMembership && !isOrganizer) {
@@ -474,7 +475,7 @@ export default function TripDetails() {
         tripId={tripId}
         title={trip.name}
         isConfirmedMember={false}
-        description={`Trip to ${trip.destination}`}
+        description={trip.destination ? `Trip to ${trip.destination}` : "Trip"}
       >
         <PendingStatusScreen 
           trip={trip}
@@ -489,7 +490,7 @@ export default function TripDetails() {
       tripId={tripId}
       title={trip.name}
       isConfirmedMember={!!isConfirmedMember}
-      description={`Trip to ${trip.destination}`}
+      description={trip.destination ? `Trip to ${trip.destination}` : "Trip"}
     >
       {/* RSVP Status Notice for Declined Users */}
       {isDeclinedMember && (
@@ -653,7 +654,7 @@ export default function TripDetails() {
                       dropdownDirection="up"
                     />
                   ) : (
-                    <p className="text-gray-600">{trip.destination}</p>
+                    <p className="text-gray-600">{trip.destination || "Not set"}</p>
                   )}
                 </div>
               </div>
