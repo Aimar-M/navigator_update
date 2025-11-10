@@ -407,7 +407,7 @@ export default function Chat() {
                             )}
                           </div>
                           <span
-                            className={`text-[10px] md:text-xs mt-0.5 block ${
+                            className={`text-[10px] md:text-xs mt-0.5 block whitespace-nowrap ${
                               item.user?.id === user?.id ? "text-right text-gray-400" : "text-gray-500"
                             }`}
                           >
@@ -443,7 +443,7 @@ export default function Chat() {
                             </p>
                             <ChatPoll poll={poll} tripId={tripId} />
                           </div>
-                          <span className={`text-[10px] md:text-xs mt-0.5 block ${
+                          <span className={`text-[10px] md:text-xs mt-0.5 block whitespace-nowrap ${
                             isOwnPoll ? "text-right text-gray-400" : "text-gray-500"
                           }`}>
                             {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -486,7 +486,7 @@ export default function Chat() {
                     <div className="w-full">
                       <ChatPoll poll={poll} tripId={tripId} />
                     </div>
-                    <span className="text-[10px] md:text-xs mt-1 block text-gray-500">
+                    <span className="text-[10px] md:text-xs mt-1 block text-gray-500 whitespace-nowrap">
                       {new Date(poll.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>

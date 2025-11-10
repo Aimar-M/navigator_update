@@ -71,18 +71,36 @@ const ChatItem = ({ trip, lastMessages, currentUser }: { trip: any, lastMessages
               {getInitials(trip.name)}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex justify-between items-start">
-                <div className="flex items-center">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-0">
+                <div className="flex items-center min-w-0">
                   <h3 className="text-sm font-semibold text-gray-900 truncate">{trip.name}</h3>
                   {unreadCount > 0 && (
-                    <span className="ml-2 bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full">
+                    <span className="ml-2 bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full flex-shrink-0">
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
                 </div>
-                <span className="text-xs text-gray-500">{formatDateTime(lastMessage.timestamp)}</span>
+                <span className="text-xs text-gray-500 whitespace-nowrap flex-shrink-0 sm:ml-2">
+                  {(() => {
+                    const date = new Date(lastMessage.timestamp);
+                    const now = new Date();
+                    const diffMs = now.getTime() - date.getTime();
+                    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                    
+                    // Show time only if today, otherwise show date
+                    if (diffDays === 0) {
+                      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    } else if (diffDays === 1) {
+                      return 'Yesterday';
+                    } else if (diffDays < 7) {
+                      return date.toLocaleDateString([], { weekday: 'short' });
+                    } else {
+                      return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+                    }
+                  })()}
+                </span>
               </div>
-              <div className="flex items-center mt-1">
+              <div className="flex items-center mt-1 min-w-0">
                 {lastMessage.user && lastMessage.user.name && (
                   <span className="text-xs font-medium text-gray-600 mr-1 truncate">
                     {lastMessage.user.name}:
@@ -93,8 +111,10 @@ const ChatItem = ({ trip, lastMessages, currentUser }: { trip: any, lastMessages
                 </p>
               </div>
               <div className="mt-1">
-                <span className="text-xs text-gray-500">
-                  {trip.destination} • {formatDate(trip.startDate)} - {formatDate(trip.endDate)}
+                <span className="text-xs text-gray-500 break-words">
+                  <span className="truncate inline-block max-w-full">{trip.destination}</span>
+                  <span className="hidden sm:inline"> • </span>
+                  <span className="block sm:inline">{formatDate(trip.startDate)} - {formatDate(trip.endDate)}</span>
                 </span>
               </div>
             </div>
