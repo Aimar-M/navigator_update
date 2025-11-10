@@ -320,21 +320,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         trackUserLogout(user.id.toString());
       }
       
-      await logoutUser();
-      // Remove the token from localStorage
-      removeAuthToken();
+      // Clear user state immediately to prevent any race conditions
       setUser(null);
-      queryClient.clear(); // Clear all cached queries after logout
+      
+      // Disconnect WebSocket before logout
       wsClient.disconnect();
       
-      // Clear any remaining auth state
+      // Clear all cached queries before logout
+      queryClient.clear();
+      
+      // Clear local storage and session storage
+      removeAuthToken();
       localStorage.removeItem('auth_token');
       sessionStorage.clear();
       
+      // Call logout endpoint to destroy server session and clear cookie
+      try {
+        await logoutUser();
+      } catch (logoutError) {
+        // Even if logout endpoint fails, continue with client-side cleanup
+        console.error("Logout endpoint error (continuing with cleanup):", logoutError);
+      }
+      
+      // Small delay to ensure state is cleared before redirect
+      // This prevents race conditions where auth check might run before state is cleared
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       // Use window.location for a hard redirect to avoid race conditions
+      // This ensures a full page reload and fresh auth check
       window.location.href = "/";
     } catch (error) {
       console.error("Logout failed:", error);
+      // Even on error, try to clear state and redirect
+      setUser(null);
+      removeAuthToken();
+      localStorage.removeItem('auth_token');
+      sessionStorage.clear();
+      window.location.href = "/";
     }
   };
 

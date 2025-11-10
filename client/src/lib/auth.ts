@@ -88,6 +88,7 @@ export async function registerUser(userData: {
 export async function logoutUser() {
   const response = await fetch(`${API_BASE}/api/auth/logout`, {
     method: 'POST',
+    credentials: 'include', // Include cookies so server can identify and destroy the session
   });
 
   if (!response.ok) {

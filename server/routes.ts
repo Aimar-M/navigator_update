@@ -575,13 +575,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   router.post('/auth/logout', (req: Request, res: Response) => {
     if (req.session) {
+      const sessionId = req.sessionID;
       req.session.destroy((err: Error | null) => {
         if (err) {
+          console.error('Session destroy error:', err);
           return res.status(500).json({ message: 'Could not log out' });
         }
+        
+        // Clear the session cookie from the browser
+        // Default cookie name for express-session is 'connect.sid'
+        // Match the cookie settings from server/index.ts
+        const isProduction = process.env.NODE_ENV === 'production';
+        res.clearCookie('connect.sid', {
+          httpOnly: true,
+          secure: isProduction,
+          sameSite: 'none',
+          domain: isProduction ? '.navigatortrips.com' : undefined,
+          path: '/'
+        });
+        
+        console.log('Session destroyed and cookie cleared for session:', sessionId);
         res.json({ message: 'Logged out successfully' });
       });
     } else {
+      // Even if no session exists, clear any potential cookie
+      const isProduction = process.env.NODE_ENV === 'production';
+      res.clearCookie('connect.sid', {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: 'none',
+        domain: isProduction ? '.navigatortrips.com' : undefined,
+        path: '/'
+      });
       res.json({ message: 'No active session' });
     }
   });
