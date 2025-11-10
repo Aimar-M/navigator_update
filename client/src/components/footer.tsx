@@ -8,7 +8,7 @@ export default function Footer({ isDark = false }: FooterProps) {
   return (
     <footer
       className={`
-        fixed bottom-0 left-0 right-0 z-40
+        w-full
         ${isDark 
           ? "bg-gradient-to-t from-black/50 via-black/30 to-transparent backdrop-blur-md border-t border-white/20 shadow-[0_-4px_20px_rgba(0,0,0,0.3)]" 
           : "bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-sm"
@@ -16,21 +16,10 @@ export default function Footer({ isDark = false }: FooterProps) {
         transition-all duration-300
       `}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
-        <div className="flex items-center justify-between">
-          {/* Copyright - Left */}
-          <p
-            className={`
-              text-xs font-light pl-2 sm:pl-4
-              ${isDark ? "text-white/70" : "text-gray-900"}
-              transition-colors duration-300
-            `}
-          >
-            © 2025 Navigator by Navigator Technologies 1802. All rights reserved.
-          </p>
-
-          {/* Social Icons - Right */}
-          <div className="flex items-center space-x-8 pr-0.5 sm:pr-1">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="flex flex-col items-center justify-center space-y-4">
+          {/* Social Icons - Top */}
+          <div className="flex items-center space-x-8">
             {/* Instagram */}
             <a
               href="https://www.instagram.com/navigatortrips/"
@@ -45,7 +34,7 @@ export default function Footer({ isDark = false }: FooterProps) {
               `}
               aria-label="Follow us on Instagram"
             >
-              <SiInstagram className="w-5 h-5" />
+              <SiInstagram className="w-6 h-6" />
             </a>
 
             {/* TikTok */}
@@ -62,9 +51,20 @@ export default function Footer({ isDark = false }: FooterProps) {
               `}
               aria-label="Follow us on TikTok"
             >
-              <SiTiktok className="w-5 h-5" />
+              <SiTiktok className="w-6 h-6" />
             </a>
           </div>
+
+          {/* Copyright - Bottom */}
+          <p
+            className={`
+              text-xs font-light text-center
+              ${isDark ? "text-white/70" : "text-gray-900"}
+              transition-colors duration-300
+            `}
+          >
+            © 2025 Navigator by Navigator Technologies 1802. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>
