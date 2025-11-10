@@ -327,7 +327,6 @@ export default function Header() {
                 <DropdownMenuItem asChild>
                   <Link href="/outstanding-balances">
                     <div className="cursor-pointer w-full flex items-center">
-                      <DollarSign className="h-4 w-4 mr-2" />
                       Outstanding Balances
                     </div>
                   </Link>
@@ -335,7 +334,6 @@ export default function Header() {
                 <DropdownMenuItem asChild>
                   <Link href="/contact?fromHelp=true">
                     <div className="cursor-pointer w-full flex items-center">
-                      <HelpCircle className="h-4 w-4 mr-2" />
                       Help
                     </div>
                   </Link>

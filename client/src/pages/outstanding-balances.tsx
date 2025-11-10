@@ -62,11 +62,11 @@ export default function OutstandingBalancesPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/profile')}
+              onClick={() => navigate('/dashboard')}
               className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
             >
               <ArrowLeft className="h-4 w-4" />
-              <span>Back to Profile</span>
+              <span>Back to Dashboard</span>
             </Button>
           </div>
 
