@@ -1569,6 +1569,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'User not found' });
       }
       
+      // Check if user is deleted - cannot add deleted users to trips
+      if (userToAdd.deletedAt) {
+        return res.status(400).json({ message: 'Cannot add deleted users to trips' });
+      }
+      
       // Check if user is already a member
       const members = await storage.getTripMembers(tripId);
       const existingMember = members.find(member => member.userId === userToAdd.id);
@@ -2626,18 +2631,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const activitiesWithRsvps = await Promise.all(
         activities.map(async (activity) => {
           const rsvps = await storage.getActivityRSVPs(activity.id);
-          const confirmedCount = rsvps.filter(rsvp => rsvp.status === 'going').length;
+          
+          // Filter out RSVPs from deleted users for counts
+          const activeRsvps = await Promise.all(
+            rsvps.map(async (rsvp) => {
+              const rsvpUser = await storage.getUser(rsvp.userId);
+              return rsvpUser && !rsvpUser.deletedAt ? rsvp : null;
+            })
+          );
+          const validRsvps = activeRsvps.filter((r): r is typeof rsvps[0] => r !== null);
+          
+          const confirmedCount = validRsvps.filter(rsvp => rsvp.status === 'going').length;
           // Count only confirmed members (people who are actually part of the trip)
           const confirmedMembers = members.filter(member => 
             member.status === 'confirmed' && member.rsvpStatus === 'confirmed'
           );
           const totalCount = confirmedMembers.length;
           
-          // Get creator information
+          // Get creator information and check if deleted
           let creator = null;
+          let isCreatorDeleted = false;
           if (activity.createdBy) {
             const creatorUser = await storage.getUser(activity.createdBy);
             if (creatorUser) {
+              isCreatorDeleted = !!creatorUser.deletedAt;
               creator = {
                 id: creatorUser.id,
                 name: creatorUser.name || creatorUser.username || 'Unknown User',
@@ -2648,10 +2665,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           return {
             ...activity,
-            rsvps,
+            rsvps: validRsvps, // Only return non-deleted user RSVPs
             confirmedCount,
             totalCount,
-            creator
+            creator,
+            isCreatorDeleted // Flag to disable RSVP buttons if creator is deleted
           };
         })
       );
@@ -2867,6 +2885,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const activity = await storage.getActivity(activityId);
       if (!activity) {
         return res.status(404).json({ message: 'Activity not found' });
+      }
+      
+      // Check if activity creator is deleted - cannot RSVP to activities created by deleted users
+      if (activity.createdBy) {
+        const creator = await storage.getUser(activity.createdBy);
+        if (creator && creator.deletedAt) {
+          return res.status(400).json({ message: 'Cannot RSVP to activities created by deleted users' });
+        }
       }
       
       // Check if user is any member of the trip (allow all members to RSVP)
@@ -4886,12 +4912,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Create an array to track votes per option
         const voteCounts = poll.options.map(() => 0);
         
-        // Count votes for each option
-        votes.forEach(vote => {
-          if (vote.optionIndex >= 0 && vote.optionIndex < voteCounts.length) {
+        // Count votes for each option, excluding deleted users
+        let validVoteCount = 0;
+        for (const vote of votes) {
+          const voter = await storage.getUser(vote.userId);
+          // Only count votes from non-deleted users
+          if (voter && !voter.deletedAt && vote.optionIndex >= 0 && vote.optionIndex < voteCounts.length) {
             voteCounts[vote.optionIndex]++;
+            validVoteCount++;
           }
-        });
+        }
         
         // Get creator info
         const creator = await storage.getUser(poll.createdBy);
@@ -4899,7 +4929,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return {
           ...poll,
           voteCounts,
-          totalVotes: votes.length,
+          totalVotes: validVoteCount, // Only count non-deleted users
           hasVoted: userVotes.length > 0,
           userVotes,
           creator: creator ? {
@@ -5534,18 +5564,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .filter(member => member.rsvpStatus === 'confirmed')
         .map(member => member.userId);
       
-      // Validate that payer has confirmed RSVP status
+      // Validate that payer has confirmed RSVP status and is not deleted
+      const payerUser = await storage.getUser(parseInt(paidBy));
+      if (!payerUser || payerUser.deletedAt) {
+        return res.status(400).json({ message: "Cannot create expenses with deleted users" });
+      }
       if (!confirmedMemberIds.includes(parseInt(paidBy))) {
         return res.status(400).json({ message: "Expense payer must have confirmed RSVP status" });
       }
       
-      // Filter splitWith to only include confirmed RSVP users
-      const validSplitWith = splitWith.filter((userId: string) => 
-        confirmedMemberIds.includes(parseInt(userId))
-      );
+      // Filter splitWith to only include confirmed RSVP users and check they're not deleted
+      const validSplitWith = [];
+      for (const userIdStr of splitWith) {
+        const userId = parseInt(userIdStr);
+        const splitUser = await storage.getUser(userId);
+        if (splitUser && !splitUser.deletedAt && confirmedMemberIds.includes(userId)) {
+          validSplitWith.push(userIdStr);
+        }
+      }
       
       if (validSplitWith.length === 0) {
-        return res.status(400).json({ message: "No confirmed members found for expense split" });
+        return res.status(400).json({ message: "No valid members found for expense split" });
       }
       
       // Create the expense
@@ -5673,6 +5712,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const payee = await storage.getUser(payeeId);
       if (!payee) {
         return res.status(404).json({ message: "Payee not found" });
+      }
+
+      // Check if payee is deleted - cannot settle with deleted users
+      if (payee.deletedAt) {
+        return res.status(400).json({ message: "Cannot settle with a deleted user" });
       }
 
       const trip = await storage.getTrip(tripId);
@@ -5888,6 +5932,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Payee or trip not found" });
       }
 
+      // Check if payee is deleted - cannot settle with deleted users
+      if (payee.deletedAt) {
+        return res.status(400).json({ message: "Cannot settle with a deleted user" });
+      }
+
       const { getSettlementOptions } = await import('./settlement-utils');
       const options = getSettlementOptions(payee, paymentAmount, user.name || user.username, trip.name);
 
@@ -5923,6 +5972,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Filter out deleted users from settlement calculations (but keep them in balances for historical data)
+      const activeBalances = balances.filter((b: any) => !b.isDeleted);
+
       // Import and run the settlement algorithm
       const { 
         calculateOptimizedSettlements, 
@@ -5930,7 +5982,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         getSettlementStats 
       } = await import('./settlement-algorithm');
       
-      const optimizedTransactions = calculateOptimizedSettlements(balances);
+      const optimizedTransactions = calculateOptimizedSettlements(activeBalances);
       const isValid = validateSettlementPlan(balances, optimizedTransactions);
       const stats = getSettlementStats(optimizedTransactions);
 

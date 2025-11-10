@@ -492,6 +492,10 @@ export default function ExpensesPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {balances
                     .filter(balance => {
+                      // Filter out deleted users
+                      if ((balance as any).isDeleted) {
+                        return false;
+                      }
                       const member = members.find(m => m.userId === balance.userId);
                       // Show current confirmed members, organizer, or removed users with financial obligations
                       return member?.rsvpStatus === 'confirmed' || 

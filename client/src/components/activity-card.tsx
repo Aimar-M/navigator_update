@@ -33,6 +33,7 @@ interface ActivityCardProps {
     name: string;
     avatar?: string;
   };
+  isCreatorDeleted?: boolean;
   isAccommodationEntry?: boolean;
 }
 
@@ -54,6 +55,7 @@ export default function ActivityCard({
   rsvps = [],
   createdBy,
   creator,
+  isCreatorDeleted = false,
   isAccommodationEntry = false,
 }: ActivityCardProps) {
   const { user } = useAuth();
@@ -66,7 +68,9 @@ export default function ActivityCard({
   
   // Check if activity is full
   const isFull = maxParticipants && confirmedCount >= maxParticipants;
-  const canRSVPGoing = !isFull || userRsvp?.status === "going";
+  // Cannot RSVP if creator is deleted
+  const canRSVPGoing = !isCreatorDeleted && (!isFull || userRsvp?.status === "going");
+  const canRSVP = !isCreatorDeleted;
   
   const handleRsvp = async (status: string) => {
     if (!user) return;
@@ -279,7 +283,7 @@ export default function ActivityCard({
                     }}
                     disabled={isSubmitting || !canRSVPGoing}
                     className={`h-7 w-7 p-0 ${!canRSVPGoing ? "opacity-50 cursor-not-allowed" : ""}`}
-                    title={!canRSVPGoing ? "Activity is full" : ""}
+                    title={isCreatorDeleted ? "Activity creator has deleted their account" : !canRSVPGoing ? "Activity is full" : ""}
                   >
                     <CheckIcon className="h-3 w-3" />
                   </Button>
@@ -290,8 +294,9 @@ export default function ActivityCard({
                       e.stopPropagation();
                       handleRsvp("not going");
                     }}
-                    disabled={isSubmitting}
-                    className="h-7 w-7 p-0"
+                    disabled={isSubmitting || !canRSVP}
+                    className={`h-7 w-7 p-0 ${!canRSVP ? "opacity-50 cursor-not-allowed" : ""}`}
+                    title={isCreatorDeleted ? "Activity creator has deleted their account" : ""}
                   >
                     <XIcon className="h-3 w-3" />
                   </Button>

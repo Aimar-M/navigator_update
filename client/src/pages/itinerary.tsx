@@ -607,6 +607,7 @@ function Itinerary() {
                               rsvps={activity.rsvps || []}
                               createdBy={activity.createdBy}
                               creator={activity.creator}
+                              isCreatorDeleted={activity.isCreatorDeleted}
                               isAccommodationEntry={activity.isAccommodationEntry}
                             />
                           );
@@ -657,6 +658,7 @@ function Itinerary() {
                         rsvps={activity.rsvps || []}
                         createdBy={activity.createdBy}
                         creator={activity.creator}
+                        isCreatorDeleted={activity.isCreatorDeleted}
                         isAccommodationEntry={activity.isAccommodationEntry}
                       />
                     );

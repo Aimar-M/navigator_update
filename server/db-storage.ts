@@ -12,6 +12,14 @@ import {
 } from "@shared/schema";
 import { eq, and, or, desc, sql, ilike, inArray, isNotNull, lt, ne, asc } from "drizzle-orm";
 export class DatabaseStorage {
+  /**
+   * Check if a user has been deleted
+   */
+  async isUserDeleted(userId: number): Promise<boolean> {
+    const user = await this.getUser(userId);
+    return user ? !!user.deletedAt : false;
+  }
+
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user || undefined;
@@ -548,10 +556,24 @@ export class DatabaseStorage {
   }
 
   async getTripMembers(tripId: number): Promise<TripMember[]> {
-    return db
+    // Get all trip members and filter out deleted users
+    const allMembers = await db
       .select()
       .from(tripMembers)
       .where(eq(tripMembers.tripId, tripId));
+    
+    // Filter out members whose users have been deleted
+    const activeMembers = await Promise.all(
+      allMembers.map(async (member) => {
+        const user = await this.getUser(member.userId);
+        if (user && user.deletedAt) {
+          return null; // Filter out deleted users
+        }
+        return member;
+      })
+    );
+    
+    return activeMembers.filter((member): member is TripMember => member !== null);
   }
 
   async getTripMembershipsByUser(userId: number): Promise<TripMember[]> {
@@ -1367,7 +1389,8 @@ export class DatabaseStorage {
           totalOwed: Math.round(totalOwed * 100) / 100,
           netBalance: netBalance,
           isCurrentMember: isCurrentMember,
-          isLegacyRemoved: memberUser?.legacyRemoved || false
+          isLegacyRemoved: memberUser?.legacyRemoved || false,
+          isDeleted: !!memberUser?.deletedAt // Mark deleted users for filtering
         });
       }
 
