@@ -121,7 +121,7 @@ export default function Header() {
         if (notif.isRead) return;
         
         // Handle downpayment notifications
-        if (notif.type === 'downpayment_required' || notif.type === 'downpayment_updated' || notif.type === 'downpayment_removed') {
+        if (notif.type === 'downpayment_required' || notif.type === 'downpayment_updated' || notif.type === 'downpayment_removed' || notif.type === 'downpayment_submitted') {
           const notifId = `notif-${notif.id}`;
           newNotifications.push({
             id: notifId,
@@ -149,7 +149,7 @@ export default function Header() {
   const handleNotificationClick = (notification: any) => {
     if (notification.type === 'invite') {
       navigate(`/trips/${notification.data.trip.id}`);
-    } else if (notification.type === 'downpayment_required' || notification.type === 'downpayment_updated' || notification.type === 'downpayment_removed') {
+    } else if (notification.type === 'downpayment_required' || notification.type === 'downpayment_updated' || notification.type === 'downpayment_removed' || notification.type === 'downpayment_submitted') {
       // Navigate to trip if tripId is available in notification data
       if (notification.data?.tripId) {
         navigate(`/trips/${notification.data.tripId}`);
@@ -286,7 +286,7 @@ export default function Header() {
                             {notification.type === 'activity' && (
                               <CalendarPlus className="h-4 w-4 text-blue-600" />
                             )}
-                            {(notification.type === 'downpayment_required' || notification.type === 'downpayment_updated' || notification.type === 'downpayment_removed') && (
+                            {(notification.type === 'downpayment_required' || notification.type === 'downpayment_updated' || notification.type === 'downpayment_removed' || notification.type === 'downpayment_submitted') && (
                               <DollarSign className="h-4 w-4 text-blue-600" />
                             )}
                           </div>

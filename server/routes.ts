@@ -2174,6 +2174,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update RSVP status to pending until organizer confirms payment
       await storage.updateTripMemberRSVPStatus(tripId, userId, 'pending');
       
+      // Notify the trip organizer that a payment has been submitted
+      await storage.createNotification({
+        userId: trip.organizer,
+        type: 'downpayment_submitted',
+        title: 'Payment Submitted',
+        message: `${user.name || user.username} submitted a down payment of $${trip.downPaymentAmount} for ${trip.name}.`,
+        data: { 
+          tripId, 
+          tripName: trip.name, 
+          amount: trip.downPaymentAmount,
+          memberId: userId,
+          memberName: user.name || user.username,
+          paymentMethod
+        }
+      });
+      
       res.json({ message: 'Payment submitted successfully', member: updatedMember });
     } catch (error) {
       console.error('Error submitting payment:', error);
