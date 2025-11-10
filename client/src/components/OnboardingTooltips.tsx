@@ -184,6 +184,8 @@ function getStepPosition(stepId: string, desktopPosition: 'top' | 'bottom' | 'le
       return 'bottom';
     case 'navigator-logo':
       return 'bottom';
+    case 'page-components':
+      return 'bottom';
     default:
       return desktopPosition;
   }
