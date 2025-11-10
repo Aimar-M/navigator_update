@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Bell, ChevronDown, Menu, MessageCircle, CalendarPlus, UserPlus, PieChart, DollarSign, HelpCircle } from "lucide-react";
+import { Bell, ChevronDown, Menu, MessageCircle, CalendarPlus, UserPlus, PieChart, DollarSign, HelpCircle, HandHeart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -133,6 +133,20 @@ export default function Header() {
             isRead: readIds.includes(notifId)
           });
         }
+        
+        // Handle settlement notifications
+        if (notif.type === 'settlement_confirmed' || notif.type === 'settlement_rejected') {
+          const notifId = `notif-${notif.id}`;
+          newNotifications.push({
+            id: notifId,
+            type: notif.type,
+            title: notif.title,
+            message: notif.message,
+            time: notif.createdAt,
+            data: notif.data || {},
+            isRead: readIds.includes(notifId)
+          });
+        }
       });
     }
     
@@ -150,6 +164,11 @@ export default function Header() {
     if (notification.type === 'invite') {
       navigate(`/trips/${notification.data.trip.id}`);
     } else if (notification.type === 'downpayment_required' || notification.type === 'downpayment_updated' || notification.type === 'downpayment_removed' || notification.type === 'downpayment_submitted') {
+      // Navigate to trip if tripId is available in notification data
+      if (notification.data?.tripId) {
+        navigate(`/trips/${notification.data.tripId}`);
+      }
+    } else if (notification.type === 'settlement_confirmed' || notification.type === 'settlement_rejected') {
       // Navigate to trip if tripId is available in notification data
       if (notification.data?.tripId) {
         navigate(`/trips/${notification.data.tripId}`);
@@ -288,6 +307,9 @@ export default function Header() {
                             )}
                             {(notification.type === 'downpayment_required' || notification.type === 'downpayment_updated' || notification.type === 'downpayment_removed' || notification.type === 'downpayment_submitted') && (
                               <DollarSign className="h-4 w-4 text-blue-600" />
+                            )}
+                            {(notification.type === 'settlement_confirmed' || notification.type === 'settlement_rejected') && (
+                              <HandHeart className="h-4 w-4 text-blue-600" />
                             )}
                           </div>
                           <div className="flex-1 space-y-1">

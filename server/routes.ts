@@ -5850,6 +5850,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const confirmedSettlement = await storage.confirmSettlement(settlementId, user.id);
+      
+      // Notify the payer that their payment was confirmed
+      const trip = await storage.getTrip(settlement.tripId);
+      const payeeName = user.name || user.username;
+      
+      await storage.createNotification({
+        userId: settlement.payerId,
+        type: 'settlement_confirmed',
+        title: 'Payment Confirmed',
+        message: `${payeeName} confirmed receipt of your payment of $${settlement.amount} for ${trip?.name || 'the trip'}.`,
+        data: { 
+          tripId: settlement.tripId, 
+          tripName: trip?.name || 'Unknown Trip',
+          amount: settlement.amount,
+          settlementId: settlementId,
+          payeeId: settlement.payeeId,
+          payeeName: payeeName,
+          paymentMethod: settlement.paymentMethod
+        }
+      });
+      
       res.json(confirmedSettlement);
     } catch (error) {
       console.error("Error confirming settlement:", error);
@@ -5883,6 +5904,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const rejectedSettlement = await storage.rejectSettlement(settlementId, user.id);
+      
+      // Notify the payer that their payment was rejected
+      const trip = await storage.getTrip(settlement.tripId);
+      const payeeName = user.name || user.username;
+      
+      await storage.createNotification({
+        userId: settlement.payerId,
+        type: 'settlement_rejected',
+        title: 'Payment Rejected',
+        message: `${payeeName} rejected your payment of $${settlement.amount} for ${trip?.name || 'the trip'}. Please contact them to resolve.`,
+        data: { 
+          tripId: settlement.tripId, 
+          tripName: trip?.name || 'Unknown Trip',
+          amount: settlement.amount,
+          settlementId: settlementId,
+          payeeId: settlement.payeeId,
+          payeeName: payeeName,
+          paymentMethod: settlement.paymentMethod
+        }
+      });
+      
       res.json(rejectedSettlement);
     } catch (error) {
       console.error("Error rejecting settlement:", error);
