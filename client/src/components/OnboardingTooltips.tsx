@@ -156,35 +156,35 @@ const onboardingSteps: OnboardingStep[] = [
         title: 'Itinerary',
         description: 'Plan your trip schedule and activities.',
         targetSelector: '[data-tooltip="itinerary-tab"]',
-        position: 'top'
+        position: 'bottom'
       },
       {
         id: 'chat-tab',
         title: 'Chat',
         description: 'Talk with your group, share updates, and vote seamlessly.',
         targetSelector: '[data-tooltip="chat-tab"]',
-        position: 'top'
+        position: 'bottom'
       },
       {
         id: 'expenses-tab',
         title: 'Expenses',
         description: 'Track and split costs effortlessly.',
         targetSelector: '[data-tooltip="expenses-tab"]',
-        position: 'top'
+        position: 'bottom'
       },
       {
         id: 'polls-tab',
         title: 'Polls',
         description: 'Create dedicated polls and let everyone decide together.',
         targetSelector: '[data-tooltip="polls-tab"]',
-        position: 'top'
+        position: 'bottom'
       },
       {
         id: 'navigator-logo',
         title: 'Navigator Logo',
         description: 'Go back home',
         targetSelector: '[data-tooltip="navigator-logo"]',
-        position: 'bottom'
+        position: 'left'
       }
     ]
   },
