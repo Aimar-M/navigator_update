@@ -1058,6 +1058,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
       }));
       
+      // Sort by start date (ascending - earliest first), ignoring end date
+      tripsWithMemberCounts.sort((a, b) => {
+        const dateA = a.startDate ? new Date(a.startDate).getTime() : 0;
+        const dateB = b.startDate ? new Date(b.startDate).getTime() : 0;
+        return dateA - dateB;
+      });
+      
       res.json(tripsWithMemberCounts);
     } catch (error) {
       console.error("Error fetching trips with member counts:", error);

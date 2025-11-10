@@ -387,8 +387,12 @@ export class DatabaseStorage {
   // }
 
   async getTripsByUser(userId: number) {
-    // Get trips where user is the organizer
-    const organizerTrips = await db.select().from(trips).where(eq(trips.organizer, userId));
+    // Get trips where user is the organizer, ordered by start date
+    const organizerTrips = await db
+      .select()
+      .from(trips)
+      .where(eq(trips.organizer, userId))
+      .orderBy(asc(trips.startDate));
   
     // Get trips where user is a member
     const memberTripIds = await db
@@ -399,12 +403,20 @@ export class DatabaseStorage {
     const memberTrips = await db
       .select()
       .from(trips)
-      .where(inArray(trips.id, memberTripIds.map(m => m.tripId)));
+      .where(inArray(trips.id, memberTripIds.map(m => m.tripId)))
+      .orderBy(asc(trips.startDate));
   
-    // Combine and deduplicate
+    // Combine and deduplicate, then sort by start date
     const allTrips = [...organizerTrips, ...memberTrips].filter(
       (trip, index, self) => self.findIndex(t => t.id === trip.id) === index
     );
+  
+    // Sort by start date (ascending - earliest first)
+    allTrips.sort((a, b) => {
+      const dateA = a.startDate ? new Date(a.startDate).getTime() : 0;
+      const dateB = b.startDate ? new Date(b.startDate).getTime() : 0;
+      return dateA - dateB;
+    });
   
     return allTrips;
   }
