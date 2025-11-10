@@ -2,6 +2,7 @@ import { Switch, Route } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import OnboardingTooltips from "@/components/OnboardingTooltips";
+import Footer from "@/components/footer";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Landing from "@/pages/landing";
@@ -88,6 +89,7 @@ function App() {
       <Toaster />
       <Router />
       <OnboardingTooltips />
+      <Footer />
     </TooltipProvider>
   );
 }
