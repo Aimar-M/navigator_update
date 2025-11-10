@@ -28,12 +28,60 @@ export default function Contact() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Redirect authenticated users to dashboard (but render content first for SEO)
+  // Check if user came from Help button
+  const [fromHelp, setFromHelp] = useState(false);
+
   useEffect(() => {
-    if (!isLoading && user) {
+    const params = new URLSearchParams(window.location.search);
+    setFromHelp(params.get('fromHelp') === 'true');
+  }, []);
+
+  // Helper function to extract firstName and lastName from user object
+  const extractUserNames = (user: any) => {
+    let firstName = '';
+    let lastName = '';
+
+    // Check if firstName and lastName exist directly
+    if (user.firstName && user.lastName) {
+      firstName = user.firstName;
+      lastName = user.lastName;
+    } else if (user.name) {
+      // Parse user.name by splitting on space
+      const nameParts = user.name.trim().split(/\s+/);
+      if (nameParts.length > 0) {
+        firstName = nameParts[0];
+        if (nameParts.length > 1) {
+          // Join remaining parts as lastName
+          lastName = nameParts.slice(1).join(' ');
+        }
+      }
+    }
+
+    return { firstName, lastName };
+  };
+
+  // Pre-fill form when user comes from Help button
+  useEffect(() => {
+    if (fromHelp && user && !isLoading) {
+      const { firstName, lastName } = extractUserNames(user);
+      
+      // Only pre-fill if fields are empty (don't overwrite user input)
+      setFormData(prev => ({
+        ...prev,
+        firstName: prev.firstName || firstName,
+        lastName: prev.lastName || lastName,
+        email: prev.email || user.email || ''
+      }));
+    }
+  }, [fromHelp, user, isLoading]);
+
+  // Redirect authenticated users to dashboard (but render content first for SEO)
+  // UNLESS they came from the Help button
+  useEffect(() => {
+    if (!isLoading && user && !fromHelp) {
       navigate("/dashboard");
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isLoading, navigate, fromHelp]);
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -117,7 +165,8 @@ export default function Contact() {
 
   // Don't render contact page if user is authenticated (will redirect)
   // But show content during loading for SEO/crawlers
-  if (!isLoading && user) {
+  // UNLESS they came from the Help button
+  if (!isLoading && user && !fromHelp) {
     return null;
   }
   return (

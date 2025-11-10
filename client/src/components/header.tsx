@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Bell, ChevronDown, Menu, MessageCircle, CalendarPlus, UserPlus, PieChart, DollarSign } from "lucide-react";
+import { Bell, ChevronDown, Menu, MessageCircle, CalendarPlus, UserPlus, PieChart, DollarSign, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -329,6 +329,14 @@ export default function Header() {
                     <div className="cursor-pointer w-full flex items-center">
                       <DollarSign className="h-4 w-4 mr-2" />
                       Outstanding Balances
+                    </div>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/contact?fromHelp=true">
+                    <div className="cursor-pointer w-full flex items-center">
+                      <HelpCircle className="h-4 w-4 mr-2" />
+                      Help
                     </div>
                   </Link>
                 </DropdownMenuItem>
