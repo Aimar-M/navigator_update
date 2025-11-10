@@ -332,11 +332,14 @@ export default function Header() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/contact?fromHelp=true">
-                    <div className="cursor-pointer w-full flex items-center">
-                      Help
-                    </div>
-                  </Link>
+                  <a 
+                    href="/contact?fromHelp=true"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="cursor-pointer w-full flex items-center"
+                  >
+                    Help
+                  </a>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
