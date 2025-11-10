@@ -114,7 +114,7 @@ const onboardingSteps: OnboardingStep[] = [
     targetSelector: '[data-tooltip="downpayment"]',
     position: 'top',
     route: '/create-trip',
-    triggerFormAction: 'create-trip'
+    triggerFormAction: 'next-step'
   },
   
   // 🏖 Trip Overview Page (Steps 11-15)
@@ -239,9 +239,36 @@ export default function OnboardingTooltips() {
 
   // Step 5 navigation is handled in handleNext - no auto-navigation
 
+  // For steps 11-16, wait for trip overview page before showing
+  const [isOnTripOverviewPage, setIsOnTripOverviewPage] = useState(false);
+  
+  useEffect(() => {
+    // Steps 11-16 need to be on trip overview page
+    if (currentStep >= 10 && currentStepData?.route?.includes(':id')) {
+      setIsOnTripOverviewPage(false); // Reset to false when step changes
+      
+      const checkTripOverview = () => {
+        const tripId = localStorage.getItem('onboardingTripId');
+        const currentPath = window.location.pathname;
+        const isOnOverview = tripId !== null && currentPath.includes(`/trips/${tripId}`);
+        
+        if (isOnOverview) {
+          setIsOnTripOverviewPage(true);
+        } else {
+          // Keep checking every 200ms
+          setTimeout(checkTripOverview, 200);
+        }
+      };
+      
+      checkTripOverview();
+    } else {
+      setIsOnTripOverviewPage(true); // For steps 1-10, always show
+    }
+  }, [currentStep, currentStepData, isVisible]);
+
   // Find and highlight target element
   useEffect(() => {
-    if (!isVisible || !currentStepData || isStep15) return;
+    if (!isVisible || !currentStepData || isStep15 || !isOnTripOverviewPage) return;
 
     const findTarget = () => {
       const tryFind = (attempts = 0) => {
@@ -371,54 +398,25 @@ export default function OnboardingTooltips() {
       const tripFormNextButton = document.querySelector('[data-trip-form-next]') as HTMLButtonElement;
       if (tripFormNextButton) {
         tripFormNextButton.click();
+        
+        // If this is step 10 (downpayment), we're moving from form step 2 → 3
+        // After form reaches step 3, auto-click the Create Trip button
+        if (currentStepData?.id === 'downpayment') {
+          // Wait for form to reach step 3, then auto-submit
+          setTimeout(() => {
+            const tripFormSubmitButton = document.querySelector('[data-trip-form-submit]') as HTMLButtonElement;
+            if (tripFormSubmitButton && !tripFormSubmitButton.disabled) {
+              tripFormSubmitButton.click();
+            }
+          }, 500);
+        }
+        
         // Wait a bit for form to update, then move to next onboarding step
         setTimeout(() => {
           nextStep();
         }, 300);
       } else {
         // Fallback: just move to next step if button not found
-        nextStep();
-      }
-    } else if (currentStepData?.triggerFormAction === 'create-trip') {
-      // Trigger TripForm's submit
-      const tripFormSubmitButton = document.querySelector('[data-trip-form-submit]') as HTMLButtonElement;
-      if (tripFormSubmitButton && !tripFormSubmitButton.disabled) {
-        // Get current trip ID from localStorage (if any) to detect when new trip is created
-        const initialTripId = localStorage.getItem('onboardingTripId');
-        
-        // Click the submit button
-        tripFormSubmitButton.click();
-        
-        // Wait for trip creation to complete by checking for:
-        // 1. Trip ID in localStorage (set by trip-form after creation)
-        // 2. Route change to trip details page
-        let checkCount = 0;
-        const maxChecks = 25; // 5 seconds max (25 * 200ms)
-        
-        const checkTripCreated = () => {
-          checkCount++;
-          const newTripId = localStorage.getItem('onboardingTripId');
-          const currentPath = window.location.pathname;
-          
-          // Check if trip was created (new trip ID) and we're on trip details page
-          if (newTripId && newTripId !== initialTripId && currentPath.includes('/trips/')) {
-            // Trip created and navigated - advance onboarding
-            nextStep();
-          } else if (checkCount < maxChecks) {
-            // Keep checking
-            setTimeout(checkTripCreated, 200);
-          } else {
-            // Timeout - if we have a trip ID, advance anyway
-            if (newTripId && newTripId !== initialTripId) {
-              nextStep();
-            }
-          }
-        };
-        
-        // Start checking after a short delay to allow form submission to start
-        setTimeout(checkTripCreated, 500);
-      } else {
-        // Button not found or disabled - just advance
         nextStep();
       }
     } else if (currentStep === TOTAL_STEPS - 1) {
@@ -441,7 +439,11 @@ export default function OnboardingTooltips() {
     setDismissedSubSteps(prev => new Set([...prev, subStepId]));
   };
 
+  // For steps 11-16, don't show until we're on trip overview page
   if (!isVisible || !currentStepData) return null;
+  if (currentStep >= 10 && currentStepData.route?.includes(':id') && !isOnTripOverviewPage) {
+    return null; // Wait for trip overview page
+  }
 
   // Render step 15 with multiple tooltips
   if (isStep15 && currentStepData.subSteps) {
