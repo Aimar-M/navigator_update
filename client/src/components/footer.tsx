@@ -21,7 +21,7 @@ export default function Footer({ isDark = false }: FooterProps) {
           {/* Copyright - Left */}
           <p
             className={`
-              text-xs font-light
+              text-xs font-light pl-2 sm:pl-4
               ${isDark ? "text-white/70" : "text-muted-foreground"}
               transition-colors duration-300
             `}
@@ -30,7 +30,7 @@ export default function Footer({ isDark = false }: FooterProps) {
           </p>
 
           {/* Social Icons - Right */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-6 pr-2 sm:pr-4">
             {/* Instagram */}
             <a
               href="https://www.instagram.com/navigatortrips/"
