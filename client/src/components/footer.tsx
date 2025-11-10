@@ -63,7 +63,7 @@ export default function Footer({ isDark = false }: FooterProps) {
               transition-colors duration-300
             `}
           >
-            © 2025 Navigator by Navigator Technologies 1802. All rights reserved.
+            © 2025 Navigator Technologies 1802, Inc. All rights reserved.
           </p>
         </div>
       </div>
