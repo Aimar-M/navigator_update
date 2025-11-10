@@ -73,18 +73,21 @@ export default function TripForm({ onComplete }: TripFormProps) {
     setIsSubmitting(true);
     
     try {
-      // Convert string dates to Date objects for the server
-      const startDate = new Date(formData.startDate);
-      const endDate = new Date(formData.endDate);
-      
-      const tripData = {
+      // Only include dates if they are provided
+      const tripData: any = {
         ...formData,
         organizer: user.id,
         status: "planning",
-        startDate,
-        endDate,
         downPaymentAmount: formData.requiresDownPayment ? formData.downPaymentAmount : null,
       };
+      
+      // Only add dates if they are provided
+      if (formData.startDate) {
+        tripData.startDate = new Date(formData.startDate);
+      }
+      if (formData.endDate) {
+        tripData.endDate = new Date(formData.endDate);
+      }
       
       // Use fetch directly with authentication token
       const token = localStorage.getItem('auth_token');
@@ -171,7 +174,7 @@ export default function TripForm({ onComplete }: TripFormProps) {
             <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
-                  Start Date
+                  Start Date <span className="text-gray-500 font-normal">(optional)</span>
                 </label>
                 <Input
                   type="date"
@@ -179,12 +182,11 @@ export default function TripForm({ onComplete }: TripFormProps) {
                   name="startDate"
                   value={formData.startDate}
                   onChange={handleChange}
-                  required
                 />
               </div>
               <div>
                 <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">
-                  End Date
+                  End Date <span className="text-gray-500 font-normal">(optional)</span>
                 </label>
                 <Input
                   type="date"
@@ -193,7 +195,6 @@ export default function TripForm({ onComplete }: TripFormProps) {
                   value={formData.endDate}
                   onChange={handleChange}
                   min={formData.startDate || undefined}
-                  required
                 />
               </div>
             </div>
@@ -271,7 +272,13 @@ export default function TripForm({ onComplete }: TripFormProps) {
               
               <p className="text-sm font-medium text-gray-700">Dates:</p>
               <p className="text-sm text-gray-900 mb-2">
-                {formData.startDate} to {formData.endDate}
+                {formData.startDate && formData.endDate 
+                  ? `${formData.startDate} to ${formData.endDate}`
+                  : formData.startDate 
+                    ? `Start: ${formData.startDate}`
+                    : formData.endDate
+                      ? `End: ${formData.endDate}`
+                      : "Not set (you can add dates later)"}
               </p>
               
               {formData.description && (
@@ -305,11 +312,8 @@ export default function TripForm({ onComplete }: TripFormProps) {
   const isStepValid = () => {
     switch (step) {
       case 1:
-        return (
-          formData.name.trim() !== "" &&
-          formData.startDate !== "" &&
-          formData.endDate !== ""
-        );
+        // Only trip name is required, dates are optional
+        return formData.name.trim() !== "";
       case 2:
         // Description is optional, but down payment amount is required if down payment is enabled
         return !formData.requiresDownPayment || (formData.downPaymentAmount.trim() !== "" && parseFloat(formData.downPaymentAmount) > 0);

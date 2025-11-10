@@ -135,6 +135,9 @@ export const insertTripSchema = createInsertSchema(trips).pick({
   requiresDownPayment: true,
   downPaymentAmount: true,
   adminOnlyItinerary: true,
+}).extend({
+  startDate: z.date().optional(),
+  endDate: z.date().optional(),
 });
 
 // Add new table for user-specific trip settings

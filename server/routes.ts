@@ -975,9 +975,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'You can only create trips as yourself' });
       }
       
+      // Provide default dates if not provided (database requires notNull dates)
+      // Set to 1 year from now so they can be edited later
+      const defaultStartDate = tripData.startDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+      const defaultEndDate = tripData.endDate || new Date(defaultStartDate.getTime() + 7 * 24 * 60 * 60 * 1000); // 1 week after start
+      
       // Set removalLogicVersion to 2 for new trips to enable enhanced removal system
       const tripWithEnhancedRemoval = {
         ...tripData,
+        startDate: defaultStartDate,
+        endDate: defaultEndDate,
         removalLogicVersion: 2
       };
       
