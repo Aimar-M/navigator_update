@@ -3,6 +3,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { HelmetProvider } from "react-helmet-async";
 import { queryClient } from "@/lib/queryClient";
 import { AuthProvider } from "@/hooks/use-auth";
+import { OnboardingProvider } from "@/hooks/use-onboarding";
 import App from "./App";
 import "./index.css";
 
@@ -15,7 +16,9 @@ const AppWrapper = () => (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <App />
+        <OnboardingProvider>
+          <App />
+        </OnboardingProvider>
       </AuthProvider>
     </QueryClientProvider>
   </HelmetProvider>

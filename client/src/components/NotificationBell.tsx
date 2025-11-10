@@ -143,7 +143,7 @@ export function NotificationBell() {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="sm" className="relative">
+        <Button variant="ghost" size="sm" className="relative" data-tooltip="settlements-icon">
           <HandHeart className="h-5 w-5" />
           {unreadCount > 0 && (
             <Badge 

@@ -5172,7 +5172,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = ensureUser(req, res);
       if (!user) return;
 
-      const { username, email, name, bio, location, venmoUsername, paypalEmail } = req.body;
+      const { username, email, name, bio, location, venmoUsername, paypalEmail, hasSeenOnboarding } = req.body;
       
       // Debug: Check if name field is being received
       if (name !== undefined) {
@@ -5214,6 +5214,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         location: location || user.location,
         venmoUsername: venmoUsername || null,
         paypalEmail: paypalEmail || null,
+        hasSeenOnboarding: hasSeenOnboarding !== undefined ? hasSeenOnboarding : user.hasSeenOnboarding,
       });
 
       res.json(updatedUser);

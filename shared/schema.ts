@@ -46,6 +46,8 @@ export const users = pgTable("users", {
   accountRecoveryToken: text("account_recovery_token"),
   accountRecoveryExpires: timestamp("account_recovery_expires"),
   deletionInProgress: boolean("deletion_in_progress").default(false),
+  // Onboarding field
+  hasSeenOnboarding: boolean("has_seen_onboarding").default(false),
 });
 
 export const usersRelations = relations(users, ({ many }) => ({

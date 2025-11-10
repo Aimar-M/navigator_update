@@ -120,3 +120,65 @@
     height: calc(100vh - 64px);
   }
 }
+
+/* Tooltip Highlight Effect */
+.tooltip-highlight {
+  position: relative;
+  z-index: 50;
+  animation: pulse-highlight 2s infinite;
+  transition: all 0.3s ease-out;
+}
+
+.tooltip-highlight::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  background: hsl(var(--primary) / 0.2);
+  border-radius: 12px;
+  z-index: -1;
+  animation: pulse-highlight 2s infinite;
+}
+
+.tooltip-highlight::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(
+    45deg,
+    hsl(var(--primary) / 0.3),
+    hsl(var(--accent) / 0.3),
+    hsl(var(--primary) / 0.3)
+  );
+  border-radius: 10px;
+  z-index: -1;
+  animation: shimmer 3s ease-in-out infinite;
+  background-size: 200% 200%;
+}
+
+@keyframes pulse-highlight {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.02);
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  0%, 100% {
+    opacity: 0.5;
+    background-position: -200% center;
+  }
+  50% {
+    opacity: 0.8;
+    background-position: 200% center;
+  }
+}

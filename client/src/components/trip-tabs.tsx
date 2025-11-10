@@ -38,27 +38,35 @@ export default function TripTabs({ tripId, isConfirmedMember = true }: TripTabsP
   };
 
   return (
-    <div className="bg-white border-b border-gray-200 px-4 flex overflow-x-auto">
-      {tabs.map((tab) => (
-        <button
-          key={tab.name}
-          className={cn(
-            "px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap",
-            isActive(tab)
-              ? "text-primary-600 border-primary-600"
-              : "text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300"
-          )}
-          onClick={() => {
-            // When navigating to chat from tabs, clear any previous referrer
-            if (tab.name === "Chat") {
-              sessionStorage.removeItem('chatReferrer');
-            }
-            navigate(tab.href);
-          }}
-        >
-          {tab.name}
-        </button>
-      ))}
+    <div className="bg-white border-b border-gray-200 px-4 flex overflow-x-auto" data-tooltip="page-components">
+      {tabs.map((tab) => {
+        const tooltipId = tab.name === "Itinerary" ? "itinerary-tab" :
+                         tab.name === "Chat" ? "chat-tab" :
+                         tab.name === "Expenses" ? "expenses-tab" :
+                         tab.name === "Polls" ? "polls-tab" : undefined;
+        
+        return (
+          <button
+            key={tab.name}
+            className={cn(
+              "px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap",
+              isActive(tab)
+                ? "text-primary-600 border-primary-600"
+                : "text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300"
+            )}
+            onClick={() => {
+              // When navigating to chat from tabs, clear any previous referrer
+              if (tab.name === "Chat") {
+                sessionStorage.removeItem('chatReferrer');
+              }
+              navigate(tab.href);
+            }}
+            data-tooltip={tooltipId}
+          >
+            {tab.name}
+          </button>
+        );
+      })}
     </div>
   );
 }

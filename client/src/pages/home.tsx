@@ -394,11 +394,11 @@ export default function Home() {
       
       <main className="flex-1 flex flex-col md:flex-row overflow-hidden pb-16 md:pb-0">
         {/* Navigation Panel */}
-        <div className="w-full md:w-80 md:min-w-[320px] bg-white border-r border-gray-200 md:h-full overflow-y-auto">
+        <div className="w-full md:w-80 md:min-w-[320px] bg-white border-r border-gray-200 md:h-full overflow-y-auto" data-tooltip="dashboard-overview">
 
 
           {/* Search Bar */}
-          <div className="p-4 border-b border-gray-200">
+          <div className="p-4 border-b border-gray-200" data-tooltip="search-icon">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
@@ -420,6 +420,7 @@ export default function Home() {
                 size="icon"
                 className="text-primary-600 hover:bg-primary-50"
                 onClick={() => navigate("/create-trip")}
+                data-tooltip="create-trip-prompt"
               >
                 <Plus className="h-5 w-5" />
               </Button>

@@ -192,7 +192,7 @@ export default function Header() {
     <header className="bg-white border-b border-gray-200 h-16 px-4">
       <div className="container mx-auto h-full flex justify-between items-center">
         <div className="flex items-center space-x-2">
-          <Link href="/">
+          <Link href="/" data-tooltip="navigator-logo">
             <div className="flex items-center space-x-2 cursor-pointer">
               <img 
                 src={navigatorLogo} 
@@ -229,6 +229,7 @@ export default function Header() {
                   variant="ghost"
                   size="icon"
                   className="relative text-gray-500 hover:bg-gray-100"
+                  data-tooltip="notification-bell"
                 >
                   <Bell className="h-5 w-5" />
                   {hasNotifications && (

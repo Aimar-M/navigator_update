@@ -517,18 +517,20 @@ export default function TripDetails() {
       )}
 
       {/* Trip Image Upload */}
-      <TripImageUpload 
-        tripId={tripId}
-        currentImage={trip.cover}
-        isOrganizer={user?.id === trip.organizer}
-        onImageUpdate={(imageUrl) => {
-          // Update the trip data locally
-          queryClient.setQueryData([`${API_BASE}/api/trips/${tripId}`], (oldData: any) => ({
-            ...oldData,
-            cover: imageUrl
-          }));
-        }}
-      />
+      <div data-tooltip="upload-photo">
+        <TripImageUpload 
+          tripId={tripId}
+          currentImage={trip.cover}
+          isOrganizer={user?.id === trip.organizer}
+          onImageUpdate={(imageUrl) => {
+            // Update the trip data locally
+            queryClient.setQueryData([`${API_BASE}/api/trips/${tripId}`], (oldData: any) => ({
+              ...oldData,
+              cover: imageUrl
+            }));
+          }}
+        />
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Trip Details Card */}
@@ -572,6 +574,7 @@ export default function TripDetails() {
                         variant="outline" 
                         size="sm"
                         onClick={handleEditToggle}
+                        data-tooltip="trip-details"
                       >
                         <Edit2 className="h-4 w-4 mr-1" />
                         Edit
@@ -889,6 +892,7 @@ export default function TripDetails() {
                     size="sm"
                     className="flex items-center gap-1"
                     onClick={() => setIsInviteModalOpen(true)}
+                    data-tooltip="invite-friends"
                   >
                     <UserPlus className="h-4 w-4" />
                     <span>Invite</span>

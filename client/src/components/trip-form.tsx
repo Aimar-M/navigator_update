@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect, useImperativeHandle, forwardRef } from "react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { useOnboarding } from "@/hooks/use-onboarding";
 import { useFullStory } from "@/hooks/use-fullstory";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
@@ -20,8 +21,14 @@ interface TripFormProps {
   onComplete?: () => void;
 }
 
-export default function TripForm({ onComplete }: TripFormProps) {
+export interface TripFormRef {
+  nextStep: () => void;
+  handleSubmit: () => void;
+}
+
+const TripForm = forwardRef<TripFormRef, TripFormProps>(({ onComplete }, ref) => {
   const { user } = useAuth();
+  const { isVisible: isOnboardingVisible } = useOnboarding();
   const { trackTripCreation } = useFullStory();
   const token = user ? localStorage.getItem('auth_token') : null;
   const [, navigate] = useLocation();
@@ -38,6 +45,26 @@ export default function TripForm({ onComplete }: TripFormProps) {
     requiresDownPayment: false,
     downPaymentAmount: "",
   });
+
+  // Auto-fill "My First Trip" for new users in onboarding
+  useEffect(() => {
+    if (isOnboardingVisible && formData.name === "") {
+      setFormData(prev => ({ ...prev, name: "My First Trip" }));
+    }
+  }, [isOnboardingVisible]);
+
+  // Expose methods for onboarding
+  useImperativeHandle(ref, () => ({
+    nextStep: () => {
+      if (step < totalSteps) {
+        setStep((prev) => prev + 1);
+      }
+    },
+    handleSubmit: () => {
+      const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+      handleSubmit(fakeEvent);
+    }
+  }));
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type, checked } = e.target as HTMLInputElement;
@@ -118,6 +145,11 @@ export default function TripForm({ onComplete }: TripFormProps) {
       
       await queryClient.refetchQueries({ queryKey: [`${API_BASE}/api/trips`], exact: false });
       
+      // Store trip ID for onboarding navigation
+      if (isOnboardingVisible) {
+        localStorage.setItem('onboardingTripId', trip.id.toString());
+      }
+      
       if (onComplete) {
         onComplete();
       } else {
@@ -153,6 +185,7 @@ export default function TripForm({ onComplete }: TripFormProps) {
                 onChange={handleChange}
                 placeholder="e.g., Summer Beach Vacation"
                 required
+                data-tooltip="trip-name"
               />
             </div>
 
@@ -160,18 +193,20 @@ export default function TripForm({ onComplete }: TripFormProps) {
               <label htmlFor="destination" className="block text-sm font-medium text-gray-700 mb-1">
                 Destination
               </label>
-              <GooglePlacesMulti
-                id="destination"
-                name="destination"
-                value={formData.destination}
-                onChange={(value) => setFormData(prev => ({ ...prev, destination: value }))}
-                placeholder="Where are you going?"
-                types="(cities)"
-                className=""
-              />
+              <div data-tooltip="destination">
+                <GooglePlacesMulti
+                  id="destination"
+                  name="destination"
+                  value={formData.destination}
+                  onChange={(value) => setFormData(prev => ({ ...prev, destination: value }))}
+                  placeholder="Where are you going?"
+                  types="(cities)"
+                  className=""
+                />
+              </div>
             </div>
 
-            <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4" data-tooltip="dates">
               <div>
                 <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
                   Start Date <span className="text-gray-500 font-normal">(optional)</span>
@@ -214,10 +249,11 @@ export default function TripForm({ onComplete }: TripFormProps) {
                 onChange={handleChange}
                 placeholder="What's this trip about? Add details to help your friends understand what to expect."
                 rows={5}
+                data-tooltip="details"
               />
             </div>
             
-            <div className="border-t pt-4">
+            <div className="border-t pt-4" data-tooltip="downpayment">
               <h3 className="text-lg font-medium text-gray-900 mb-3">Payment Options</h3>
               
               <div className="mb-4">
@@ -384,4 +420,8 @@ export default function TripForm({ onComplete }: TripFormProps) {
       </CardContent>
     </Card>
   );
-}
+});
+
+TripForm.displayName = "TripForm";
+
+export default TripForm;
