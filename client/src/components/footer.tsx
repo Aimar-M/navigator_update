@@ -30,7 +30,7 @@ export default function Footer({ isDark = false }: FooterProps) {
           </p>
 
           {/* Social Icons - Right */}
-          <div className="flex items-center space-x-8 pr-1 sm:pr-2">
+          <div className="flex items-center space-x-8 pr-0.5 sm:pr-1">
             {/* Instagram */}
             <a
               href="https://www.instagram.com/navigatortrips/"
