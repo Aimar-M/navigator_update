@@ -9,6 +9,7 @@ import navigatorLogo from "@/assets/ab_Navigator2-02.png";
 import navigatorLogoMobile from "@/assets/ab_Navigator2-08.png";
 import FullStoryDebug from "@/components/FullStoryDebug";
 import { SEO } from "@/components/SEO";
+import Footer from "@/components/footer";
 
 export default function Landing() {
   const { user, isLoading } = useAuth();
@@ -138,6 +139,7 @@ export default function Landing() {
           </div>
         </div>
       </div>
+      <Footer isDark={true} />
     </div>
   );
 }

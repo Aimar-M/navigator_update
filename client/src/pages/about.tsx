@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect } from "react";
 import { SEO } from "@/components/SEO";
+import Footer from "@/components/footer";
 
 export default function About() {
   const { user, isLoading } = useAuth();
@@ -136,6 +137,7 @@ export default function About() {
           </div>
         </div>
       </section>
+      <Footer isDark={false} />
     </div>
   );
 }

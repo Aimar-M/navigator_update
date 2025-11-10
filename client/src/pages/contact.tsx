@@ -10,6 +10,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 import { SEO } from "@/components/SEO";
+import Footer from "@/components/footer";
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -325,6 +326,7 @@ export default function Contact() {
           </Card>
         </div>
       </section>
+      <Footer isDark={false} />
     </div>
   );
 }
