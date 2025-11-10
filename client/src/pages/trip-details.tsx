@@ -706,7 +706,7 @@ export default function TripDetails() {
                                 newLinks[index] = formatAccommodationLink(linkData.name, e.target.value);
                                 setEditForm(prev => ({ ...prev, accommodationLinks: newLinks }));
                               }}
-                              placeholder="Enter accommodation booking link"
+                              placeholder="link"
                               type="url"
                               className="flex-1"
                             />
