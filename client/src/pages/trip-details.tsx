@@ -423,12 +423,13 @@ export default function TripDetails() {
       }
     }
 
+    // Convert dates to Date objects (will be serialized to ISO strings by JSON.stringify)
     const updatedData = {
       name: editForm.name.trim(),
       destination: editForm.destination.trim(),
       description: editForm.description.trim(),
-      startDate: startDate,
-      endDate: endDate,
+      startDate: startDate, // Date object - will be converted to ISO string by JSON.stringify
+      endDate: endDate, // Date object - will be converted to ISO string by JSON.stringify
       accommodationLinks: editForm.accommodationLinks.filter(link => link.trim() !== ''),
       airportGateway: editForm.airportGateway.trim() || null,
       requiresDownPayment: editForm.requiresDownPayment,

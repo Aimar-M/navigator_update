@@ -1001,8 +1001,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Provide default dates if not provided (database requires notNull dates)
-      // Set to 1 year from now so they can be edited later
-      const defaultStartDate = tripData.startDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+      // Set to today for start date, and 1 week after for end date
+      const defaultStartDate = tripData.startDate || new Date();
       const defaultEndDate = tripData.endDate || new Date(defaultStartDate.getTime() + 7 * 24 * 60 * 60 * 1000); // 1 week after start
       
       // Set removalLogicVersion to 2 for new trips to enable enhanced removal system
