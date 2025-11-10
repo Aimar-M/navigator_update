@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useFullStory } from "@/hooks/use-fullstory";
 import { fullstory } from "@/lib/fullstory";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import backgroundVideo from "@/assets/IMG_4795_1758657014573.mov";
 import navigatorLogo from "@/assets/ab_Navigator2-02.png";
 import navigatorLogoMobile from "@/assets/ab_Navigator2-08.png";
@@ -15,6 +15,7 @@ export default function Landing() {
   const { user, isLoading } = useAuth();
   const [, navigate] = useLocation();
   const { trackPage } = useFullStory();
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   // Track page view
   useEffect(() => {
@@ -28,6 +29,41 @@ export default function Landing() {
       fullstory.testConnection();
     }, 2000);
   }, [trackPage, user]);
+
+  // Ensure video autoplays on mobile devices
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Try to play the video programmatically (helps with mobile autoplay)
+    const playVideo = async () => {
+      try {
+        // Set volume to 0 to ensure muted (some browsers need this)
+        video.volume = 0;
+        await video.play();
+      } catch (error) {
+        // Autoplay was prevented, which is fine - user interaction will be needed
+        console.log('Video autoplay prevented:', error);
+      }
+    };
+
+    // Try playing when video is loaded
+    if (video.readyState >= 2) {
+      // Video metadata is loaded
+      playVideo();
+    } else {
+      // Wait for metadata to load
+      video.addEventListener('loadedmetadata', playVideo, { once: true });
+    }
+
+    // Also try playing when video can play through
+    video.addEventListener('canplaythrough', playVideo, { once: true });
+
+    return () => {
+      video.removeEventListener('loadedmetadata', playVideo);
+      video.removeEventListener('canplaythrough', playVideo);
+    };
+  }, []);
 
   // Redirect authenticated users to dashboard
   useEffect(() => {
@@ -59,13 +95,14 @@ export default function Landing() {
       {/* Background Video */}
       <div className="absolute inset-0 z-0">
         <video
+          ref={videoRef}
           autoPlay
           muted
           loop
           playsInline
           className="w-full h-full object-cover"
           data-testid="background-video"
-          preload="metadata"
+          preload="auto"
           aria-label="Background video of travel destinations"
         >
           <source src={backgroundVideo} type="video/mp4" />
