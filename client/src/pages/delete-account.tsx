@@ -205,6 +205,18 @@ export default function DeleteAccountPage() {
                       Please settle all debts (negative balances) before deleting your account. 
                       You can leave even if you're owed money, but you'll lose that money.
                     </p>
+                    <p className="text-yellow-700 text-sm mt-2">
+                      If you need help,{' '}
+                      <a 
+                        href="/contact?fromDelete=true&subject=account%20deletion%20support"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline hover:text-yellow-900"
+                      >
+                        contact support
+                      </a>
+                      .
+                    </p>
                   </div>
 
                   {/* Trips List */}

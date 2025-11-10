@@ -28,12 +28,16 @@ export default function Contact() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Check if user came from Help button
+  // Check if user came from Help button or Delete flow
   const [fromHelp, setFromHelp] = useState(false);
+  const [fromDelete, setFromDelete] = useState(false);
+  const [prefillSubject, setPrefillSubject] = useState('');
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setFromHelp(params.get('fromHelp') === 'true');
+    setFromDelete(params.get('fromDelete') === 'true');
+    setPrefillSubject(params.get('subject') || '');
   }, []);
 
   // Helper function to extract firstName and lastName from user object
@@ -60,28 +64,39 @@ export default function Contact() {
     return { firstName, lastName };
   };
 
-  // Pre-fill form when user comes from Help button
+  // Pre-fill form when user comes from Help button or Delete flow
   useEffect(() => {
-    if (fromHelp && user && !isLoading) {
-      const { firstName, lastName } = extractUserNames(user);
+    if ((fromHelp || fromDelete) && !isLoading) {
+      // Pre-fill subject from URL parameter (works for both authenticated and non-authenticated users)
+      if (prefillSubject) {
+        setFormData(prev => ({
+          ...prev,
+          subject: prev.subject || prefillSubject
+        }));
+      }
       
-      // Only pre-fill if fields are empty (don't overwrite user input)
-      setFormData(prev => ({
-        ...prev,
-        firstName: prev.firstName || firstName,
-        lastName: prev.lastName || lastName,
-        email: prev.email || user.email || ''
-      }));
+      // Pre-fill user info if authenticated
+      if (user) {
+        const { firstName, lastName } = extractUserNames(user);
+        
+        // Only pre-fill if fields are empty (don't overwrite user input)
+        setFormData(prev => ({
+          ...prev,
+          firstName: prev.firstName || firstName,
+          lastName: prev.lastName || lastName,
+          email: prev.email || user.email || ''
+        }));
+      }
     }
-  }, [fromHelp, user, isLoading]);
+  }, [fromHelp, fromDelete, user, isLoading, prefillSubject]);
 
   // Redirect authenticated users to dashboard (but render content first for SEO)
-  // UNLESS they came from the Help button
+  // UNLESS they came from the Help button or Delete flow
   useEffect(() => {
-    if (!isLoading && user && !fromHelp) {
+    if (!isLoading && user && !fromHelp && !fromDelete) {
       navigate("/dashboard");
     }
-  }, [user, isLoading, navigate, fromHelp]);
+  }, [user, isLoading, navigate, fromHelp, fromDelete]);
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -165,8 +180,8 @@ export default function Contact() {
 
   // Don't render contact page if user is authenticated (will redirect)
   // But show content during loading for SEO/crawlers
-  // UNLESS they came from the Help button
-  if (!isLoading && user && !fromHelp) {
+  // UNLESS they came from the Help button or Delete flow
+  if (!isLoading && user && !fromHelp && !fromDelete) {
     return null;
   }
   return (
