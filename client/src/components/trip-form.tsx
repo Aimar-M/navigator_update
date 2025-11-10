@@ -404,6 +404,7 @@ const TripForm = forwardRef<TripFormRef, TripFormProps>(({ onComplete }, ref) =>
                 type="button"
                 onClick={nextStep}
                 disabled={!isStepValid()}
+                data-trip-form-next
               >
                 Next
               </Button>
@@ -411,6 +412,7 @@ const TripForm = forwardRef<TripFormRef, TripFormProps>(({ onComplete }, ref) =>
               <Button
                 type="submit"
                 disabled={isSubmitting}
+                data-trip-form-submit
               >
                 {isSubmitting ? "Creating..." : "Create Trip"}
               </Button>

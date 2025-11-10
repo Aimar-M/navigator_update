@@ -237,16 +237,7 @@ export default function OnboardingTooltips() {
     }
   }, [currentStep, isVisible, navigate, currentStepData]);
 
-  // Handle step 5 navigation to create-trip
-  useEffect(() => {
-    if (isVisible && currentStep === 4 && currentStepData?.id === 'create-trip-prompt') {
-      // Small delay to ensure route change happens
-      const timer = setTimeout(() => {
-        navigate('/create-trip');
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [currentStep, isVisible, navigate, currentStepData]);
+  // Step 5 navigation is handled in handleNext - no auto-navigation
 
   // Find and highlight target element
   useEffect(() => {
@@ -363,13 +354,30 @@ export default function OnboardingTooltips() {
     }
   }, [dismissedSubSteps, isStep15, currentStepData, nextStep]);
 
-  // Handle form actions (steps 8 and 10)
+  // Handle form actions (steps 5, 8 and 10)
   const handleNext = () => {
+    // Step 5: Navigate to create-trip when Next is clicked
+    if (currentStepData?.id === 'create-trip-prompt') {
+      navigate('/create-trip');
+      // Small delay to ensure route change happens before moving to next step
+      setTimeout(() => {
+        nextStep();
+      }, 100);
+      return;
+    }
+    
     if (currentStepData?.triggerFormAction === 'next-step') {
       // Trigger TripForm's nextStep
       const tripFormNextButton = document.querySelector('[data-trip-form-next]') as HTMLButtonElement;
       if (tripFormNextButton) {
         tripFormNextButton.click();
+        // Wait a bit for form to update, then move to next onboarding step
+        setTimeout(() => {
+          nextStep();
+        }, 300);
+      } else {
+        // Fallback: just move to next step if button not found
+        nextStep();
       }
     } else if (currentStepData?.triggerFormAction === 'create-trip') {
       // Trigger TripForm's submit
@@ -377,6 +385,12 @@ export default function OnboardingTooltips() {
       if (tripFormSubmitButton) {
         tripFormSubmitButton.click();
         // Store trip ID when trip is created (handled by trip-form)
+        // Move to next step after trip is created (navigation handled by trip-form)
+        setTimeout(() => {
+          nextStep();
+        }, 500);
+      } else {
+        nextStep();
       }
     } else if (currentStep === TOTAL_STEPS - 1) {
       // Last step - complete onboarding
