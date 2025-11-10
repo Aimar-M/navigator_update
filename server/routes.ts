@@ -1499,26 +1499,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check for unsettled balances (same check as leave trip)
-      const dbStorage = storage as any;
-      if (typeof dbStorage.analyzeMemberRemovalEligibility === 'function') {
-        const eligibility = await dbStorage.analyzeMemberRemovalEligibility(tripId, user.id);
-        
-        if (!eligibility.canRemove) {
-          return res.status(400).json({ 
-            message: eligibility.reason || 'Cannot delete trip due to unsettled balances',
-            balance: eligibility.balance,
-            manualExpenseBalance: eligibility.manualExpenseBalance,
-            prepaidActivityBalance: eligibility.prepaidActivityBalance,
-            prepaidActivitiesOwed: eligibility.prepaidActivitiesOwed,
-            suggestions: eligibility.suggestions
-          });
+      // Only check if user is a member of the trip (organizer might not be a member for new trips)
+      const members = await storage.getTripMembers(tripId);
+      const isMember = members.some(m => m.userId === user.id);
+      
+      if (isMember) {
+        const dbStorage = storage as any;
+        if (typeof dbStorage.analyzeMemberRemovalEligibility === 'function') {
+          try {
+            const eligibility = await dbStorage.analyzeMemberRemovalEligibility(tripId, user.id);
+            
+            if (!eligibility.canRemove) {
+              return res.status(400).json({ 
+                message: eligibility.reason || 'Cannot delete trip due to unsettled balances',
+                balance: eligibility.balance,
+                manualExpenseBalance: eligibility.manualExpenseBalance,
+                prepaidActivityBalance: eligibility.prepaidActivityBalance,
+                prepaidActivitiesOwed: eligibility.prepaidActivitiesOwed,
+                suggestions: eligibility.suggestions
+              });
+            }
+          } catch (eligibilityError) {
+            // If eligibility check fails (e.g., no members/expenses yet), log but allow deletion
+            // Organizer should be able to delete their trip even if eligibility check fails
+            console.warn('Eligibility check failed during trip deletion, allowing deletion:', eligibilityError);
+          }
         }
       }
       
       await storage.deleteTrip(tripId);
       res.json({ message: 'Trip deleted successfully' });
     } catch (error) {
-      res.status(500).json({ message: 'Server error' });
+      console.error('Error deleting trip:', error);
+      res.status(500).json({ 
+        message: 'Server error',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
   

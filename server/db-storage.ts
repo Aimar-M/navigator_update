@@ -432,11 +432,94 @@ export class DatabaseStorage {
   }
 
   async deleteTrip(id: number): Promise<boolean> {
-    const result = await db
-      .delete(trips)
-      .where(eq(trips.id, id));
-    
-    return result.rowCount ? result.rowCount > 0 : false;
+    // Delete all related records in the correct order to avoid foreign key constraint violations
+    await db.transaction(async (tx) => {
+      // 1. Delete expense splits (references expenses)
+      const tripExpenses = await tx.select({ id: expenses.id })
+        .from(expenses)
+        .where(eq(expenses.tripId, id));
+      const expenseIds = tripExpenses.map(e => e.id);
+      if (expenseIds.length > 0) {
+        await tx.delete(expenseSplits)
+          .where(inArray(expenseSplits.expenseId, expenseIds));
+      }
+
+      // 2. Delete expenses (references trips)
+      await tx.delete(expenses)
+        .where(eq(expenses.tripId, id));
+
+      // 3. Delete activity RSVPs (references activities)
+      const tripActivities = await tx.select({ id: activities.id })
+        .from(activities)
+        .where(eq(activities.tripId, id));
+      const activityIds = tripActivities.map(a => a.id);
+      if (activityIds.length > 0) {
+        await tx.delete(activityRsvp)
+          .where(inArray(activityRsvp.activityId, activityIds));
+      }
+
+      // 4. Delete activities (references trips)
+      await tx.delete(activities)
+        .where(eq(activities.tripId, id));
+
+      // 5. Delete poll votes (references polls)
+      const tripPolls = await tx.select({ id: polls.id })
+        .from(polls)
+        .where(eq(polls.tripId, id));
+      const pollIds = tripPolls.map(p => p.id);
+      if (pollIds.length > 0) {
+        await tx.delete(pollVotes)
+          .where(inArray(pollVotes.pollId, pollIds));
+      }
+
+      // 6. Delete polls (references trips)
+      await tx.delete(polls)
+        .where(eq(polls.tripId, id));
+
+      // 7. Delete survey responses (references survey questions)
+      const tripSurveyQuestions = await tx.select({ id: surveyQuestions.id })
+        .from(surveyQuestions)
+        .where(eq(surveyQuestions.tripId, id));
+      const surveyQuestionIds = tripSurveyQuestions.map(q => q.id);
+      if (surveyQuestionIds.length > 0) {
+        await tx.delete(surveyResponses)
+          .where(inArray(surveyResponses.questionId, surveyQuestionIds));
+      }
+
+      // 8. Delete survey questions (references trips)
+      await tx.delete(surveyQuestions)
+        .where(eq(surveyQuestions.tripId, id));
+
+      // 9. Delete messages (references trips)
+      await tx.delete(messages)
+        .where(eq(messages.tripId, id));
+
+      // 10. Delete trip members (references trips)
+      await tx.delete(tripMembers)
+        .where(eq(tripMembers.tripId, id));
+
+      // 11. Delete user trip settings (references trips)
+      await tx.delete(userTripSettings)
+        .where(eq(userTripSettings.tripId, id));
+
+      // 12. Delete invitation links (references trips)
+      await tx.delete(invitationLinks)
+        .where(eq(invitationLinks.tripId, id));
+
+      // 13. Delete flight info (references trips)
+      await tx.delete(flightInfo)
+        .where(eq(flightInfo.tripId, id));
+
+      // 14. Delete settlements (references trips)
+      await tx.delete(settlements)
+        .where(eq(settlements.tripId, id));
+
+      // 15. Finally, delete the trip itself
+      await tx.delete(trips)
+        .where(eq(trips.id, id));
+    });
+
+    return true;
   }
 
   async addTripMember(member: InsertTripMember): Promise<TripMember> {
@@ -693,10 +776,10 @@ export class DatabaseStorage {
         
         // Get splits for these expenses to calculate what others owe
         const expenseIds = activityExpenses.map(e => e.id);
-        const splits = await db
+        const splits = expenseIds.length > 0 ? await db
           .select()
           .from(expenseSplits)
-          .where(eq(expenseSplits.expenseId, activityExpenses[0].id));
+          .where(inArray(expenseSplits.expenseId, expenseIds)) : [];
         
         const amountOwedByOthers = splits
           .filter(split => split.userId !== userId)
