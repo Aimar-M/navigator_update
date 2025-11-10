@@ -6,7 +6,7 @@ import { useOnboarding } from "@/hooks/use-onboarding";
 import { useFullStory } from "@/hooks/use-fullstory";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
-import { getRandomDestinationImage } from "@/lib/utils";
+import { getRandomDestinationImage, parseLocalDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -75,7 +75,7 @@ const TripForm = forwardRef<TripFormRef, TripFormProps>(({ onComplete }, ref) =>
         const updated = { ...prev, startDate: value };
         // If new start date is after end date, update end date to be 1 day after start
         if (prev.endDate && value > prev.endDate) {
-          const start = new Date(value);
+          const start = parseLocalDate(value);
           start.setDate(start.getDate() + 1);
           updated.endDate = start.toISOString().split('T')[0];
         }
@@ -124,11 +124,13 @@ const TripForm = forwardRef<TripFormRef, TripFormProps>(({ onComplete }, ref) =>
       };
       
       // Only add dates if they are provided
+      // Use parseLocalDate to ensure dates are created in local time, not UTC
+      // This prevents timezone issues where dates appear a day behind
       if (formData.startDate) {
-        tripData.startDate = new Date(formData.startDate);
+        tripData.startDate = parseLocalDate(formData.startDate);
       }
       if (formData.endDate) {
-        tripData.endDate = new Date(formData.endDate);
+        tripData.endDate = parseLocalDate(formData.endDate);
       }
       
       // Use fetch directly with authentication token
@@ -248,7 +250,7 @@ const TripForm = forwardRef<TripFormRef, TripFormProps>(({ onComplete }, ref) =>
                     // Validate that end date is after start date
                     if (formData.startDate && newEndDate && newEndDate <= formData.startDate) {
                       // Auto-adjust to 1 day after start date instead of showing error
-                      const start = new Date(formData.startDate);
+                      const start = parseLocalDate(formData.startDate);
                       start.setDate(start.getDate() + 1);
                       setFormData(prev => ({ ...prev, endDate: start.toISOString().split('T')[0] }));
                     } else {

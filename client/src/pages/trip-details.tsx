@@ -1,6 +1,7 @@
 import { useParams, useLocation } from "wouter";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { parseLocalDate } from "@/lib/utils";
 import { useFullStory } from "@/hooks/use-fullstory";
 import { MapPin, Calendar, Users, Info, UserPlus, Edit2, Save, X, Home, Plane, UserMinus, Trash2, Plus } from "lucide-react";
 import TripDetailLayout from "@/components/trip-detail-layout";
@@ -194,8 +195,9 @@ export default function TripDetails() {
         );
         if (confirmChange) {
           // Retry with confirmation flag - rebuild the data properly
-          const startDate = new Date(editForm.startDate);
-          const endDate = new Date(editForm.endDate);
+          // Use parseLocalDate to ensure dates are created in local time, not UTC
+          const startDate = parseLocalDate(editForm.startDate);
+          const endDate = parseLocalDate(editForm.endDate);
           const updatedData = {
             name: editForm.name.trim(),
             destination: editForm.destination.trim(),
@@ -383,8 +385,10 @@ export default function TripDetails() {
       return;
     }
 
-    const startDate = new Date(editForm.startDate);
-    const endDate = new Date(editForm.endDate);
+    // Use parseLocalDate to ensure dates are created in local time, not UTC
+    // This prevents timezone issues where dates appear a day behind
+    const startDate = parseLocalDate(editForm.startDate);
+    const endDate = parseLocalDate(editForm.endDate);
 
     if (startDate >= endDate) {
       toast({
@@ -625,7 +629,7 @@ export default function TripDetails() {
                               // If new start date is after end date, update end date to be 1 day after start
                               const updated = { ...prev, startDate: newStartDate };
                               if (newStartDate && prev.endDate && newStartDate > prev.endDate) {
-                                const start = new Date(newStartDate);
+                                const start = parseLocalDate(newStartDate);
                                 start.setDate(start.getDate() + 1);
                                 updated.endDate = start.toISOString().split('T')[0];
                               }
@@ -661,7 +665,7 @@ export default function TripDetails() {
                     </div>
                   ) : (
                     <p className="text-gray-600">
-                      {format(new Date(trip.startDate), "MMM d, yyyy")} - {format(new Date(trip.endDate), "MMM d, yyyy")}
+                      {format(parseLocalDate(trip.startDate), "MMM d, yyyy")} - {format(parseLocalDate(trip.endDate), "MMM d, yyyy")}
                     </p>
                   )}
                 </div>

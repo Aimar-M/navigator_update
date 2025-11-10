@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest } from '@/lib/queryClient';
+import { parseLocalDate } from '@/lib/utils';
 
 
 
@@ -495,7 +496,7 @@ export default function Home() {
                                   <div>
                                     <h4 className="font-medium text-gray-900">{invitation.trip?.name}</h4>
                                     <p className="text-sm text-gray-600">
-                                      {invitation.trip?.destination} • {new Date(invitation.trip?.startDate).toLocaleDateString()} - {new Date(invitation.trip?.endDate).toLocaleDateString()}
+                                      {invitation.trip?.destination} • {invitation.trip?.startDate && parseLocalDate(invitation.trip.startDate).toLocaleDateString()} - {invitation.trip?.endDate && parseLocalDate(invitation.trip.endDate).toLocaleDateString()}
                                     </p>
                                     <p className="text-xs text-gray-600 mt-1">
                                       Invited by {invitation.organizer?.name || invitation.organizer?.username}

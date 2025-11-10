@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
+import { parseLocalDate } from "@/lib/utils";
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -125,7 +126,7 @@ export default function RSVPNotification() {
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Calendar className="h-4 w-4" />
                 <span>
-                  {format(new Date(trip.startDate), "MMM d")} - {format(new Date(trip.endDate), "MMM d, yyyy")}
+                  {format(parseLocalDate(trip.startDate), "MMM d")} - {format(parseLocalDate(trip.endDate), "MMM d, yyyy")}
                 </span>
               </div>
               {trip.description && (

@@ -9,7 +9,7 @@ import { CreditCard, Clock, CheckCircle, AlertCircle, Bell, Timer, DollarSign, C
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
-import { openPaymentLinkWithMobileFallback } from "@/lib/utils";
+import { openPaymentLinkWithMobileFallback, parseLocalDate } from "@/lib/utils";
 import Lottie from "lottie-react";
 import EnhancedItineraryPreview from "@/components/enhanced-itinerary-preview";
 import EnhancedRSVPButtons from "@/components/enhanced-rsvp-buttons";
@@ -348,9 +348,9 @@ export default function PendingStatusScreen({ trip, member }: PendingStatusScree
                 <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg border border-white/30">
                   <Calendar className="h-4 w-4" />
                   <span>
-                    {trip.startDate && new Date(trip.startDate).toLocaleDateString()}
+                    {trip.startDate && parseLocalDate(trip.startDate).toLocaleDateString()}
                     {trip.startDate && trip.endDate && ' - '}
-                    {trip.endDate && new Date(trip.endDate).toLocaleDateString()}
+                    {trip.endDate && parseLocalDate(trip.endDate).toLocaleDateString()}
                   </span>
                 </div>
               )}

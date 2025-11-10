@@ -16,6 +16,7 @@ import Lottie from "lottie-react";
 import EnhancedItineraryPreview from "@/components/enhanced-itinerary-preview";
 import EnhancedRSVPButtons from "@/components/enhanced-rsvp-buttons";
 import { useAuth } from "@/hooks/use-auth";
+import { parseLocalDate } from "@/lib/utils";
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -315,9 +316,9 @@ export default function InvitationPage() {
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
                     <span>
-                      {trip.startDate && format(new Date(trip.startDate), 'MMM d')}
+                      {trip.startDate && format(parseLocalDate(trip.startDate), 'MMM d')}
                       {trip.startDate && trip.endDate && ' - '}
-                      {trip.endDate && format(new Date(trip.endDate), 'MMM d, yyyy')}
+                      {trip.endDate && format(parseLocalDate(trip.endDate), 'MMM d, yyyy')}
                     </span>
                   </div>
                 )}

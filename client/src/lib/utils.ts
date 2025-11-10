@@ -5,10 +5,26 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+// Helper function to parse date strings as local dates (not UTC)
+// This prevents timezone issues where dates appear a day behind
+export function parseLocalDate(dateString: string): Date {
+  if (!dateString) return new Date();
+  
+  // If the string is in YYYY-MM-DD format, parse it as local time
+  // to avoid timezone shifts (e.g., "2024-01-15" should be Jan 15 in local time, not UTC)
+  if (/^\d{4}-\d{2}-\d{2}/.test(dateString)) {
+    const [year, month, day] = dateString.split('T')[0].split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+  
+  // For other formats, use standard Date parsing
+  return new Date(dateString);
+}
+
 export function formatDate(date: Date | string): string {
   if (!date) return '';
   
-  const d = typeof date === 'string' ? new Date(date) : date;
+  const d = typeof date === 'string' ? parseLocalDate(date) : date;
   return d.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -19,8 +35,8 @@ export function formatDate(date: Date | string): string {
 export function formatDateRange(start: Date | string, end: Date | string): string {
   if (!start || !end) return '';
   
-  const startDate = typeof start === 'string' ? new Date(start) : start;
-  const endDate = typeof end === 'string' ? new Date(end) : end;
+  const startDate = typeof start === 'string' ? parseLocalDate(start) : start;
+  const endDate = typeof end === 'string' ? parseLocalDate(end) : end;
   
   // Same year
   if (startDate.getFullYear() === endDate.getFullYear()) {
