@@ -10,6 +10,7 @@ interface OnboardingContextType {
   isCompleted: boolean;
   isNewUser: boolean;
   startOnboarding: () => void;
+  startManualTour: () => void;
   nextStep: () => void;
   previousStep: () => void;
   skipStep: () => void;
@@ -28,6 +29,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [isCompleted, setIsCompleted] = useState<boolean>(false);
   const [isNewUser, setIsNewUser] = useState<boolean>(false);
   const [isChecking, setIsChecking] = useState<boolean>(false);
+  const [isManualTour, setIsManualTour] = useState<boolean>(false);
+  const [manualTourDismissed, setManualTourDismissed] = useState<boolean>(false);
 
   const checkIfNewUser = async (): Promise<boolean> => {
     if (!user) return false;
@@ -46,6 +49,20 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
   const checkUserOnboardingStatus = async () => {
     if (!user || isChecking) return;
+    
+    // Don't show automatic onboarding if manual tour was dismissed in this session
+    if (manualTourDismissed) {
+      setIsCompleted(true);
+      setIsVisible(false);
+      setIsChecking(false);
+      return;
+    }
+    
+    // Don't override if a manual tour is currently active
+    if (isManualTour && isVisible) {
+      setIsChecking(false);
+      return;
+    }
     
     setIsChecking(true);
     
@@ -68,6 +85,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       if (isNew) {
         setIsVisible(true);
         setCurrentStep(0);
+        setIsManualTour(false); // Automatic onboarding
       } else {
         setIsCompleted(true);
         setIsVisible(false);
@@ -89,6 +107,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     } else {
       setIsVisible(false);
       setIsCompleted(false);
+      setIsManualTour(false);
+      setManualTourDismissed(false);
     }
   }, [user]);
 
@@ -96,6 +116,15 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     setIsVisible(true);
     setCurrentStep(0);
     setIsCompleted(false);
+    setIsManualTour(false);
+  };
+
+  const startManualTour = () => {
+    setIsVisible(true);
+    setCurrentStep(0);
+    setIsCompleted(false);
+    setIsManualTour(true);
+    setManualTourDismissed(false); // Reset dismissal flag when starting new manual tour
   };
 
   const nextStep = () => {
@@ -112,35 +141,51 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
   const completeOnboarding = async () => {
     try {
-      // Mark onboarding as seen in backend
-      await apiRequest('PUT', `${API_BASE}/api/users/profile`, {
-        hasSeenOnboarding: true
-      });
+      // Only update backend if it's not a manual tour
+      if (!isManualTour) {
+        // Mark onboarding as seen in backend
+        await apiRequest('PUT', `${API_BASE}/api/users/profile`, {
+          hasSeenOnboarding: true
+        });
+      } else {
+        // For manual tours, prevent automatic onboarding from showing
+        setManualTourDismissed(true);
+      }
       
       setIsCompleted(true);
       setIsVisible(false);
+      setIsManualTour(false);
     } catch (error) {
       console.error('Error completing onboarding:', error);
       // Still mark as completed locally even if API call fails
       setIsCompleted(true);
       setIsVisible(false);
+      setIsManualTour(false);
     }
   };
 
   const dismissOnboarding = async () => {
     try {
-      // Mark onboarding as seen in backend
-      await apiRequest('PUT', `${API_BASE}/api/users/profile`, {
-        hasSeenOnboarding: true
-      });
+      // Only update backend if it's not a manual tour
+      if (!isManualTour) {
+        // Mark onboarding as seen in backend
+        await apiRequest('PUT', `${API_BASE}/api/users/profile`, {
+          hasSeenOnboarding: true
+        });
+      } else {
+        // For manual tours, prevent automatic onboarding from showing
+        setManualTourDismissed(true);
+      }
       
       setIsCompleted(true);
       setIsVisible(false);
+      setIsManualTour(false);
     } catch (error) {
       console.error('Error dismissing onboarding:', error);
       // Still mark as dismissed locally even if API call fails
       setIsCompleted(true);
       setIsVisible(false);
+      setIsManualTour(false);
     }
   };
 
@@ -156,6 +201,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         isCompleted,
         isNewUser,
         startOnboarding,
+        startManualTour,
         nextStep,
         previousStep,
         skipStep,

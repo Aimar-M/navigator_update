@@ -13,6 +13,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import UserAvatar from "@/components/user-avatar";
 import { useAuth } from "@/hooks/use-auth";
+import { useOnboarding } from "@/hooks/use-onboarding";
 import { useQuery } from "@tanstack/react-query";
 import navigatorLogo from "@assets/ab_Navigator2-11_1749671092581.png";
 import navigatorText from "@assets/ab_Navigator2-09_1749671257407.png";
@@ -25,6 +26,7 @@ export default function Header() {
   const { user, logout } = useAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { startManualTour } = useOnboarding();
   const [hasNotifications, setHasNotifications] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -179,6 +181,15 @@ export default function Header() {
     setHasNotifications(false);
   };
 
+  const handleStartTour = () => {
+    // Navigate to dashboard first
+    navigate('/dashboard');
+    // Small delay to ensure route change completes before starting tour
+    setTimeout(() => {
+      startManualTour();
+    }, 100);
+  };
+
   const handleLogout = async () => {
     await logout();
     toast({
@@ -330,6 +341,11 @@ export default function Header() {
                       Outstanding Balances
                     </div>
                   </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleStartTour}>
+                  <div className="cursor-pointer w-full flex items-center">
+                    Take a quick tour
+                  </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <a 
