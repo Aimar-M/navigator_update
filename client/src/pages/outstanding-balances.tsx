@@ -147,7 +147,7 @@ export default function OutstandingBalancesPage() {
                                   </span>
                                 </div>
                                 <p className="text-sm text-gray-600">
-                                  {trip.message}
+                                  {trip.message.replace(/ You must settle this before deleting your account\.?/g, '')}
                                 </p>
                                 <Button
                                   onClick={() => navigate(`/trips/${trip.tripId}/expenses`)}
