@@ -382,14 +382,43 @@ export default function OnboardingTooltips() {
     } else if (currentStepData?.triggerFormAction === 'create-trip') {
       // Trigger TripForm's submit
       const tripFormSubmitButton = document.querySelector('[data-trip-form-submit]') as HTMLButtonElement;
-      if (tripFormSubmitButton) {
+      if (tripFormSubmitButton && !tripFormSubmitButton.disabled) {
+        // Get current trip ID from localStorage (if any) to detect when new trip is created
+        const initialTripId = localStorage.getItem('onboardingTripId');
+        
+        // Click the submit button
         tripFormSubmitButton.click();
-        // Store trip ID when trip is created (handled by trip-form)
-        // Move to next step after trip is created (navigation handled by trip-form)
-        setTimeout(() => {
-          nextStep();
-        }, 500);
+        
+        // Wait for trip creation to complete by checking for:
+        // 1. Trip ID in localStorage (set by trip-form after creation)
+        // 2. Route change to trip details page
+        let checkCount = 0;
+        const maxChecks = 25; // 5 seconds max (25 * 200ms)
+        
+        const checkTripCreated = () => {
+          checkCount++;
+          const newTripId = localStorage.getItem('onboardingTripId');
+          const currentPath = window.location.pathname;
+          
+          // Check if trip was created (new trip ID) and we're on trip details page
+          if (newTripId && newTripId !== initialTripId && currentPath.includes('/trips/')) {
+            // Trip created and navigated - advance onboarding
+            nextStep();
+          } else if (checkCount < maxChecks) {
+            // Keep checking
+            setTimeout(checkTripCreated, 200);
+          } else {
+            // Timeout - if we have a trip ID, advance anyway
+            if (newTripId && newTripId !== initialTripId) {
+              nextStep();
+            }
+          }
+        };
+        
+        // Start checking after a short delay to allow form submission to start
+        setTimeout(checkTripCreated, 500);
       } else {
+        // Button not found or disabled - just advance
         nextStep();
       }
     } else if (currentStep === TOTAL_STEPS - 1) {
