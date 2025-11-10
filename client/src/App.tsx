@@ -36,6 +36,7 @@ import ConfirmEmail from "@/pages/confirm-email";
 import RecoverAccount from "@/pages/recover-account";
 import AirportTest from "@/pages/airport-test";
 import DeleteAccount from "@/pages/delete-account";
+import OutstandingBalances from "@/pages/outstanding-balances";
 
 function Router() {
   return (
@@ -67,6 +68,7 @@ function Router() {
       <Route path="/trips/:tripId/activities/:activityId" component={ActivityDetails} />
       <Route path="/trips/:tripId/expenses/:expenseId" component={ExpenseDetails} />
       <Route path="/profile" component={Profile} />
+      <Route path="/outstanding-balances" component={OutstandingBalances} />
       <Route path="/account-settings" component={AccountSettings} />
       <Route path="/delete-account" component={DeleteAccount} />
       <Route path="/user/:userId" component={UserProfile} />

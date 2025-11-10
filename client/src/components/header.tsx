@@ -324,6 +324,14 @@ export default function Header() {
                     <div className="cursor-pointer w-full flex">Profile</div>
                   </Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/outstanding-balances">
+                    <div className="cursor-pointer w-full flex items-center">
+                      <DollarSign className="h-4 w-4 mr-2" />
+                      Outstanding Balances
+                    </div>
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
                   Log out
