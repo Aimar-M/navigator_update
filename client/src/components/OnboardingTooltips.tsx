@@ -4,6 +4,7 @@ import { X, ArrowRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useOnboarding } from "@/hooks/use-onboarding";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
 interface OnboardingStep {
@@ -169,9 +170,29 @@ const onboardingSteps: OnboardingStep[] = [
 
 const TOTAL_STEPS = onboardingSteps.length;
 
+// Get mobile-aware position for a step
+function getStepPosition(stepId: string, desktopPosition: 'top' | 'bottom' | 'left' | 'right' | 'center', isMobile: boolean): 'top' | 'bottom' | 'left' | 'right' | 'center' {
+  if (!isMobile) return desktopPosition;
+  
+  // Mobile position overrides
+  switch (stepId) {
+    case 'search-icon':
+      return 'bottom';
+    case 'settlements-icon':
+      return 'bottom';
+    case 'create-trip-prompt':
+      return 'bottom';
+    case 'navigator-logo':
+      return 'bottom';
+    default:
+      return desktopPosition;
+  }
+}
+
 export default function OnboardingTooltips() {
   const { currentStep, isVisible, nextStep, previousStep, dismissOnboarding, completeOnboarding, isStepActive } = useOnboarding();
   const [, navigate] = useLocation();
+  const isMobile = useIsMobile();
   const [targetElement, setTargetElement] = useState<HTMLElement | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -181,6 +202,11 @@ export default function OnboardingTooltips() {
   const isCompletionStep = currentStepData?.id === 'completion';
   const isWelcomeStep = currentStepData?.id === 'welcome';
   const hasNoTarget = !currentStepData?.targetSelector || currentStepData.targetSelector === '';
+  
+  // Get mobile-aware position
+  const effectivePosition = currentStepData 
+    ? getStepPosition(currentStepData.id, currentStepData.position, isMobile)
+    : 'center';
 
   // Handle route navigation
   useEffect(() => {
@@ -240,14 +266,35 @@ export default function OnboardingTooltips() {
     // Skip if no target selector (e.g., welcome step or completion step with center position)
     if (!isVisible || !currentStepData || hasNoTarget || !isOnTripOverviewPage) {
       // For center position steps without target, set position immediately
-      if (hasNoTarget && currentStepData?.position === 'center') {
+      if (hasNoTarget && effectivePosition === 'center') {
         const tooltip = tooltipRef.current;
         if (tooltip) {
           const tooltipRect = tooltip.getBoundingClientRect();
-          setTooltipPosition({
-            top: window.innerHeight / 2 - tooltipRect.height / 2,
-            left: window.innerWidth / 2 - tooltipRect.width / 2
-          });
+          if (tooltipRect.width > 0 && tooltipRect.height > 0) {
+            setTooltipPosition({
+              top: isMobile 
+                ? window.innerHeight / 2 - tooltipRect.height / 2
+                : window.innerHeight / 2 - tooltipRect.height / 2,
+              left: isMobile
+                ? window.innerWidth / 2 - tooltipRect.width / 2
+                : window.innerWidth / 2 - tooltipRect.width / 2
+            });
+          } else {
+            // Retry if tooltip hasn't rendered yet
+            setTimeout(() => {
+              const retryRect = tooltip.getBoundingClientRect();
+              if (retryRect.width > 0 && retryRect.height > 0) {
+                setTooltipPosition({
+                  top: isMobile 
+                    ? window.innerHeight / 2 - retryRect.height / 2
+                    : window.innerHeight / 2 - retryRect.height / 2,
+                  left: isMobile
+                    ? window.innerWidth / 2 - retryRect.width / 2
+                    : window.innerWidth / 2 - retryRect.width / 2
+                });
+              }
+            }, 100);
+          }
         }
       }
       return;
@@ -292,7 +339,10 @@ export default function OnboardingTooltips() {
       let top = 0;
       let left = 0;
 
-      switch (currentStepData.position) {
+      // Use mobile-aware position
+      const position = effectivePosition;
+
+      switch (position) {
         case 'top':
           top = rect.top - tooltipRect.height - 16;
           left = rect.left + rect.width / 2 - tooltipRect.width / 2;
@@ -315,8 +365,8 @@ export default function OnboardingTooltips() {
           break;
       }
 
-      // Keep tooltip within viewport
-      const padding = 20;
+      // Keep tooltip within viewport with mobile-aware padding
+      const padding = isMobile ? 16 : 20;
       top = Math.max(padding, Math.min(top, window.innerHeight - tooltipRect.height - padding));
       left = Math.max(padding, Math.min(left, window.innerWidth - tooltipRect.width - padding));
 
@@ -347,7 +397,59 @@ export default function OnboardingTooltips() {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('scroll', handleResize, true);
     };
-  }, [currentStep, isVisible, currentStepData, hasNoTarget, targetElement, isOnTripOverviewPage]);
+  }, [currentStep, isVisible, currentStepData, hasNoTarget, targetElement, isOnTripOverviewPage, effectivePosition, isMobile]);
+  
+  // Recalculate position when mobile state changes
+  useEffect(() => {
+    if (targetElement && isVisible && currentStepData && !hasNoTarget) {
+      const updatePosition = () => {
+        const rect = targetElement.getBoundingClientRect();
+        const tooltip = tooltipRef.current;
+        if (!tooltip) return;
+
+        const tooltipRect = tooltip.getBoundingClientRect();
+        if (tooltipRect.width === 0 || tooltipRect.height === 0) {
+          setTimeout(updatePosition, 50);
+          return;
+        }
+
+        let top = 0;
+        let left = 0;
+        const position = effectivePosition;
+
+        switch (position) {
+          case 'top':
+            top = rect.top - tooltipRect.height - 16;
+            left = rect.left + rect.width / 2 - tooltipRect.width / 2;
+            break;
+          case 'bottom':
+            top = rect.bottom + 16;
+            left = rect.left + rect.width / 2 - tooltipRect.width / 2;
+            break;
+          case 'left':
+            top = rect.top + rect.height / 2 - tooltipRect.height / 2;
+            left = rect.left - tooltipRect.width - 16;
+            break;
+          case 'right':
+            top = rect.top + rect.height / 2 - tooltipRect.height / 2;
+            left = rect.right + 16;
+            break;
+          case 'center':
+            top = window.innerHeight / 2 - tooltipRect.height / 2;
+            left = window.innerWidth / 2 - tooltipRect.width / 2;
+            break;
+        }
+
+        const padding = isMobile ? 16 : 20;
+        top = Math.max(padding, Math.min(top, window.innerHeight - tooltipRect.height - padding));
+        left = Math.max(padding, Math.min(left, window.innerWidth - tooltipRect.width - padding));
+
+        setTooltipPosition({ top, left });
+      };
+      
+      setTimeout(updatePosition, 100);
+    }
+  }, [isMobile, targetElement, isVisible, currentStepData, hasNoTarget, effectivePosition]);
 
   // Handle form actions (steps 5, 8 and 10)
   const handleNext = () => {
@@ -419,10 +521,18 @@ export default function OnboardingTooltips() {
         />
         <div
           ref={tooltipRef}
-          className="fixed z-[101] w-80 transition-all duration-300 animate-in fade-in zoom-in-95"
+          className={cn(
+            "fixed z-[101] transition-all duration-300 animate-in fade-in zoom-in-95",
+            isMobile ? "w-[calc(100%-32px)] max-w-sm" : "w-80"
+          )}
           style={{
-            top: `${window.innerHeight / 2 - 150}px`,
-            left: `${window.innerWidth / 2 - 160}px`,
+            top: isMobile 
+              ? `${window.innerHeight / 2 - 100}px`
+              : `${window.innerHeight / 2 - 150}px`,
+            left: isMobile
+              ? '50%'
+              : `${window.innerWidth / 2 - 160}px`,
+            transform: isMobile ? 'translateX(-50%)' : 'none',
           }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -466,16 +576,18 @@ export default function OnboardingTooltips() {
       <div
         ref={tooltipRef}
         className={cn(
-          "fixed z-[101] w-80 transition-all duration-300 animate-in fade-in zoom-in-95",
+          "fixed z-[101] transition-all duration-300 animate-in fade-in zoom-in-95",
+          isMobile ? "w-[calc(100%-32px)] max-w-sm" : "w-80",
           (hasNoTarget || tooltipPosition.top > 0 || tooltipPosition.left > 0) ? "opacity-100" : "opacity-0"
         )}
         style={{
-          top: hasNoTarget && currentStepData.position === 'center' 
-            ? `${window.innerHeight / 2 - 150}px` 
+          top: hasNoTarget && effectivePosition === 'center' 
+            ? (isMobile ? `${window.innerHeight / 2 - 100}px` : `${window.innerHeight / 2 - 150}px`)
             : `${tooltipPosition.top}px`,
-          left: hasNoTarget && currentStepData.position === 'center'
-            ? `${window.innerWidth / 2 - 160}px`
+          left: hasNoTarget && effectivePosition === 'center'
+            ? (isMobile ? '50%' : `${window.innerWidth / 2 - 160}px`)
             : `${tooltipPosition.left}px`,
+          transform: hasNoTarget && effectivePosition === 'center' && isMobile ? 'translateX(-50%)' : 'none',
         }}
         onClick={(e) => e.stopPropagation()}
       >
