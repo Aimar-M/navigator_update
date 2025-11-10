@@ -22,7 +22,7 @@ export default function Footer({ isDark = false }: FooterProps) {
           <p
             className={`
               text-xs font-light pl-2 sm:pl-4
-              ${isDark ? "text-white/70" : "text-muted-foreground"}
+              ${isDark ? "text-white/70" : "text-gray-900"}
               transition-colors duration-300
             `}
           >
@@ -30,7 +30,7 @@ export default function Footer({ isDark = false }: FooterProps) {
           </p>
 
           {/* Social Icons - Right */}
-          <div className="flex items-center space-x-6 pr-2 sm:pr-4">
+          <div className="flex items-center space-x-8 pr-1 sm:pr-2">
             {/* Instagram */}
             <a
               href="https://www.instagram.com/navigatortrips/"
