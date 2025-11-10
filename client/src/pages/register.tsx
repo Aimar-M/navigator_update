@@ -65,13 +65,12 @@ export default function Register() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <div className="flex items-center justify-center mb-2">
+            <div className="flex flex-col items-center justify-center mb-2">
               <img 
                 src={navigatorLogo} 
                 alt="Navigator Logo" 
-                className="h-10 w-10 mr-2"
+                className="h-10 w-10 mb-2"
               />
-              <h1 className="text-2xl font-bold text-gray-900">Navigator</h1>
             </div>
             <p className="text-gray-600">Plan amazing trips with friends</p>
           </div>
@@ -282,13 +281,12 @@ export default function Register() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-2">
+          <div className="flex flex-col items-center justify-center mb-2">
             <img 
               src={navigatorLogo} 
               alt="Navigator Logo" 
-              className="h-10 w-10 mr-2"
+              className="h-10 w-10 mb-2"
             />
-            <h1 className="text-2xl font-bold text-gray-900">Navigator</h1>
           </div>
           <p className="text-gray-600">Plan amazing trips with friends</p>
         </div>

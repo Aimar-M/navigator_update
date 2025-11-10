@@ -299,6 +299,11 @@ export default function Login() {
               alt="Navigator Logo" 
               className="h-32 w-32 md:h-56 md:w-56 mb-2"
             />
+            <img 
+              src={navigatorText} 
+              alt="Navigator" 
+              className="hidden md:block w-auto h-auto max-w-xs"
+            />
           </div>
         </div>
 
