@@ -35,7 +35,8 @@ export default function DeleteAccountPage() {
     },
     enabled: !!user,
     retry: false,
-    refetchInterval: 10000, // Auto-refresh every 10 seconds
+    staleTime: 0, // Always consider data stale to allow refetching
+    refetchInterval: 3000, // Auto-refresh every 3 seconds
   });
 
   // Cancel deletion mutation
