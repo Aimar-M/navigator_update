@@ -288,7 +288,7 @@ export default function Login() {
         <img 
           src={companyLogo} 
           alt="Navigator Company Logo" 
-          className="absolute top-4 left-4 h-12 md:h-24 cursor-pointer hover:opacity-80 transition-opacity"
+          className="hidden md:block absolute top-4 left-4 h-12 md:h-24 cursor-pointer hover:opacity-80 transition-opacity"
         />
       </Link>
       <div className="w-full max-w-md">
@@ -298,11 +298,6 @@ export default function Login() {
               src={navigatorLogo} 
               alt="Navigator Logo" 
               className="h-32 w-32 md:h-56 md:w-56 mb-2"
-            />
-            <img 
-              src={navigatorText} 
-              alt="Navigator" 
-              className="hidden md:block w-auto h-auto max-w-xs"
             />
           </div>
         </div>
