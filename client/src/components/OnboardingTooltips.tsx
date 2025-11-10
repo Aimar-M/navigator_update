@@ -6,14 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import { cn } from "@/lib/utils";
 
-interface OnboardingSubStep {
-  id: string;
-  title: string;
-  description: string;
-  targetSelector: string;
-  position: 'top' | 'bottom' | 'left' | 'right';
-}
-
 interface OnboardingStep {
   id: string;
   title: string;
@@ -22,12 +14,19 @@ interface OnboardingStep {
   position: 'top' | 'bottom' | 'left' | 'right' | 'center';
   route?: string;
   action?: () => void;
-  showAllComponents?: boolean;
-  subSteps?: OnboardingSubStep[];
   triggerFormAction?: 'next-step' | 'create-trip';
 }
 
 const onboardingSteps: OnboardingStep[] = [
+  // 👋 Welcome Step (Step 0)
+  {
+    id: 'welcome',
+    title: 'Welcome to Navigator',
+    description: 'We\'re excited to have you! To get the best experience, please save this webpage to your homescreen.',
+    targetSelector: '', // No target - centered card
+    position: 'center',
+    route: '/dashboard'
+  },
   // 🏠 Dashboard Section (Steps 1-5)
   {
     id: 'dashboard-overview',
@@ -145,53 +144,23 @@ const onboardingSteps: OnboardingStep[] = [
   {
     id: 'page-components',
     title: 'Explore your trip features',
-    description: 'Multiple tooltips will appear simultaneously',
+    description: 'Plan your itinerary, chat with friends, manage shared expenses, and organize polls.',
     targetSelector: '[data-tooltip="page-components"]',
-    position: 'center',
-    route: '/trips/:id',
-    showAllComponents: true,
-    subSteps: [
-      {
-        id: 'itinerary-tab',
-        title: 'Itinerary',
-        description: 'Plan your trip schedule and activities.',
-        targetSelector: '[data-tooltip="itinerary-tab"]',
-        position: 'bottom'
-      },
-      {
-        id: 'chat-tab',
-        title: 'Chat',
-        description: 'Talk with your group, share updates, and vote seamlessly.',
-        targetSelector: '[data-tooltip="chat-tab"]',
-        position: 'bottom'
-      },
-      {
-        id: 'expenses-tab',
-        title: 'Expenses',
-        description: 'Track and split costs effortlessly.',
-        targetSelector: '[data-tooltip="expenses-tab"]',
-        position: 'bottom'
-      },
-      {
-        id: 'polls-tab',
-        title: 'Polls',
-        description: 'Create dedicated polls and let everyone decide together.',
-        targetSelector: '[data-tooltip="polls-tab"]',
-        position: 'bottom'
-      },
-      {
-        id: 'navigator-logo',
-        title: 'Navigator Logo',
-        description: 'Go back home',
-        targetSelector: '[data-tooltip="navigator-logo"]',
-        position: 'right'
-      }
-    ]
+    position: 'top',
+    route: '/trips/:id'
+  },
+  {
+    id: 'navigator-logo',
+    title: 'Navigator Logo',
+    description: 'Go back home',
+    targetSelector: '[data-tooltip="navigator-logo"]',
+    position: 'right',
+    route: '/trips/:id'
   },
   {
     id: 'completion',
     title: '🎉 You\'re all set!',
-    description: 'Your first trip is ready — invite your friends, start planning, and explore together.\n\nNavigator makes group travel simple. 🌍',
+    description: 'Your first trip is ready — invite your friends, start planning, and explore together.\n\nNavigator makes group travel simple. 🌍\n\nRemember to save Navigator to your homescreen for a better experience.',
     targetSelector: '[data-tooltip="completion"]',
     position: 'center',
     route: '/trips/:id'
@@ -205,13 +174,13 @@ export default function OnboardingTooltips() {
   const [, navigate] = useLocation();
   const [targetElement, setTargetElement] = useState<HTMLElement | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
-  const [dismissedSubSteps, setDismissedSubSteps] = useState<Set<string>>(new Set());
   const tooltipRef = useRef<HTMLDivElement>(null);
   const highlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const currentStepData = onboardingSteps[currentStep];
-  const isStep15 = currentStepData?.id === 'page-components';
   const isCompletionStep = currentStepData?.id === 'completion';
+  const isWelcomeStep = currentStepData?.id === 'welcome';
+  const hasNoTarget = !currentStepData?.targetSelector || currentStepData.targetSelector === '';
 
   // Handle route navigation
   useEffect(() => {
@@ -268,7 +237,21 @@ export default function OnboardingTooltips() {
 
   // Find and highlight target element
   useEffect(() => {
-    if (!isVisible || !currentStepData || isStep15 || !isOnTripOverviewPage) return;
+    // Skip if no target selector (e.g., welcome step or completion step with center position)
+    if (!isVisible || !currentStepData || hasNoTarget || !isOnTripOverviewPage) {
+      // For center position steps without target, set position immediately
+      if (hasNoTarget && currentStepData?.position === 'center') {
+        const tooltip = tooltipRef.current;
+        if (tooltip) {
+          const tooltipRect = tooltip.getBoundingClientRect();
+          setTooltipPosition({
+            top: window.innerHeight / 2 - tooltipRect.height / 2,
+            left: window.innerWidth / 2 - tooltipRect.width / 2
+          });
+        }
+      }
+      return;
+    }
 
     const findTarget = () => {
       const tryFind = (attempts = 0) => {
@@ -364,22 +347,7 @@ export default function OnboardingTooltips() {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('scroll', handleResize, true);
     };
-  }, [currentStep, isVisible, currentStepData, isStep15, targetElement]);
-
-  // Handle step 15 sub-steps dismissal
-  useEffect(() => {
-    if (isStep15 && currentStepData?.subSteps) {
-      const allSubSteps = currentStepData.subSteps.map(s => s.id);
-      const allDismissed = allSubSteps.every(id => dismissedSubSteps.has(id));
-      
-      if (allDismissed && dismissedSubSteps.size === allSubSteps.length) {
-        // All sub-steps dismissed, move to completion
-        setTimeout(() => {
-          nextStep();
-        }, 300);
-      }
-    }
-  }, [dismissedSubSteps, isStep15, currentStepData, nextStep]);
+  }, [currentStep, isVisible, currentStepData, hasNoTarget, targetElement, isOnTripOverviewPage]);
 
   // Handle form actions (steps 5, 8 and 10)
   const handleNext = () => {
@@ -435,40 +403,10 @@ export default function OnboardingTooltips() {
     dismissOnboarding();
   };
 
-  const handleSubStepDismiss = (subStepId: string) => {
-    setDismissedSubSteps(prev => new Set([...prev, subStepId]));
-  };
-
-  // For steps 11-16, don't show until we're on trip overview page
+  // For steps 11-17, don't show until we're on trip overview page
   if (!isVisible || !currentStepData) return null;
   if (currentStep >= 10 && currentStepData.route?.includes(':id') && !isOnTripOverviewPage) {
     return null; // Wait for trip overview page
-  }
-
-  // Render step 15 with multiple tooltips
-  if (isStep15 && currentStepData.subSteps) {
-    return (
-      <>
-        {/* Overlay */}
-        <div 
-          className="fixed inset-0 z-[100] bg-black/20 transition-opacity duration-300 animate-in fade-in"
-          onClick={handleDismiss}
-        />
-        
-        {/* Multiple tooltips */}
-        {currentStepData.subSteps.map((subStep) => {
-          if (dismissedSubSteps.has(subStep.id)) return null;
-          
-          return (
-            <SubStepTooltip
-              key={subStep.id}
-              subStep={subStep}
-              onDismiss={() => handleSubStepDismiss(subStep.id)}
-            />
-          );
-        })}
-      </>
-    );
   }
 
   // Render completion step
@@ -515,7 +453,7 @@ export default function OnboardingTooltips() {
     );
   }
 
-  // Render regular step
+  // Render regular step (including welcome step and page-components step)
   return (
     <>
       {/* Overlay */}
@@ -529,11 +467,15 @@ export default function OnboardingTooltips() {
         ref={tooltipRef}
         className={cn(
           "fixed z-[101] w-80 transition-all duration-300 animate-in fade-in zoom-in-95",
-          tooltipPosition.top > 0 || tooltipPosition.left > 0 ? "opacity-100" : "opacity-0"
+          (hasNoTarget || tooltipPosition.top > 0 || tooltipPosition.left > 0) ? "opacity-100" : "opacity-0"
         )}
         style={{
-          top: `${tooltipPosition.top}px`,
-          left: `${tooltipPosition.left}px`,
+          top: hasNoTarget && currentStepData.position === 'center' 
+            ? `${window.innerHeight / 2 - 150}px` 
+            : `${tooltipPosition.top}px`,
+          left: hasNoTarget && currentStepData.position === 'center'
+            ? `${window.innerWidth / 2 - 160}px`
+            : `${tooltipPosition.left}px`,
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -564,8 +506,8 @@ export default function OnboardingTooltips() {
                   </Button>
                 )}
                 <Button size="sm" onClick={handleNext}>
-                  Next
-                  <ArrowRight />
+                  {isCompletionStep ? 'Got it!' : 'Next'}
+                  {!isCompletionStep && <ArrowRight />}
                 </Button>
               </div>
             </div>
@@ -576,99 +518,4 @@ export default function OnboardingTooltips() {
   );
 }
 
-// Sub-step tooltip component for step 15
-function SubStepTooltip({ subStep, onDismiss }: { subStep: OnboardingSubStep; onDismiss: () => void }) {
-  const [position, setPosition] = useState({ top: 0, left: 0 });
-  const tooltipRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const findTarget = () => {
-      const tryFind = (attempts = 0) => {
-        const element = document.querySelector(subStep.targetSelector) as HTMLElement;
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          element.classList.add('tooltip-highlight');
-          
-          setTimeout(() => {
-            const rect = element.getBoundingClientRect();
-            const tooltip = tooltipRef.current;
-            if (!tooltip) return;
-
-            const tooltipRect = tooltip.getBoundingClientRect();
-            let top = 0;
-            let left = 0;
-
-            switch (subStep.position) {
-              case 'top':
-                top = rect.top - tooltipRect.height - 16;
-                left = rect.left + rect.width / 2 - tooltipRect.width / 2;
-                break;
-              case 'bottom':
-                top = rect.bottom + 16;
-                left = rect.left + rect.width / 2 - tooltipRect.width / 2;
-                break;
-              case 'left':
-                top = rect.top + rect.height / 2 - tooltipRect.height / 2;
-                left = rect.left - tooltipRect.width - 16;
-                break;
-              case 'right':
-                top = rect.top + rect.height / 2 - tooltipRect.height / 2;
-                left = rect.right + 16;
-                break;
-            }
-
-            const padding = 20;
-            top = Math.max(padding, Math.min(top, window.innerHeight - tooltipRect.height - padding));
-            left = Math.max(padding, Math.min(left, window.innerWidth - tooltipRect.width - padding));
-
-            setPosition({ top, left });
-          }, 100);
-        } else if (attempts < 20) {
-          setTimeout(() => tryFind(attempts + 1), 200);
-        }
-      };
-      tryFind();
-    };
-
-    const timeoutId = setTimeout(findTarget, 100);
-
-    return () => {
-      clearTimeout(timeoutId);
-      const element = document.querySelector(subStep.targetSelector) as HTMLElement;
-      if (element) {
-        element.classList.remove('tooltip-highlight');
-      }
-    };
-  }, [subStep]);
-
-  return (
-    <div
-      ref={tooltipRef}
-      className="fixed z-[101] w-80 transition-all duration-300 animate-in fade-in zoom-in-95"
-      style={{
-        top: `${position.top}px`,
-        left: `${position.left}px`,
-      }}
-      onClick={(e) => e.stopPropagation()}
-    >
-      <Card className="border-0 shadow-lg bg-white">
-        <CardHeader className="pb-3">
-          <div className="flex items-start justify-between gap-2">
-            <CardTitle className="text-base font-semibold text-gray-900">
-              {subStep.title}
-            </CardTitle>
-            <Button variant="ghost" size="sm" onClick={onDismiss}>
-              <X className="text-gray-500" />
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4 pt-0">
-          <p className="text-sm text-gray-600 leading-relaxed">
-            {subStep.description}
-          </p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
 

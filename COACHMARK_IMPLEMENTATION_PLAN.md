@@ -307,7 +307,7 @@ const onboardingSteps: OnboardingStep[] = [
         title: 'Navigator Logo',
         description: 'Go back home',
         targetSelector: '[data-tooltip="navigator-logo"]',
-        position: 'bottom'
+        position: 'right'
       }
     ]
   },
