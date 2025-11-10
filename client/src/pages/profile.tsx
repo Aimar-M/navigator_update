@@ -340,7 +340,7 @@ export default function Profile() {
             <CardContent className="p-6">
               {/* Profile Completion Bar goes here */}
               <ProfileCompletionBar formData={isEditing ? formData : profileData} />
-              <div className="flex items-start justify-between mb-6">
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-6 gap-4">
                 <div className="flex items-center space-x-4">
                   <div className="relative">
                     <Avatar className="h-20 w-20">
@@ -410,13 +410,13 @@ export default function Profile() {
                     )}
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:space-x-2">
                   {isEditing ? (
                     <>
                       <Button
                         variant="outline"
                         onClick={cancelEdit}
-                        className="flex items-center space-x-2"
+                        className="flex items-center justify-center space-x-2 w-full sm:w-auto"
                       >
                         <X className="h-4 w-4" />
                         <span>Cancel</span>
@@ -425,7 +425,7 @@ export default function Profile() {
                         type="submit"
                         form="profile-edit-form"
                         disabled={updateProfileMutation.isPending}
-                        className="flex items-center space-x-2"
+                        className="flex items-center justify-center space-x-2 w-full sm:w-auto"
                       >
                         {updateProfileMutation.isPending ? (
                           <>
@@ -444,7 +444,7 @@ export default function Profile() {
                     <Button
                       variant="default"
                       onClick={() => setIsEditing(true)}
-                      className="flex items-center space-x-2"
+                      className="flex items-center justify-center space-x-2 w-full sm:w-auto"
                     >
                       <Edit className="h-4 w-4" />
                       <span>Edit Profile</span>
@@ -637,21 +637,30 @@ export default function Profile() {
                   </div>
 
 
-                  <div className="flex justify-between pt-4">
+                  <div className="flex flex-col sm:flex-row justify-between pt-4 gap-3">
                     <Button
                       type="button"
                       variant="outline"
                       onClick={() => navigate("/account-settings")}
-                      className="flex items-center space-x-2"
+                      className="flex items-center justify-center space-x-2 w-full sm:w-auto"
                     >
                       <Shield className="h-4 w-4" />
                       <span>More</span>
                     </Button>
-                    <div className="flex space-x-3">
-                      <Button type="button" variant="outline" onClick={cancelEdit}>
+                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={cancelEdit}
+                        className="w-full sm:w-auto"
+                      >
                         Cancel
                       </Button>
-                      <Button type="submit" disabled={updateProfileMutation.isPending}>
+                      <Button 
+                        type="submit" 
+                        disabled={updateProfileMutation.isPending}
+                        className="w-full sm:w-auto"
+                      >
                         {updateProfileMutation.isPending ? (
                           <>
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
