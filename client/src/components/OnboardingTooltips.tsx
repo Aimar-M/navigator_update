@@ -32,7 +32,7 @@ const onboardingSteps: OnboardingStep[] = [
   {
     id: 'dashboard-overview',
     title: 'Welcome to your Dashboard',
-    description: 'This is your travel hub — where you\'ll see all your trips, updates, and group activity in one place.',
+    description: 'This is your travel hub — where you\'ll see all your trips in one place.',
     targetSelector: '[data-tooltip="dashboard-overview"]',
     position: 'bottom',
     route: '/dashboard'
@@ -48,7 +48,7 @@ const onboardingSteps: OnboardingStep[] = [
   {
     id: 'settlements-icon',
     title: 'Stay squared up',
-    description: 'View or manage shared expenses and get notified when your group settles up.',
+    description: 'Get notified when your group settles up.',
     targetSelector: '[data-tooltip="settlements-icon"]',
     position: 'left',
     route: '/dashboard'
@@ -129,7 +129,7 @@ const onboardingSteps: OnboardingStep[] = [
   {
     id: 'trip-details',
     title: 'Edit your trip info',
-    description: 'Update the name, description, or destination anytime.',
+    description: 'Update the name, description, dates, aiports, accomodations, or destination anytime.',
     targetSelector: '[data-tooltip="trip-details"]',
     position: 'top',
     route: '/trips/:id'
