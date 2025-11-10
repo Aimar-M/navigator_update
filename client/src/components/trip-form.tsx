@@ -68,10 +68,25 @@ const TripForm = forwardRef<TripFormRef, TripFormProps>(({ onComplete }, ref) =>
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type, checked } = e.target as HTMLInputElement;
-    setFormData((prev) => ({ 
-      ...prev, 
-      [name]: type === 'checkbox' ? checked : value 
-    }));
+    
+    // Handle date validation for start/end dates
+    if (name === 'startDate' && value) {
+      setFormData((prev) => {
+        const updated = { ...prev, startDate: value };
+        // If new start date is after end date, update end date to be 1 day after start
+        if (prev.endDate && value > prev.endDate) {
+          const start = new Date(value);
+          start.setDate(start.getDate() + 1);
+          updated.endDate = start.toISOString().split('T')[0];
+        }
+        return updated;
+      });
+    } else {
+      setFormData((prev) => ({ 
+        ...prev, 
+        [name]: type === 'checkbox' ? checked : value 
+      }));
+    }
   };
 
   const nextStep = () => {
@@ -228,7 +243,18 @@ const TripForm = forwardRef<TripFormRef, TripFormProps>(({ onComplete }, ref) =>
                   id="endDate"
                   name="endDate"
                   value={formData.endDate}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    const newEndDate = e.target.value;
+                    // Validate that end date is after start date
+                    if (formData.startDate && newEndDate && newEndDate <= formData.startDate) {
+                      // Auto-adjust to 1 day after start date instead of showing error
+                      const start = new Date(formData.startDate);
+                      start.setDate(start.getDate() + 1);
+                      setFormData(prev => ({ ...prev, endDate: start.toISOString().split('T')[0] }));
+                    } else {
+                      setFormData(prev => ({ ...prev, endDate: newEndDate }));
+                    }
+                  }}
                   min={formData.startDate || undefined}
                 />
               </div>

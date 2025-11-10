@@ -23,7 +23,7 @@ import TripImageUpload from "@/components/trip-image-upload";
 import { EnhancedMemberRemovalDialog } from "@/components/EnhancedMemberRemovalDialog";
 import TripSettingsMenu from "@/components/trip-settings-menu";
 import { useAuth } from "@/hooks/use-auth";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { invalidateAllUserQueries } from '@/lib/profile-update-utils';
 import GooglePlacesAutocomplete from "@/components/google-places-autocomplete";
@@ -100,6 +100,7 @@ export default function TripDetails() {
     userName: string;
   }>({ isOpen: false, userId: 0, userName: '' });
   const { user } = useAuth();
+  const { toast } = useToast();
   
   // Define trip interface
   interface Trip {
@@ -618,7 +619,20 @@ export default function TripDetails() {
                         <Input
                           type="date"
                           value={editForm.startDate}
-                          onChange={(e) => setEditForm(prev => ({ ...prev, startDate: e.target.value }))}
+                          onChange={(e) => {
+                            const newStartDate = e.target.value;
+                            setEditForm(prev => {
+                              // If new start date is after end date, update end date to be 1 day after start
+                              const updated = { ...prev, startDate: newStartDate };
+                              if (newStartDate && prev.endDate && newStartDate > prev.endDate) {
+                                const start = new Date(newStartDate);
+                                start.setDate(start.getDate() + 1);
+                                updated.endDate = start.toISOString().split('T')[0];
+                              }
+                              return updated;
+                            });
+                          }}
+                          max={editForm.endDate || undefined}
                         />
                       </div>
                       <div>
@@ -626,7 +640,22 @@ export default function TripDetails() {
                         <Input
                           type="date"
                           value={editForm.endDate}
-                          onChange={(e) => setEditForm(prev => ({ ...prev, endDate: e.target.value }))}
+                          onChange={(e) => {
+                            const newEndDate = e.target.value;
+                            setEditForm(prev => {
+                              // Validate that end date is after start date
+                              if (prev.startDate && newEndDate && newEndDate <= prev.startDate) {
+                                toast({
+                                  title: "Invalid date",
+                                  description: "End date must be after start date",
+                                  variant: "destructive"
+                                });
+                                return prev; // Don't update if invalid
+                              }
+                              return { ...prev, endDate: newEndDate };
+                            });
+                          }}
+                          min={editForm.startDate || undefined}
                         />
                       </div>
                     </div>
