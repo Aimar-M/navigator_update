@@ -278,6 +278,89 @@ export default function OnboardingTooltips() {
     }
   }, [currentStep, currentStepData, isVisible]);
 
+  // Auto-advance when trip is created (step 10 → step 11)
+  useEffect(() => {
+    // Only watch during step 10 (downpayment step) when user has clicked Next
+    if (!isVisible || currentStep !== 9 || currentStepData?.id !== 'downpayment') {
+      return;
+    }
+
+    // Check if trip was created and we've navigated to trip details page
+    const checkTripCreated = () => {
+      const tripId = localStorage.getItem('onboardingTripId');
+      const currentPath = window.location.pathname;
+      
+      // Trip is created if:
+      // 1. onboardingTripId exists in localStorage (set when trip is created)
+      // 2. We're on the trip details page (/trips/:id)
+      // 3. The trip details page has loaded (check for key elements)
+      if (tripId && currentPath.includes(`/trips/${tripId}`)) {
+        // Wait for page content to be ready
+        const hasContent = document.querySelector('[data-tooltip="upload-photo"]') !== null ||
+                          document.querySelector('[data-tooltip="trip-details"]') !== null;
+        
+        if (hasContent) {
+          // Trip is created and page is ready - auto-advance to step 11
+          nextStep();
+        }
+      }
+    };
+
+    // Check immediately
+    checkTripCreated();
+    
+    // Also listen for route changes (in case navigation happens)
+    const interval = setInterval(checkTripCreated, 200);
+    
+    // Cleanup after 10 seconds (shouldn't take that long)
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+    }, 10000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [currentStep, isVisible, currentStepData, nextStep]);
+
+  // Auto-advance when form step changes (step 8 → step 9)
+  useEffect(() => {
+    // Only watch during step 8 (dates step) when user has clicked Next
+    if (!isVisible || currentStep !== 7 || currentStepData?.id !== 'dates') {
+      return;
+    }
+
+    // Check if TripForm has moved to step 2
+    const checkFormStep = () => {
+      // Look for indicators that form is on step 2 (details step)
+      // The details field should be visible when form is on step 2
+      const detailsField = document.querySelector('[data-tooltip="details"]');
+      const isOnFormStep2 = detailsField !== null && 
+                            (detailsField as HTMLElement).offsetParent !== null;
+      
+      if (isOnFormStep2) {
+        // Form has moved to step 2 - auto-advance onboarding to step 9
+        nextStep();
+      }
+    };
+
+    // Check immediately
+    checkFormStep();
+    
+    // Poll for form step change (check every 200ms)
+    const interval = setInterval(checkFormStep, 200);
+    
+    // Cleanup after 5 seconds (form step change should happen quickly)
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+    }, 5000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [currentStep, isVisible, currentStepData, nextStep]);
+
   // Find and highlight target element
   useEffect(() => {
     // Skip if no target selector (e.g., welcome step or completion step with center position)
@@ -584,9 +667,18 @@ export default function OnboardingTooltips() {
               tripFormSubmitButton.click();
             }
           }, 500);
+          // Don't call nextStep() here - let the auto-advance effect handle it
+          // when trip is actually created and we navigate to trip details page
+          return;
         }
         
-        // Wait a bit for form to update, then move to next onboarding step
+        // For step 8 (dates), don't call nextStep() here either
+        // Let the auto-advance effect handle it when form moves to step 2
+        if (currentStepData?.id === 'dates') {
+          return;
+        }
+        
+        // For other steps with triggerFormAction, wait a bit then move to next step
         setTimeout(() => {
           nextStep();
         }, 300);
