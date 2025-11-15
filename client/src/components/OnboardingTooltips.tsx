@@ -199,6 +199,8 @@ export default function OnboardingTooltips() {
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
   const tooltipRef = useRef<HTMLDivElement>(null);
   const highlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
   const currentStepData = onboardingSteps[currentStep];
   const isCompletionStep = currentStepData?.id === 'completion';
@@ -244,16 +246,29 @@ export default function OnboardingTooltips() {
     if (currentStep >= 10 && currentStepData?.route?.includes(':id')) {
       setIsOnTripOverviewPage(false); // Reset to false when step changes
       
-      const checkTripOverview = () => {
+      const checkTripOverview = (attempts = 0) => {
         const tripId = localStorage.getItem('onboardingTripId');
         const currentPath = window.location.pathname;
         const isOnOverview = tripId !== null && currentPath.includes(`/trips/${tripId}`);
         
         if (isOnOverview) {
-          setIsOnTripOverviewPage(true);
+          // Wait for page content to be ready (not just route match)
+          // Check if main content elements exist
+          const hasContent = document.querySelector('[data-tooltip]') !== null || 
+                           document.body.children.length > 1;
+          
+          if (hasContent || attempts > 20) {
+            // Content is ready or we've waited long enough (4 seconds)
+            setIsOnTripOverviewPage(true);
+          } else {
+            // Keep checking for content
+            setTimeout(() => checkTripOverview(attempts + 1), 200);
+          }
         } else {
-          // Keep checking every 200ms
-          setTimeout(checkTripOverview, 200);
+          // Keep checking for route match (up to 10 seconds for slow connections)
+          if (attempts < 50) {
+            setTimeout(() => checkTripOverview(attempts + 1), 200);
+          }
         }
       };
       
@@ -306,9 +321,40 @@ export default function OnboardingTooltips() {
       const tryFind = (attempts = 0) => {
         const element = document.querySelector(currentStepData.targetSelector) as HTMLElement;
         if (element) {
+          // Check if element is actually visible and has dimensions (not just in DOM)
+          const rect = element.getBoundingClientRect();
+          const isVisible = rect.width > 0 && rect.height > 0 && 
+                           rect.top < window.innerHeight && 
+                           rect.bottom > 0;
+          
+          if (!isVisible && attempts < 50) {
+            // Element exists but not visible yet - wait longer for slow connections
+            setTimeout(() => tryFind(attempts + 1), 200);
+            return;
+          }
+
           element.scrollIntoView({ behavior: 'smooth', block: 'center' });
           setTargetElement(element);
           element.classList.add('tooltip-highlight');
+          
+          // Set up ResizeObserver to handle layout shifts (e.g., when images load on slow connections)
+          if ('ResizeObserver' in window) {
+            // Clean up any existing observer
+            if (resizeObserverRef.current) {
+              resizeObserverRef.current.disconnect();
+            }
+            
+            resizeObserverRef.current = new ResizeObserver(() => {
+              // Debounce resize observer updates
+              if (scrollTimeoutRef.current) {
+                clearTimeout(scrollTimeoutRef.current);
+              }
+              scrollTimeoutRef.current = setTimeout(() => {
+                updatePosition(element);
+              }, 150);
+            });
+            resizeObserverRef.current.observe(element);
+          }
           
           // Auto-remove highlight after 15 seconds
           if (highlightTimeoutRef.current) {
@@ -318,9 +364,47 @@ export default function OnboardingTooltips() {
             element.classList.remove('tooltip-highlight');
           }, 15000);
 
-          // Small delay to ensure element is scrolled into view
-          setTimeout(() => updatePosition(element), 100);
-        } else if (attempts < 20) {
+          // Wait for images to load before positioning (helps with layout shifts)
+          const waitForImages = () => {
+            const images = element.querySelectorAll('img');
+            let loadedCount = 0;
+            const totalImages = images.length;
+            
+            if (totalImages === 0) {
+              // No images, position immediately
+              setTimeout(() => updatePosition(element), 300);
+              return;
+            }
+
+            const checkComplete = () => {
+              loadedCount++;
+              if (loadedCount === totalImages) {
+                // All images loaded, wait a bit more for layout to settle
+                setTimeout(() => updatePosition(element), 300);
+              }
+            };
+
+            images.forEach((img) => {
+              if (img.complete) {
+                checkComplete();
+              } else {
+                img.addEventListener('load', checkComplete, { once: true });
+                img.addEventListener('error', checkComplete, { once: true });
+              }
+            });
+
+            // Fallback: if images take too long, position anyway after 2 seconds
+            setTimeout(() => {
+              if (loadedCount < totalImages) {
+                setTimeout(() => updatePosition(element), 300);
+              }
+            }, 2000);
+          };
+
+          // Small delay to ensure element is scrolled into view, then wait for images
+          setTimeout(waitForImages, 100);
+        } else if (attempts < 50) {
+          // Increased from 20 to 50 attempts (10 seconds max instead of 4)
           setTimeout(() => tryFind(attempts + 1), 200);
         }
       };
@@ -379,6 +463,18 @@ export default function OnboardingTooltips() {
       findTarget();
     }, 1000);
 
+    // Throttle function to limit how often position updates
+    const throttledUpdatePosition = () => {
+      if (targetElement) {
+        if (scrollTimeoutRef.current) {
+          clearTimeout(scrollTimeoutRef.current);
+        }
+        scrollTimeoutRef.current = setTimeout(() => {
+          updatePosition(targetElement);
+        }, 200); // Update at most every 200ms for smoother movement
+      }
+    };
+
     const handleResize = () => {
       if (targetElement) {
         updatePosition(targetElement);
@@ -386,18 +482,25 @@ export default function OnboardingTooltips() {
     };
 
     window.addEventListener('resize', handleResize);
-    window.addEventListener('scroll', handleResize, true);
+    window.addEventListener('scroll', throttledUpdatePosition, true);
 
     return () => {
       clearTimeout(timeoutId);
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
       if (highlightTimeoutRef.current) {
         clearTimeout(highlightTimeoutRef.current);
+      }
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+        resizeObserverRef.current = null;
       }
       if (targetElement) {
         targetElement.classList.remove('tooltip-highlight');
       }
       window.removeEventListener('resize', handleResize);
-      window.removeEventListener('scroll', handleResize, true);
+      window.removeEventListener('scroll', throttledUpdatePosition, true);
     };
   }, [currentStep, isVisible, currentStepData, hasNoTarget, targetElement, isOnTripOverviewPage, effectivePosition, isMobile]);
   
