@@ -9,6 +9,7 @@ import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
 import { preWarmEmailConnection } from "./email";
 import path from "path";
+import fs from "fs";
 import { safeErrorLog } from "./error-logger";
 
 config();
@@ -171,6 +172,41 @@ Sitemap: https://navigatortrips.com/sitemap.xml
     app.get('/api/og', async (req: Request, res: Response) => {
       const { generateOGImage } = await import('./og-image.js');
       await generateOGImage(req, res);
+    });
+
+    // Serve OG image with proper headers to avoid 206 Partial Content errors
+    // Facebook/WhatsApp crawlers don't handle Range requests well
+    app.get('/og-image.png', (req: Request, res: Response) => {
+      // Try production path first (dist/public), then fallback to client/public (dev)
+      const distPath = path.resolve(__dirname, '../dist/public/og-image.png');
+      const devPath = path.resolve(__dirname, '../client/public/og-image.png');
+      const ogImagePath = fs.existsSync(distPath) ? distPath : devPath;
+      
+      if (!fs.existsSync(ogImagePath)) {
+        console.error('OG image not found at:', ogImagePath);
+        return res.status(404).json({ error: 'OG image not found' });
+      }
+      
+      // Disable range requests for OG images (prevents 206 errors)
+      // This ensures Facebook/WhatsApp crawlers get a full 200 response
+      delete req.headers.range;
+      
+      // Set proper headers for social media crawlers
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      res.setHeader('Accept-Ranges', 'none'); // Explicitly disable range requests
+      res.setHeader('Content-Length', fs.statSync(ogImagePath).size);
+      
+      // Read and send file directly to avoid Express static middleware's range handling
+      const fileStream = fs.createReadStream(ogImagePath);
+      fileStream.pipe(res);
+      
+      fileStream.on('error', (err) => {
+        console.error('Error serving OG image:', err);
+        if (!res.headersSent) {
+          res.status(500).json({ error: 'Error serving OG image' });
+        }
+      });
     });
 
     console.log('🔧 Setting up routes...');
