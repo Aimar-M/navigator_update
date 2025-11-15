@@ -2,6 +2,7 @@ import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { storage } from './db-storage';
 import bcrypt from 'bcrypt';
+import { safeErrorLog } from './error-logger';
 
 // Debug: Log environment variables
 console.log('🔍 Google OAuth Configuration:', {
@@ -77,7 +78,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.
             return done(new Error('Failed to update user with Google OAuth data'));
           }
         } catch (updateError) {
-          console.error('❌ Error updating user with Google OAuth data:', updateError);
+          safeErrorLog('❌ Error updating user with Google OAuth data', updateError);
           return done(updateError as Error);
         }
       }
@@ -124,11 +125,11 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.
       });
       return done(null, newUser);
     } catch (createError) {
-      console.error('❌ Error creating new Google OAuth user:', createError);
+      safeErrorLog('❌ Error creating new Google OAuth user', createError);
       return done(createError as Error);
     }
   } catch (error) {
-    console.error('❌ Google OAuth error:', error);
+    safeErrorLog('❌ Google OAuth error', error);
     return done(error as Error);
   }
 }));
@@ -145,9 +146,27 @@ passport.serializeUser((user: any, done) => {
 passport.deserializeUser(async (id: number, done) => {
   try {
     const user = await storage.getUserById(id);
+    
+    // If user doesn't exist (deleted, invalid session, etc.), deserialize as null
+    // This allows the request to continue but user will be unauthenticated
+    if (!user) {
+      safeErrorLog(`Failed to deserialize user: user not found for id ${id}`, null);
+      return done(null, false); // Passport convention: null = no error, false = no user
+    }
+    
+    // Check if account is deleted - don't allow session auth for deleted accounts
+    if (user.deletedAt) {
+      safeErrorLog(`Failed to deserialize user: account deleted for id ${id}`, null);
+      return done(null, false);
+    }
+    
     done(null, user);
   } catch (error) {
-    done(error);
+    // Log error safely without dumping connection objects
+    safeErrorLog(`Failed to deserialize user for id ${id}`, error);
+    // Return null user instead of error to prevent session corruption
+    // This allows the request to continue, user will just be unauthenticated
+    done(null, false);
   }
 });
 

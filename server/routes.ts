@@ -7,6 +7,7 @@ import { pool } from "./db";
 import { storage } from "./db-storage";
 import { db } from "./db";
 import { expenseSplits } from "@shared/schema";
+import { safeErrorLog } from "./error-logger";
 import { 
   insertUserSchema, insertTripSchema, insertTripMemberSchema, 
   insertActivitySchema, insertActivityRsvpSchema, insertMessageSchema,
@@ -120,7 +121,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ws.tripIds = tripIds;
         }
       } catch (err) {
-        console.error('WebSocket message error:', err);
+        safeErrorLog('WebSocket message error', err);
       }
     });
   });
@@ -218,7 +219,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
     } catch (error) {
-      console.error('❌ Contact form error:', error);
+      safeErrorLog('❌ Contact form error', error);
       res.status(500).json({ 
         message: 'Failed to send message. Please try again later.' 
       });
@@ -255,7 +256,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(result);
     } catch (error: any) {
-      console.error('❌ Places autocomplete error:', error);
+      safeErrorLog('❌ Places autocomplete error', error);
       res.status(500).json({ message: 'Failed to get place autocomplete', error: error.message });
     }
   });
@@ -273,7 +274,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(result);
     } catch (error: any) {
-      console.error('❌ Place details error:', error);
+      safeErrorLog('❌ Place details error', error);
       res.status(500).json({ message: 'Failed to get place details', error: error.message });
     }
   });
@@ -295,7 +296,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ valid: false, message: 'Username not found' });
       }
     } catch (error) {
-      console.error('Error validating username:', error);
+      safeErrorLog('Error validating username', error);
       return res.status(500).json({ message: 'Server error' });
     }
   });
@@ -326,7 +327,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: isMember ? 'User is already a member of this trip' : 'User is not a member of this trip'
       });
     } catch (error) {
-      console.error('Error checking trip membership:', error);
+      safeErrorLog('Error checking trip membership', error);
       return res.status(500).json({ message: 'Server error' });
     }
   });
@@ -568,45 +569,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         token
       });
     } catch (error) {
-      console.error('Login error:', error);
+      safeErrorLog('Login error', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
   
   router.post('/auth/logout', (req: Request, res: Response) => {
+    // Always clear the cookie, even if session destruction fails
+    const isProduction = process.env.NODE_ENV === 'production';
+    const clearCookieOptions = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'none' as const,
+      domain: isProduction ? '.navigatortrips.com' : undefined,
+      path: '/'
+    };
+    
     if (req.session) {
       const sessionId = req.sessionID;
       req.session.destroy((err: Error | null) => {
-        if (err) {
-          console.error('Session destroy error:', err);
-          return res.status(500).json({ message: 'Could not log out' });
-        }
+        // Always clear cookie, even if session destruction had an error
+        res.clearCookie('connect.sid', clearCookieOptions);
         
-        // Clear the session cookie from the browser
-        // Default cookie name for express-session is 'connect.sid'
-        // Match the cookie settings from server/index.ts
-        const isProduction = process.env.NODE_ENV === 'production';
-        res.clearCookie('connect.sid', {
-          httpOnly: true,
-          secure: isProduction,
-          sameSite: 'none',
-          domain: isProduction ? '.navigatortrips.com' : undefined,
-          path: '/'
-        });
+        if (err) {
+          safeErrorLog('Session destroy error during logout', err);
+          // Still return success since we cleared the cookie
+          // Client will redirect anyway, and cookie is cleared
+          return res.json({ message: 'Logged out (session cleanup had issues, but cookie cleared)' });
+        }
         
         console.log('Session destroyed and cookie cleared for session:', sessionId);
         res.json({ message: 'Logged out successfully' });
       });
     } else {
       // Even if no session exists, clear any potential cookie
-      const isProduction = process.env.NODE_ENV === 'production';
-      res.clearCookie('connect.sid', {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: 'none',
-        domain: isProduction ? '.navigatortrips.com' : undefined,
-        path: '/'
-      });
+      res.clearCookie('connect.sid', clearCookieOptions);
       res.json({ message: 'No active session' });
     }
   });
@@ -698,7 +695,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(userWithoutPassword);
     } catch (error) {
-      console.error('❌ Auth check error:', error);
+      safeErrorLog('❌ Auth check error', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -706,6 +703,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware to check if user is authenticated
   const isAuthenticated = async (req: Request, res: Response, next: Function) => {
     try {
+      // First, check if Passport already set req.user (from session deserialization)
+      if (req.user) {
+        // User was successfully deserialized by Passport
+        // Check if account is deleted
+        if (req.user.deletedAt) {
+          return res.status(403).json({ 
+            message: 'This account has been deleted. Please recover it to continue.',
+            accountDeleted: true,
+            requiresRecovery: true
+          });
+        }
+        // Check if email is confirmed
+        if (!req.user.emailConfirmed) {
+          return res.status(403).json({ 
+            message: 'Please confirm your email before accessing this resource.',
+            requiresEmailConfirmation: true,
+            email: req.user.email
+          });
+        }
+        return next();
+      }
+      
       // Check for token (bearer) authentication
       const authHeader = req.headers.authorization;
       
@@ -774,37 +793,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Fall back to checking the session
+      // Fall back to checking the session manually (if Passport deserialization failed)
+      // This is a fallback for cases where deserialization failed but session still exists
       if (req.session && req.session.userId) {
-        const user = await storage.getUser(req.session.userId);
-        if (user) {
-          // Check if account is deleted
-          if (user.deletedAt) {
-            return res.status(403).json({ 
-              message: 'This account has been deleted. Please recover it to continue.',
-              accountDeleted: true,
-              requiresRecovery: true
-            });
+        try {
+          const user = await storage.getUser(req.session.userId);
+          if (user) {
+            // Check if account is deleted
+            if (user.deletedAt) {
+              return res.status(403).json({ 
+                message: 'This account has been deleted. Please recover it to continue.',
+                accountDeleted: true,
+                requiresRecovery: true
+              });
+            }
+            // Check if email is confirmed
+            if (!user.emailConfirmed) {
+              return res.status(403).json({ 
+                message: 'Please confirm your email before accessing this resource.',
+                requiresEmailConfirmation: true,
+                email: user.email
+              });
+            }
+            req.user = user;
+            return next();
           }
-          // Check if email is confirmed
-          if (!user.emailConfirmed) {
-            return res.status(403).json({ 
-              message: 'Please confirm your email before accessing this resource.',
-              requiresEmailConfirmation: true,
-              email: user.email
-            });
-          }
-          req.user = user;
-          return next();
+        } catch (sessionError) {
+          // If fetching user from session fails, log it but continue to auth failure
+          safeErrorLog('Failed to fetch user from session in isAuthenticated middleware', sessionError);
         }
       }
       
       // Debug logging for authentication issues
-      console.log('Authentication failed - Session:', req.session?.userId, 'Auth header:', authHeader);
+      console.log('Authentication failed - req.user:', req.user ? 'set' : 'not set', 'Session userId:', req.session?.userId, 'Auth header:', authHeader ? 'present' : 'missing');
       
       res.status(401).json({ message: 'Authentication required' });
     } catch (error) {
-      console.error('Auth error:', error);
+      safeErrorLog('Auth error', error);
       res.status(401).json({ message: 'Authentication error' });
     }
   };
@@ -870,7 +895,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const deletionInProgress = await (storage as any).getDeletionInProgress(userId);
       res.json({ deletionInProgress });
     } catch (error) {
-      console.error('Error getting deletion status:', error);
+      safeErrorLog('Error getting deletion status', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -895,7 +920,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(500).json({ message: 'Failed to update deletion status' });
       }
     } catch (error) {
-      console.error('Error updating deletion status:', error);
+      safeErrorLog('Error updating deletion status', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -974,7 +999,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: 'Failed to delete user' });
       }
     } catch (error) {
-      console.error('❌ Delete account - Error:', error);
+      safeErrorLog('❌ Delete account - Error', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -1092,7 +1117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(tripsWithMemberCounts);
     } catch (error) {
-      console.error("Error fetching trips with member counts:", error);
+      safeErrorLog("Error fetching trips with member counts", error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -1181,7 +1206,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(pendingMemberships.filter(Boolean));
     } catch (error) {
-      console.error('Error fetching pending memberships:', error);
+      safeErrorLog('Error fetching pending memberships', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -1270,7 +1295,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           res.json(updatedTrip);
           return;
         } catch (error) {
-          console.error("Error updating user trip settings:", error);
+          safeErrorLog("Error updating user trip settings", error);
           return res.status(500).json({ message: 'Failed to update trip settings' });
         }
       }
@@ -1461,7 +1486,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(updatedTrip);
     } catch (error: any) {
-      console.error('Error in PUT /api/trips/:id:', error);
+      safeErrorLog('Error in PUT /api/trips/:id', error);
       res.status(500).json({ message: error?.message || 'Server error', error });
     }
   });
@@ -1498,7 +1523,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedTrip = await storage.updateTrip(tripId, { adminOnlyItinerary });
       res.json(updatedTrip);
     } catch (error) {
-      console.error('Error updating admin settings:', error);
+      safeErrorLog('Error updating admin settings', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -1555,7 +1580,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteTrip(tripId);
       res.json({ message: 'Trip deleted successfully' });
     } catch (error) {
-      console.error('Error deleting trip:', error);
+      safeErrorLog('Error deleting trip', error);
       res.status(500).json({ 
         message: 'Server error',
         error: error instanceof Error ? error.message : 'Unknown error'
@@ -1705,7 +1730,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(eligibility);
       
     } catch (error) {
-      console.error('Error checking removal eligibility:', error);
+      safeErrorLog('Error checking removal eligibility', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -1839,7 +1864,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
     } catch (error) {
-      console.error('Error removing member:', error);
+      safeErrorLog('Error removing member', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -1949,7 +1974,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
     } catch (error) {
-      console.error('Error leaving trip:', error);
+      safeErrorLog('Error leaving trip', error);
       const errorMessage = error instanceof Error ? error.message : 'Server error';
       res.status(500).json({ message: errorMessage });
     }
@@ -2014,7 +2039,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(companions);
     } catch (error) {
-      console.error('Error fetching past companions:', error);
+      safeErrorLog('Error fetching past companions', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -2125,7 +2150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(updatedMember);
     } catch (error) {
-      console.error('Error updating trip member RSVP status:', error);
+      safeErrorLog('Error updating trip member RSVP status', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -2192,7 +2217,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ message: 'Payment submitted successfully', member: updatedMember });
     } catch (error) {
-      console.error('Error submitting payment:', error);
+      safeErrorLog('Error submitting payment', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -2232,7 +2257,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ message: 'Payment confirmed successfully' });
     } catch (error) {
-      console.error('Error confirming payment:', error);
+      safeErrorLog('Error confirming payment', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -2271,7 +2296,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ message: 'Payment rejected successfully' });
     } catch (error) {
-      console.error('Error rejecting payment:', error);
+      safeErrorLog('Error rejecting payment', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -2376,7 +2401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ message: 'Rejection notification sent successfully' });
     } catch (error) {
-      console.error('Error sending rejection notification:', error);
+      safeErrorLog('Error sending rejection notification', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -2424,7 +2449,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ message: 'User can now rejoin the trip' });
     } catch (error) {
-      console.error('Error allowing rejoin:', error);
+      safeErrorLog('Error allowing rejoin', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -2524,7 +2549,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(updatedMember);
     } catch (error) {
-      console.error('Error updating member admin status:', error);
+      safeErrorLog('Error updating member admin status', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -2559,7 +2584,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(previewActivities);
     } catch (error) {
-      console.error('Error fetching activity preview:', error);
+      safeErrorLog('Error fetching activity preview', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -2631,7 +2656,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         res.status(201).json(createdActivity);
       } catch (error) {
-        console.error('Error creating activity:', error);
+        safeErrorLog('Error creating activity', error);
         if (error instanceof z.ZodError) {
           return res.status(400).json({ 
             message: 'Invalid activity data', 
@@ -2907,7 +2932,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         activity: updatedActivity 
       });
     } catch (error) {
-      console.error('Error transferring activity ownership:', error);
+      safeErrorLog('Error transferring activity ownership', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -3087,7 +3112,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
         } catch (expenseError) {
-          console.error('Error handling prepaid activity expense:', expenseError);
+          safeErrorLog('Error handling prepaid activity expense', expenseError);
           // Don't fail the RSVP if expense handling fails
         }
       }
@@ -3170,7 +3195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
         } catch (expenseError) {
-          console.error('Error handling prepaid_per_person activity expense:', expenseError);
+          safeErrorLog('Error handling prepaid_per_person activity expense', expenseError);
           // Don't fail the RSVP if expense handling fails
         }
       }

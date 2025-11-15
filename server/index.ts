@@ -9,6 +9,7 @@ import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
 import { preWarmEmailConnection } from "./email";
 import path from "path";
+import { safeErrorLog } from "./error-logger";
 
 config();
 
@@ -179,7 +180,7 @@ Sitemap: https://navigatortrips.com/sitemap.xml
         console.log(`✅ Token cleanup completed. Cleaned ${cleanedCount} expired tokens.`);
         return cleanedCount;
       } catch (error) {
-        console.error('❌ Error during token cleanup:', error);
+        safeErrorLog('❌ Error during token cleanup', error);
         return 0;
       }
     };
@@ -192,7 +193,7 @@ Sitemap: https://navigatortrips.com/sitemap.xml
         console.log(`✅ Email confirmation token cleanup completed. Cleaned ${cleanedCount} expired tokens.`);
         return cleanedCount;
       } catch (error) {
-        console.error('❌ Error during email confirmation token cleanup:', error);
+        safeErrorLog('❌ Error during email confirmation token cleanup', error);
         return 0;
       }
     };
@@ -208,7 +209,7 @@ Sitemap: https://navigatortrips.com/sitemap.xml
           } catch {}
         }
       } catch (error) {
-        console.error('❌ Error during auto-archive task:', error);
+        safeErrorLog('❌ Error during auto-archive task', error);
       }
     };
 
@@ -219,14 +220,14 @@ Sitemap: https://navigatortrips.com/sitemap.xml
         await cleanupExpiredEmailConfirmationTokens();
         await autoArchivePastTrips();
       } catch (error) {
-        console.error('❌ Error during token cleanup:', error);
+        safeErrorLog('❌ Error during token cleanup', error);
       }
     }, 60 * 60 * 1000); // Every hour
 
     // Run cleanup once on startup
-    cleanupExpiredTokens().catch(console.error);
-    cleanupExpiredEmailConfirmationTokens().catch(console.error);
-    autoArchivePastTrips().catch(console.error);
+    cleanupExpiredTokens().catch((error) => safeErrorLog('Startup token cleanup error', error));
+    cleanupExpiredEmailConfirmationTokens().catch((error) => safeErrorLog('Startup email token cleanup error', error));
+    autoArchivePastTrips().catch((error) => safeErrorLog('Startup auto-archive error', error));
 
     // 404 handler for unmatched routes
     app.use('*', (req: Request, res: Response) => {
@@ -242,8 +243,9 @@ Sitemap: https://navigatortrips.com/sitemap.xml
       const status = err.status || err.statusCode || 500;
       const message = err.message || "Internal Server Error";
 
+      // Log error safely without throwing (which would cause unhandled rejection)
+      safeErrorLog('Unhandled error in request handler', err);
       res.status(status).json({ message });
-      throw err;
     });
 
     // Setup Vite for development, static files for production
@@ -269,7 +271,7 @@ Sitemap: https://navigatortrips.com/sitemap.xml
       console.log('📧 Email ready for immediate sending');
     });
   } catch (error) {
-    console.error('Error starting server:', error);
+    safeErrorLog('Error starting server', error);
     process.exit(1);
   }
 })();

@@ -11,6 +11,7 @@ import {
   polls, pollVotes, invitationLinks, userTripSettings, flightInfo, notifications
 } from "@shared/schema";
 import { eq, and, or, desc, sql, ilike, inArray, isNotNull, lt, ne, asc } from "drizzle-orm";
+import { safeErrorLog } from "./error-logger";
 export class DatabaseStorage {
   /**
    * Check if a user has been deleted
@@ -93,7 +94,7 @@ export class DatabaseStorage {
       console.log(`🧹 Cleaned up expired password reset tokens`);
       return 1; // Drizzle doesn't return count for updates, so we assume 1
     } catch (error) {
-      console.error('❌ Error cleaning up expired password reset tokens:', error);
+      safeErrorLog('❌ Error cleaning up expired password reset tokens', error);
       return 0;
     }
   }
@@ -114,7 +115,7 @@ export class DatabaseStorage {
       console.log(`🧹 Cleaned up expired email confirmation tokens`);
       return 1; // Drizzle doesn't return count for updates, so we assume 1
     } catch (error) {
-      console.error('❌ Error cleaning up expired email confirmation tokens:', error);
+      safeErrorLog('❌ Error cleaning up expired email confirmation tokens', error);
       return 0;
     }
   }
@@ -204,7 +205,7 @@ export class DatabaseStorage {
       
       return result.rowCount > 0;
     } catch (error) {
-      console.error('❌ anonymizeUser - Error:', error);
+      safeErrorLog('❌ anonymizeUser - Error', error);
       return false;
     }
   }
@@ -220,7 +221,7 @@ export class DatabaseStorage {
         .where(eq(users.id, userId));
       return true;
     } catch (error) {
-      console.error('Error setting deletion in progress:', error);
+      safeErrorLog('Error setting deletion in progress', error);
       return false;
     }
   }
@@ -233,7 +234,7 @@ export class DatabaseStorage {
       const user = await this.getUser(userId);
       return user?.deletionInProgress || false;
     } catch (error) {
-      console.error('Error getting deletion in progress:', error);
+      safeErrorLog('Error getting deletion in progress', error);
       return false;
     }
   }
@@ -289,7 +290,7 @@ export class DatabaseStorage {
       // Anonymize the user
       return await this.anonymizeUser(userId);
     } catch (error) {
-      console.error('❌ anonymizeUserAccount - Error:', error);
+      safeErrorLog('❌ anonymizeUserAccount - Error', error);
       return false;
     }
   }
@@ -329,7 +330,7 @@ export class DatabaseStorage {
 
       return true;
     } catch (error) {
-      console.error('❌ restoreUserOnRecovery - Error:', error);
+      safeErrorLog('❌ restoreUserOnRecovery - Error', error);
       return false;
     }
   }
@@ -1437,7 +1438,7 @@ export class DatabaseStorage {
 
       return balances;
     } catch (error) {
-      console.error('Error in calculateExpenseBalances:', error);
+      safeErrorLog('Error in calculateExpenseBalances', error);
       return [];
     }
   }
@@ -1621,7 +1622,7 @@ export class DatabaseStorage {
         return newSettings;
       }
     } catch (error) {
-      console.error('Error in createOrUpdateUserTripSettings:', error);
+      safeErrorLog('Error in createOrUpdateUserTripSettings', error);
       throw error;
     }
   }
@@ -1844,7 +1845,7 @@ export class DatabaseStorage {
 
       return tripsWithBalances;
     } catch (error) {
-      console.error('Error getting trips with unsettled balances:', error);
+      safeErrorLog('Error getting trips with unsettled balances', error);
       return [];
     }
   }
