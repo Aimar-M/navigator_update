@@ -201,7 +201,7 @@ export default function OnboardingTooltips() {
   const [userWantsTooltipBack, setUserWantsTooltipBack] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const highlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const scrollTimeoutRef = useRef<number | NodeJS.Timeout | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
   const currentStepData = onboardingSteps[currentStep];
@@ -539,8 +539,8 @@ export default function OnboardingTooltips() {
                 : window.innerWidth / 2 - tooltipRect.width / 2
             });
           } else {
-            // Retry if tooltip hasn't rendered yet
-            setTimeout(() => {
+            // Retry immediately on next frame
+            requestAnimationFrame(() => {
               const retryRect = tooltip.getBoundingClientRect();
               if (retryRect.width > 0 && retryRect.height > 0) {
                 setTooltipPosition({
@@ -552,7 +552,7 @@ export default function OnboardingTooltips() {
                     : window.innerWidth / 2 - retryRect.width / 2
                 });
               }
-            }, 100);
+            });
           }
         }
       }
@@ -569,13 +569,20 @@ export default function OnboardingTooltips() {
                            rect.top < window.innerHeight && 
                            rect.bottom > 0;
           
-          if (!isVisible && attempts < 50) {
-            // Element exists but not visible yet - wait longer for slow connections
-            setTimeout(() => tryFind(attempts + 1), 200);
+          if (!isVisible && attempts < 3) {
+            // Element exists but not visible yet - fast retries (3 attempts × 50ms = 150ms max)
+            setTimeout(() => tryFind(attempts + 1), 50);
             return;
           }
 
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Only scroll if element is not in viewport - use instant scroll for speed
+          const isInViewport = rect.top >= 0 && rect.left >= 0 && 
+                               rect.bottom <= window.innerHeight && 
+                               rect.right <= window.innerWidth;
+          if (!isInViewport) {
+            element.scrollIntoView({ behavior: 'instant', block: 'center' });
+          }
+          
           setTargetElement(element);
           element.classList.add('tooltip-highlight');
           
@@ -587,13 +594,13 @@ export default function OnboardingTooltips() {
             }
             
             resizeObserverRef.current = new ResizeObserver(() => {
-              // Debounce resize observer updates
+              // Update position immediately on next frame for snappy response
               if (scrollTimeoutRef.current) {
-                clearTimeout(scrollTimeoutRef.current);
+                cancelAnimationFrame(scrollTimeoutRef.current as any);
               }
-              scrollTimeoutRef.current = setTimeout(() => {
+              scrollTimeoutRef.current = requestAnimationFrame(() => {
                 updatePosition(element);
-              }, 150);
+              }) as any;
             });
             resizeObserverRef.current.observe(element);
           }
@@ -606,42 +613,11 @@ export default function OnboardingTooltips() {
             element.classList.remove('tooltip-highlight');
           }, 15000);
 
-          // Check if element has images - only wait if images exist and aren't loaded
-          const images = element.querySelectorAll('img');
-          const hasImages = images.length > 0;
-          const allImagesLoaded = Array.from(images).every(img => (img as HTMLImageElement).complete);
-          
-          if (!hasImages || allImagesLoaded) {
-            // No images or all loaded - position immediately
-            setTimeout(() => updatePosition(element), 50);
-          } else {
-            // Has images that aren't loaded - wait max 200ms then position anyway
-            let loadedCount = 0;
-            const totalImages = images.length;
-            
-            const checkComplete = () => {
-              loadedCount++;
-              if (loadedCount === totalImages) {
-                setTimeout(() => updatePosition(element), 50);
-              }
-            };
-
-            images.forEach((img) => {
-              if ((img as HTMLImageElement).complete) {
-                checkComplete();
-              } else {
-                img.addEventListener('load', checkComplete, { once: true });
-                img.addEventListener('error', checkComplete, { once: true });
-              }
-            });
-
-            // Fallback: position after 200ms max (don't wait longer)
-            setTimeout(() => {
-              if (loadedCount < totalImages) {
-                setTimeout(() => updatePosition(element), 50);
-              }
-            }, 200);
-          }
+          // Position immediately - don't wait for images (they'll cause layout shifts later via ResizeObserver)
+          // Use requestAnimationFrame for immediate positioning in next frame
+          requestAnimationFrame(() => {
+            updatePosition(element);
+          });
         } else if (attempts < 5) {
           // All steps: fast retries (5 attempts × 100ms = 500ms max) - target < 1 second total
           setTimeout(() => tryFind(attempts + 1), 100);
@@ -657,7 +633,8 @@ export default function OnboardingTooltips() {
 
       const tooltipRect = tooltip.getBoundingClientRect();
       if (tooltipRect.width === 0 || tooltipRect.height === 0) {
-        setTimeout(() => updatePosition(element), 50);
+        // Retry immediately on next frame instead of setTimeout
+        requestAnimationFrame(() => updatePosition(element));
         return;
       }
 
@@ -698,20 +675,25 @@ export default function OnboardingTooltips() {
       setTooltipPosition({ top, left });
     };
 
-    // All steps: start immediately for fast positioning (< 1 second target)
-    const timeoutId = setTimeout(() => {
+    // All steps: start immediately on next frame for fastest positioning
+    const timeoutId = requestAnimationFrame(() => {
       findTarget();
-    }, 50);
+    });
 
-    // Throttle function to limit how often position updates
+    // Throttle function using requestAnimationFrame for smooth, fast updates
     const throttledUpdatePosition = () => {
       if (targetElement) {
         if (scrollTimeoutRef.current) {
-          clearTimeout(scrollTimeoutRef.current);
+          if (typeof scrollTimeoutRef.current === 'number') {
+            cancelAnimationFrame(scrollTimeoutRef.current);
+          } else {
+            clearTimeout(scrollTimeoutRef.current);
+          }
         }
-        scrollTimeoutRef.current = setTimeout(() => {
+        // Use requestAnimationFrame for immediate update on next frame
+        scrollTimeoutRef.current = requestAnimationFrame(() => {
           updatePosition(targetElement);
-        }, 200); // Update at most every 200ms for smoother movement
+        }) as any;
       }
     };
 
@@ -725,9 +707,17 @@ export default function OnboardingTooltips() {
     window.addEventListener('scroll', throttledUpdatePosition, true);
 
     return () => {
-      clearTimeout(timeoutId);
+      if (typeof timeoutId === 'number') {
+        cancelAnimationFrame(timeoutId);
+      } else {
+        clearTimeout(timeoutId);
+      }
       if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
+        if (typeof scrollTimeoutRef.current === 'number') {
+          cancelAnimationFrame(scrollTimeoutRef.current);
+        } else {
+          clearTimeout(scrollTimeoutRef.current);
+        }
       }
       if (highlightTimeoutRef.current) {
         clearTimeout(highlightTimeoutRef.current);
@@ -754,7 +744,7 @@ export default function OnboardingTooltips() {
 
         const tooltipRect = tooltip.getBoundingClientRect();
         if (tooltipRect.width === 0 || tooltipRect.height === 0) {
-          setTimeout(updatePosition, 50);
+          requestAnimationFrame(() => updatePosition());
           return;
         }
 
@@ -792,7 +782,7 @@ export default function OnboardingTooltips() {
         setTooltipPosition({ top, left });
       };
       
-      setTimeout(updatePosition, 100);
+      requestAnimationFrame(() => updatePosition());
     }
   }, [isMobile, targetElement, isVisible, currentStepData, hasNoTarget, effectivePosition]);
 
