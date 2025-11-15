@@ -5,8 +5,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx server/index.ts",
-    "build": "vite build && npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist --ignore-annotations",
-    "build:prerender": "vite build && npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist --ignore-annotations && node scripts/prerender.js",
+    "build": "vite build && npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist --ignore-annotations --jsx=automatic",
+    "build:prerender": "vite build && npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist --ignore-annotations --jsx=automatic && node scripts/prerender.js",
     "prerender": "node scripts/prerender.js",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc",

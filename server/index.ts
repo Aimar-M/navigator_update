@@ -169,7 +169,7 @@ Sitemap: https://navigatortrips.com/sitemap.xml
 
     // OG Image generation endpoint (must be at root level for social media crawlers)
     app.get('/api/og', async (req: Request, res: Response) => {
-      const { generateOGImage } = await import('./og-image');
+      const { generateOGImage } = await import('./og-image.js');
       await generateOGImage(req, res);
     });
 
