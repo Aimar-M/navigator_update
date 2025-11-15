@@ -110,7 +110,7 @@ You need to create these images:
 
 | Page | Title | Description | Keywords | Structured Data |
 |------|-------|------------|----------|----------------|
-| `/` | Navigator — Group Travel Made Simple | Plan group trips effortlessly... | group travel app, trip planning, Navigator | Organization, WebApplication, Breadcrumbs |
+| `/` | Navigator — One-Stop shop for group trips | Plan group trips effortlessly... | group travel app, trip planning, Navigator | Organization, WebApplication, Breadcrumbs |
 | `/about` | About — Navigator Technologies 1802 | Learn about Navigator... | about Navigator, travel technology | Organization, Breadcrumbs |
 | `/contact` | Contact — Navigator | Get in touch... | contact Navigator, support | Organization, Breadcrumbs |
 | `/terms` | Terms of Service — Navigator | Read the terms... | terms of service, Navigator | Organization, Breadcrumbs |

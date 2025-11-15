@@ -61,7 +61,7 @@ You need to create the following image assets:
    - Format: PNG
    - Location: Should be accessible at `https://navigatortrips.com/og-image.png`
    - Content: Use your logo (`ab_Navigator2-11_1749673259080.png`) as the base
-   - Design: Include "Navigator — Group Travel Made Simple" text
+   - Design: Include "Navigator — One-Stop shop for group trips" text
    - Background: Use brand colors (blue/purple gradient)
 
 2. **Favicon** (`favicon.ico`)

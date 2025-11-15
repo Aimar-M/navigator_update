@@ -2,7 +2,7 @@
 export const SITE_CONFIG = {
   name: "Navigator",
   company: "Navigator Technologies 1802",
-  tagline: "Group Travel Made Simple",
+  tagline: "One-Stop shop for group trips",
   description: "Plan group trips effortlessly with Navigator. Split expenses, coordinate flights, chat, and vote on plans — all in one place.",
   domain: "navigatortrips.com",
   url: "https://navigatortrips.com",
