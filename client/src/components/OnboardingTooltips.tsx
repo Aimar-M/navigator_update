@@ -197,20 +197,102 @@ export default function OnboardingTooltips() {
   const isMobile = useIsMobile();
   const [targetElement, setTargetElement] = useState<HTMLElement | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
+  const [isUserTyping, setIsUserTyping] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const highlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const currentStepData = onboardingSteps[currentStep];
   const isCompletionStep = currentStepData?.id === 'completion';
   const isWelcomeStep = currentStepData?.id === 'welcome';
   const hasNoTarget = !currentStepData?.targetSelector || currentStepData.targetSelector === '';
   
+  // Check if current step is a form step (steps 6-10, indices 5-9)
+  const isFormStep = currentStep >= 5 && currentStep <= 9;
+  
   // Get mobile-aware position
   const effectivePosition = currentStepData 
     ? getStepPosition(currentStepData.id, currentStepData.position, isMobile)
     : 'center';
+
+  // Detect when user is typing in form fields - pause tooltips
+  useEffect(() => {
+    if (!isVisible || !isFormStep) return;
+
+    const handleInput = () => {
+      setIsUserTyping(true);
+      // Clear existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      // Resume tooltips after 2 seconds of no typing
+      typingTimeoutRef.current = setTimeout(() => {
+        setIsUserTyping(false);
+      }, 2000);
+    };
+
+    // Listen for input events on all form fields
+    const formFields = document.querySelectorAll('input, textarea, select');
+    formFields.forEach(field => {
+      field.addEventListener('input', handleInput);
+      field.addEventListener('keydown', handleInput);
+    });
+
+    return () => {
+      formFields.forEach(field => {
+        field.removeEventListener('input', handleInput);
+        field.removeEventListener('keydown', handleInput);
+      });
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, [isVisible, isFormStep, currentStep]);
+
+  // Detect independent form actions and auto-advance
+  useEffect(() => {
+    if (!isVisible || !isFormStep || isUserTyping) return;
+
+    // Detect if user moved form step independently (step 8 → step 9)
+    if (currentStep === 7 && currentStepData?.id === 'dates') {
+      const checkFormStep = () => {
+        const detailsField = document.querySelector('[data-tooltip="details"]');
+        const isOnFormStep2 = detailsField !== null && 
+                              (detailsField as HTMLElement).offsetParent !== null;
+        
+        if (isOnFormStep2) {
+          // User moved form step independently - auto-advance
+          nextStep();
+        }
+      };
+
+      const interval = setInterval(checkFormStep, 300);
+      return () => clearInterval(interval);
+    }
+
+    // Detect if user created trip independently (step 10 → step 11)
+    if (currentStep === 9 && currentStepData?.id === 'downpayment') {
+      const checkTripCreated = () => {
+        const tripId = localStorage.getItem('onboardingTripId');
+        const currentPath = window.location.pathname;
+        
+        if (tripId && currentPath.includes(`/trips/${tripId}`)) {
+          const hasContent = document.querySelector('[data-tooltip="upload-photo"]') !== null ||
+                            document.querySelector('[data-tooltip="trip-details"]') !== null;
+          
+          if (hasContent) {
+            // User created trip independently - auto-advance
+            nextStep();
+          }
+        }
+      };
+
+      const interval = setInterval(checkTripCreated, 300);
+      return () => clearInterval(interval);
+    }
+  }, [isVisible, isFormStep, currentStep, currentStepData, isUserTyping, nextStep]);
 
   // Handle route navigation
   useEffect(() => {
@@ -278,10 +360,20 @@ export default function OnboardingTooltips() {
     }
   }, [currentStep, currentStepData, isVisible]);
 
-  // Auto-advance when trip is created (step 10 → step 11)
+  // Auto-advance when trip is created (step 10 → step 11) - BACKUP
+  // This runs as a backup in case immediate advance didn't work or user didn't click Next
   useEffect(() => {
-    // Only watch during step 10 (downpayment step) when user has clicked Next
-    if (!isVisible || currentStep !== 9 || currentStepData?.id !== 'downpayment') {
+    // Watch during step 10 (downpayment step) OR step 11 (in case we advanced but action hasn't completed)
+    if (!isVisible || (currentStep !== 9 && currentStep !== 10) || 
+        (currentStepData?.id !== 'downpayment' && currentStepData?.id !== 'upload-photo')) {
+      return;
+    }
+
+    // Only run backup if we're on step 10, or if we're on step 11 but trip hasn't been created yet
+    const isOnStep10 = currentStep === 9 && currentStepData?.id === 'downpayment';
+    const isOnStep11Waiting = currentStep === 10 && currentStepData?.id === 'upload-photo';
+    
+    if (!isOnStep10 && !isOnStep11Waiting) {
       return;
     }
 
@@ -300,8 +392,12 @@ export default function OnboardingTooltips() {
                           document.querySelector('[data-tooltip="trip-details"]') !== null;
         
         if (hasContent) {
-          // Trip is created and page is ready - auto-advance to step 11
-          nextStep();
+          // Trip is created and page is ready
+          // If we're still on step 10, advance to step 11
+          // If we're on step 11 but waiting, the tooltip is already showing correctly
+          if (isOnStep10) {
+            nextStep();
+          }
         }
       }
     };
@@ -323,10 +419,20 @@ export default function OnboardingTooltips() {
     };
   }, [currentStep, isVisible, currentStepData, nextStep]);
 
-  // Auto-advance when form step changes (step 8 → step 9)
+  // Auto-advance when form step changes (step 8 → step 9) - BACKUP
+  // This runs as a backup in case immediate advance didn't work or user didn't click Next
   useEffect(() => {
-    // Only watch during step 8 (dates step) when user has clicked Next
-    if (!isVisible || currentStep !== 7 || currentStepData?.id !== 'dates') {
+    // Watch during step 8 (dates step) OR step 9 (in case we advanced but form hasn't moved yet)
+    if (!isVisible || (currentStep !== 7 && currentStep !== 8) ||
+        (currentStepData?.id !== 'dates' && currentStepData?.id !== 'details')) {
+      return;
+    }
+
+    // Only run backup if we're on step 8, or if we're on step 9 but form hasn't moved yet
+    const isOnStep8 = currentStep === 7 && currentStepData?.id === 'dates';
+    const isOnStep9Waiting = currentStep === 8 && currentStepData?.id === 'details';
+    
+    if (!isOnStep8 && !isOnStep9Waiting) {
       return;
     }
 
@@ -339,8 +445,12 @@ export default function OnboardingTooltips() {
                             (detailsField as HTMLElement).offsetParent !== null;
       
       if (isOnFormStep2) {
-        // Form has moved to step 2 - auto-advance onboarding to step 9
-        nextStep();
+        // Form has moved to step 2
+        // If we're still on step 8, advance to step 9
+        // If we're on step 9 but waiting, the tooltip is already showing correctly
+        if (isOnStep8) {
+          nextStep();
+        }
       }
     };
 
@@ -364,7 +474,8 @@ export default function OnboardingTooltips() {
   // Find and highlight target element
   useEffect(() => {
     // Skip if no target selector (e.g., welcome step or completion step with center position)
-    if (!isVisible || !currentStepData || hasNoTarget || !isOnTripOverviewPage) {
+    // Also skip if user is actively typing
+    if (!isVisible || !currentStepData || hasNoTarget || !isOnTripOverviewPage || isUserTyping) {
       // For center position steps without target, set position immediately
       if (hasNoTarget && effectivePosition === 'center') {
         const tooltip = tooltipRef.current;
@@ -447,48 +558,56 @@ export default function OnboardingTooltips() {
             element.classList.remove('tooltip-highlight');
           }, 15000);
 
-          // Wait for images to load before positioning (helps with layout shifts)
-          const waitForImages = () => {
-            const images = element.querySelectorAll('img');
-            let loadedCount = 0;
-            const totalImages = images.length;
-            
-            if (totalImages === 0) {
-              // No images, position immediately
-              setTimeout(() => updatePosition(element), 300);
-              return;
-            }
-
-            const checkComplete = () => {
-              loadedCount++;
-              if (loadedCount === totalImages) {
-                // All images loaded, wait a bit more for layout to settle
+          // For form steps, skip image waiting and position immediately (< 200ms)
+          // For other steps, wait for images to load (helps with layout shifts)
+          if (isFormStep) {
+            // Form steps: position immediately, no image waiting
+            setTimeout(() => updatePosition(element), 50);
+          } else {
+            // Non-form steps: wait for images to load
+            const waitForImages = () => {
+              const images = element.querySelectorAll('img');
+              let loadedCount = 0;
+              const totalImages = images.length;
+              
+              if (totalImages === 0) {
+                // No images, position immediately
                 setTimeout(() => updatePosition(element), 300);
+                return;
               }
+
+              const checkComplete = () => {
+                loadedCount++;
+                if (loadedCount === totalImages) {
+                  // All images loaded, wait a bit more for layout to settle
+                  setTimeout(() => updatePosition(element), 300);
+                }
+              };
+
+              images.forEach((img) => {
+                if (img.complete) {
+                  checkComplete();
+                } else {
+                  img.addEventListener('load', checkComplete, { once: true });
+                  img.addEventListener('error', checkComplete, { once: true });
+                }
+              });
+
+              // Fallback: if images take too long, position anyway after 2 seconds
+              setTimeout(() => {
+                if (loadedCount < totalImages) {
+                  setTimeout(() => updatePosition(element), 300);
+                }
+              }, 2000);
             };
 
-            images.forEach((img) => {
-              if (img.complete) {
-                checkComplete();
-              } else {
-                img.addEventListener('load', checkComplete, { once: true });
-                img.addEventListener('error', checkComplete, { once: true });
-              }
-            });
-
-            // Fallback: if images take too long, position anyway after 2 seconds
-            setTimeout(() => {
-              if (loadedCount < totalImages) {
-                setTimeout(() => updatePosition(element), 300);
-              }
-            }, 2000);
-          };
-
-          // Small delay to ensure element is scrolled into view, then wait for images
-          setTimeout(waitForImages, 100);
-        } else if (attempts < 50) {
-          // Increased from 20 to 50 attempts (10 seconds max instead of 4)
-          setTimeout(() => tryFind(attempts + 1), 200);
+            // Small delay to ensure element is scrolled into view, then wait for images
+            setTimeout(waitForImages, 100);
+          }
+        } else if (attempts < (isFormStep ? 10 : 50)) {
+          // Form steps: faster retries (10 attempts = 2 seconds max)
+          // Other steps: more retries for slow connections (50 attempts = 10 seconds max)
+          setTimeout(() => tryFind(attempts + 1), isFormStep ? 100 : 200);
         }
       };
       tryFind();
@@ -542,9 +661,10 @@ export default function OnboardingTooltips() {
       setTooltipPosition({ top, left });
     };
 
+    // For form steps, start immediately. For other steps, small delay for page load
     const timeoutId = setTimeout(() => {
       findTarget();
-    }, 1000);
+    }, isFormStep ? 50 : 1000);
 
     // Throttle function to limit how often position updates
     const throttledUpdatePosition = () => {
@@ -585,7 +705,7 @@ export default function OnboardingTooltips() {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('scroll', throttledUpdatePosition, true);
     };
-  }, [currentStep, isVisible, currentStepData, hasNoTarget, targetElement, isOnTripOverviewPage, effectivePosition, isMobile]);
+  }, [currentStep, isVisible, currentStepData, hasNoTarget, targetElement, isOnTripOverviewPage, effectivePosition, isMobile, isFormStep, isUserTyping]);
   
   // Recalculate position when mobile state changes
   useEffect(() => {
@@ -660,21 +780,36 @@ export default function OnboardingTooltips() {
         // If this is step 10 (downpayment), we're moving from form step 2 → 3
         // After form reaches step 3, auto-click the Create Trip button
         if (currentStepData?.id === 'downpayment') {
-          // Wait for form to reach step 3, then auto-submit
-          setTimeout(() => {
+          // Poll for submit button to appear (form needs to transition from step 2 → 3)
+          const tryClickSubmit = (attempts = 0) => {
             const tripFormSubmitButton = document.querySelector('[data-trip-form-submit]') as HTMLButtonElement;
             if (tripFormSubmitButton && !tripFormSubmitButton.disabled) {
+              // Button is ready - click it to create trip
               tripFormSubmitButton.click();
+            } else if (attempts < 20) {
+              // Button not ready yet, retry (up to 4 seconds total)
+              setTimeout(() => tryClickSubmit(attempts + 1), 200);
             }
-          }, 500);
-          // Don't call nextStep() here - let the auto-advance effect handle it
-          // when trip is actually created and we navigate to trip details page
+          };
+          
+          // Start trying to click submit button after a short delay
+          setTimeout(() => {
+            tryClickSubmit();
+          }, 300);
+          
+          // Advance immediately for better UX, auto-advance effect will handle backup if needed
+          setTimeout(() => {
+            nextStep();
+          }, 300);
           return;
         }
         
-        // For step 8 (dates), don't call nextStep() here either
-        // Let the auto-advance effect handle it when form moves to step 2
+        // For step 8 (dates), advance immediately for better UX
+        // Auto-advance effect will handle backup if form step change detection is needed
         if (currentStepData?.id === 'dates') {
+          setTimeout(() => {
+            nextStep();
+          }, 300);
           return;
         }
         
@@ -703,7 +838,8 @@ export default function OnboardingTooltips() {
   };
 
   // For steps 11-17, don't show until we're on trip overview page
-  if (!isVisible || !currentStepData) return null;
+  // Also don't show if user is actively typing
+  if (!isVisible || !currentStepData || isUserTyping) return null;
   if (currentStep >= 10 && currentStepData.route?.includes(':id') && !isOnTripOverviewPage) {
     return null; // Wait for trip overview page
   }
