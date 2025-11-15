@@ -342,7 +342,7 @@ export default function OnboardingTooltips() {
     }
   }, [isVisible, isFormStep, currentStep, currentStepData, isUserTyping, userWantsTooltipBack, nextStep]);
 
-  // Handle route navigation
+  // Handle route navigation - optimized to prevent unnecessary navigations
   useEffect(() => {
     if (!isVisible || !currentStepData) return;
 
@@ -354,13 +354,16 @@ export default function OnboardingTooltips() {
       const tripId = localStorage.getItem('onboardingTripId');
       if (tripId) {
         const actualRoute = route.replace(':id', tripId);
-        if (window.location.pathname !== actualRoute) {
+        const currentPath = window.location.pathname;
+        // Only navigate if not already on the correct route
+        if (currentPath !== actualRoute && !currentPath.includes(`/trips/${tripId}`)) {
           navigate(actualRoute);
         }
       }
     } else {
-      // Handle static routes
-      if (window.location.pathname !== route) {
+      // Handle static routes - only navigate if not already on route
+      const currentPath = window.location.pathname;
+      if (currentPath !== route) {
         navigate(route);
       }
     }
@@ -374,35 +377,64 @@ export default function OnboardingTooltips() {
   useEffect(() => {
     // Steps 11-16 need to be on trip overview page
     if (currentStep >= 10 && currentStepData?.route?.includes(':id')) {
-      setIsOnTripOverviewPage(false); // Reset to false when step changes
+      const tripId = localStorage.getItem('onboardingTripId');
+      const currentPath = window.location.pathname;
+      const isOnOverview = tripId !== null && currentPath.includes(`/trips/${tripId}`);
+      
+      // Check immediately if already on correct route - don't reset if we are
+      if (isOnOverview) {
+        // Check if content is ready immediately
+        const hasContent = document.querySelector('[data-tooltip]') !== null || 
+                         document.querySelector('[data-tooltip="upload-photo"]') !== null ||
+                         document.body.children.length > 1;
+        
+        if (hasContent) {
+          // Already on correct route with content - show immediately
+          setIsOnTripOverviewPage(true);
+          return;
+        }
+      }
+      
+      // Only reset if we're not on the correct route
+      if (!isOnOverview) {
+        setIsOnTripOverviewPage(false);
+      }
       
       const checkTripOverview = (attempts = 0) => {
-        const tripId = localStorage.getItem('onboardingTripId');
+        const currentTripId = localStorage.getItem('onboardingTripId');
         const currentPath = window.location.pathname;
-        const isOnOverview = tripId !== null && currentPath.includes(`/trips/${tripId}`);
+        const isOnOverviewNow = currentTripId !== null && currentPath.includes(`/trips/${currentTripId}`);
         
-        if (isOnOverview) {
+        if (isOnOverviewNow) {
           // Wait for page content to be ready (not just route match)
           // Check if main content elements exist
           const hasContent = document.querySelector('[data-tooltip]') !== null || 
+                           document.querySelector('[data-tooltip="upload-photo"]') !== null ||
                            document.body.children.length > 1;
           
-          if (hasContent || attempts > 20) {
-            // Content is ready or we've waited long enough (4 seconds)
+          if (hasContent || attempts > 10) {
+            // Content is ready or we've waited long enough (500ms max with 50ms intervals)
             setIsOnTripOverviewPage(true);
           } else {
-            // Keep checking for content
-            setTimeout(() => checkTripOverview(attempts + 1), 200);
+            // Keep checking for content - faster intervals
+            requestAnimationFrame(() => {
+              setTimeout(() => checkTripOverview(attempts + 1), 50);
+            });
           }
         } else {
-          // Keep checking for route match (up to 10 seconds for slow connections)
-          if (attempts < 50) {
-            setTimeout(() => checkTripOverview(attempts + 1), 200);
+          // Keep checking for route match - faster intervals
+          if (attempts < 20) {
+            requestAnimationFrame(() => {
+              setTimeout(() => checkTripOverview(attempts + 1), 50);
+            });
           }
         }
       };
       
-      checkTripOverview();
+      // Start checking immediately on next frame
+      requestAnimationFrame(() => {
+        checkTripOverview();
+      });
     } else {
       setIsOnTripOverviewPage(true); // For steps 1-10, always show
     }
