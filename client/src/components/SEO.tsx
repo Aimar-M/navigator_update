@@ -14,8 +14,8 @@ export function SEO({ page, path, noindex = false, nofollow = false }: SEOProps)
   // Always use non-www URL for canonical (strip www if present)
   const baseUrl = SITE_CONFIG.url.replace(/^https?:\/\/(www\.)?/, 'https://');
   const canonicalUrl = `${baseUrl}${canonicalPath}`;
-  // Generate dynamic OG image URL with page-specific content
-  const ogImage = `${SITE_CONFIG.ogImage}?title=${encodeURIComponent(pageData.title)}&description=${encodeURIComponent(pageData.description)}&tagline=${encodeURIComponent(SITE_CONFIG.tagline)}`;
+  // Use static OG image for maximum compatibility (Instagram, WhatsApp, Google prefer static images)
+  const ogImage = SITE_CONFIG.ogImage;
 
   // Organization structured data
   const organizationSchema = {

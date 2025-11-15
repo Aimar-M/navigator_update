@@ -7,7 +7,7 @@ export const SITE_CONFIG = {
   domain: "navigatortrips.com",
   url: "https://navigatortrips.com",
   email: "info@navigatortrips.com",
-  ogImage: "https://navigatortrips.com/api/og",
+  ogImage: "https://navigatortrips.com/og-image.png",
   logo: "https://navigatortrips.com/assets/ab_Navigator2-11_1749673259080.png",
 } as const;
 
