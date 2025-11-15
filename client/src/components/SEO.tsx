@@ -14,7 +14,8 @@ export function SEO({ page, path, noindex = false, nofollow = false }: SEOProps)
   // Always use non-www URL for canonical (strip www if present)
   const baseUrl = SITE_CONFIG.url.replace(/^https?:\/\/(www\.)?/, 'https://');
   const canonicalUrl = `${baseUrl}${canonicalPath}`;
-  const ogImage = SITE_CONFIG.ogImage;
+  // Generate dynamic OG image URL with page-specific content
+  const ogImage = `${SITE_CONFIG.ogImage}?title=${encodeURIComponent(pageData.title)}&description=${encodeURIComponent(pageData.description)}&tagline=${encodeURIComponent(SITE_CONFIG.tagline)}`;
 
   // Organization structured data
   const organizationSchema = {
@@ -94,12 +95,18 @@ export function SEO({ page, path, noindex = false, nofollow = false }: SEOProps)
       {nofollow && <meta name="robots" content="nofollow" />}
       {!noindex && !nofollow && <meta name="robots" content="index, follow" />}
 
-      {/* Open Graph / Facebook */}
+      {/* Open Graph / Facebook / WhatsApp */}
       <meta property="og:type" content="website" />
       <meta property="og:url" content={canonicalUrl} />
       <meta property="og:title" content={pageData.title} />
       <meta property="og:description" content={pageData.description} />
       <meta property="og:image" content={ogImage} />
+      <meta property="og:image:url" content={ogImage} />
+      <meta property="og:image:secure_url" content={ogImage} />
+      <meta property="og:image:type" content="image/png" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta property="og:image:alt" content={`${SITE_CONFIG.name} - ${SITE_CONFIG.tagline}`} />
       <meta property="og:site_name" content={SITE_CONFIG.name} />
       <meta property="og:locale" content="en_US" />
 
@@ -109,6 +116,7 @@ export function SEO({ page, path, noindex = false, nofollow = false }: SEOProps)
       <meta name="twitter:title" content={pageData.title} />
       <meta name="twitter:description" content={pageData.description} />
       <meta name="twitter:image" content={ogImage} />
+      <meta name="twitter:image:alt" content={`${SITE_CONFIG.name} - ${SITE_CONFIG.tagline}`} />
 
       {/* Additional Meta Tags */}
       <meta name="author" content={SITE_CONFIG.company} />

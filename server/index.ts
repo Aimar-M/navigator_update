@@ -145,6 +145,7 @@ ${publicPages.map(page => `  <url>
       const robotsTxt = `User-agent: *
 Allow: /
 Disallow: /api/
+Allow: /api/og
 Disallow: /dashboard
 Disallow: /home
 Disallow: /account-settings
@@ -164,6 +165,12 @@ Sitemap: https://navigatortrips.com/sitemap.xml
 `;
       res.setHeader('Content-Type', 'text/plain');
       res.status(200).send(robotsTxt);
+    });
+
+    // OG Image generation endpoint (must be at root level for social media crawlers)
+    app.get('/api/og', async (req: Request, res: Response) => {
+      const { generateOGImage } = await import('./og-image');
+      await generateOGImage(req, res);
     });
 
     console.log('🔧 Setting up routes...');
