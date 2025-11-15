@@ -156,9 +156,9 @@ export default function Landing() {
 
           {/* Main Headline */}
           <h1 className="text-5xl sm:text-7xl font-bold text-white mb-12 leading-tight">
-            Group Travel Made{" "}
+            One-stop Shop for{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
-              Simple
+              group trips
             </span>
           </h1>
 
