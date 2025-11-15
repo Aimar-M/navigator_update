@@ -120,10 +120,14 @@ export function SEO({ page, path, noindex = false, nofollow = false }: SEOProps)
       <meta name="distribution" content="global" />
       <meta name="rating" content="general" />
       
-      {/* Explicit favicon links for Google Search */}
+      {/* Explicit favicon links for Google Search - using absolute URLs for better Google recognition */}
+      <link rel="shortcut icon" href={`${SITE_CONFIG.url}/favicon.ico`} />
       <link rel="icon" href={`${SITE_CONFIG.url}/favicon.ico`} sizes="any" />
+      <link rel="icon" href={`${SITE_CONFIG.url}/favicon-16x16.png`} type="image/png" sizes="16x16" />
+      <link rel="icon" href={`${SITE_CONFIG.url}/favicon-32x32.png`} type="image/png" sizes="32x32" />
       <link rel="icon" href={`${SITE_CONFIG.url}/android-chrome-192x192.png`} type="image/png" sizes="192x192" />
       <link rel="icon" href={`${SITE_CONFIG.url}/android-chrome-512x512.png`} type="image/png" sizes="512x512" />
+      <link rel="apple-touch-icon" href={`${SITE_CONFIG.url}/apple-touch-icon.png`} sizes="180x180" />
 
       {/* Structured Data - JSON-LD */}
       <script type="application/ld+json">
