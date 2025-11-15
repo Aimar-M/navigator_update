@@ -518,8 +518,7 @@ export default function OnboardingTooltips() {
     return (
       <>
         <div 
-          className="fixed inset-0 z-[100] bg-black/20 transition-opacity duration-300 animate-in fade-in"
-          onClick={handleDismiss}
+          className="fixed inset-0 z-[100] bg-black/20 transition-opacity duration-300 animate-in fade-in pointer-events-none"
         />
         <div
           ref={tooltipRef}
@@ -570,8 +569,7 @@ export default function OnboardingTooltips() {
     <>
       {/* Overlay */}
       <div 
-        className="fixed inset-0 z-[100] bg-black/20 transition-opacity duration-300 animate-in fade-in"
-        onClick={handleDismiss}
+        className="fixed inset-0 z-[100] bg-black/20 transition-opacity duration-300 animate-in fade-in pointer-events-none"
       />
       
       {/* Tooltip Card */}
