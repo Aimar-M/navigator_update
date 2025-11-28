@@ -3866,9 +3866,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'You must be a member of this trip to create invitation links' });
       }
       
-      // Create expiration date (default: 7 days from now)
+      // Create expiration date (default: 30 days from now)
       const expiresAt = req.body.expiresAt ? new Date(req.body.expiresAt) : 
-        new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
       
       const invitationData = insertInvitationLinkSchema.parse({
         tripId,
