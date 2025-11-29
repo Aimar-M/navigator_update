@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -119,7 +120,7 @@ export default function EnhancedItineraryPreview({ activities, tripName, classNa
     setSelectedDay(prev => Math.min(uniqueDays.length - 1, prev + 1));
   };
 
-  const ActivityDetailsDialog = ({ activity }: { activity: Activity }) => {
+  const ActivityDetailsDialog = ({ activity, cardClassName, cardStyle }: { activity: Activity; cardClassName?: string; cardStyle?: React.CSSProperties }) => {
     const confirmedCount = activity.rsvps?.filter(rsvp => rsvp.status === 'going').length || 0;
     const totalCount = activity.rsvps?.length || 0;
     const spotsLeft = activity.maxParticipants ? activity.maxParticipants - confirmedCount : null;
@@ -128,35 +129,38 @@ export default function EnhancedItineraryPreview({ activities, tripName, classNa
     return (
       <Dialog>
         <DialogTrigger asChild>
-          <div className="cursor-pointer hover:opacity-80 transition-colors rounded-lg p-3">
-            <div className="flex items-center justify-between gap-3">
-              {/* Left side: Title, location, and accommodation icon */}
+          <div className={`cursor-pointer hover:opacity-80 transition-colors rounded-xl border p-3 sm:p-4 ${cardClassName || ''}`} style={cardStyle}>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+              {/* Main content: Title, location, and accommodation icon */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-start gap-2 mb-1.5">
                   {isAccommodation && (
-                    <Building className="h-4 w-4 flex-shrink-0" style={{ color: '#FF9F43' }} />
+                    <Building className="h-4 w-4 flex-shrink-0 mt-0.5" style={{ color: '#FF9F43' }} />
                   )}
-                  <h4 className="font-medium text-sm truncate" style={{ color: '#1A1A1A' }}>{activity.name}</h4>
+                  <h4 className="font-medium text-sm sm:text-base break-words" style={{ color: '#1A1A1A' }}>{activity.name}</h4>
                 </div>
                 {activity.location && (
-                  <div className="flex items-center text-xs" style={{ color: '#4B5A6A' }}>
-                    <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
-                    <span className="truncate">{activity.location}</span>
+                  <div className={`flex items-start gap-1.5 text-xs sm:text-sm ${isAccommodation ? 'ml-6 sm:ml-0' : ''}`} style={{ color: '#4B5A6A' }}>
+                    <MapPin className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
+                    <span className="break-words">{activity.location}</span>
                   </div>
                 )}
               </div>
 
-              {/* Right side: Time and payment info */}
-              <div className="flex items-center gap-2 flex-shrink-0">
+              {/* Right side: Time, payment info, and link - stacks on mobile */}
+              <div className={`flex flex-wrap items-center gap-2 sm:flex-nowrap sm:flex-shrink-0 ${isAccommodation ? 'ml-6 sm:ml-0' : ''}`}>
                 {activity.startTime && (
-                  <span className="text-xs font-medium whitespace-nowrap" style={{ color: '#4B5A6A' }}>
-                    {formatTime(activity.startTime)}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#4B5A6A' }} />
+                    <span className="text-xs sm:text-sm font-medium whitespace-nowrap" style={{ color: '#4B5A6A' }}>
+                      {formatTime(activity.startTime)}
+                    </span>
+                  </div>
                 )}
                 {activity.paymentType && (
                   <Badge 
                     variant="outline"
-                    className="text-xs px-2 py-1"
+                    className="text-xs px-2.5 py-1"
                     style={{
                       backgroundColor: activity.paymentType === 'free' ? '#28A745' : activity.paymentType === 'prepaid' ? '#3A8DFF' : '#FF9F43',
                       color: 'white',
@@ -167,6 +171,22 @@ export default function EnhancedItineraryPreview({ activities, tripName, classNa
                      activity.paymentType === 'payment_onsite' ? 'Pay Onsite' : 
                      'Prepaid'}
                   </Badge>
+                )}
+                {activity.activityLink && (
+                  <a 
+                    href={activity.activityLink.startsWith('http') ? activity.activityLink : `https://${activity.activityLink}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 underline flex items-center gap-1.5"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log('Activity link clicked:', activity.activityLink);
+                    }}
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Website</span>
+                    <span className="sm:hidden">Link</span>
+                  </a>
                 )}
               </div>
             </div>
@@ -391,127 +411,22 @@ export default function EnhancedItineraryPreview({ activities, tripName, classNa
             {currentDayActivities
               .filter(activity => !isAccommodationEntry(activity))
               .map((activity) => (
-                <div key={activity.id} className="rounded-xl border" style={{ backgroundColor: '#F5F9FF', borderColor: '#CED6E0' }}>
-                  <div className="p-3">
-                    <div className="flex items-center justify-between gap-3">
-                      {/* Left side: Title, location, and accommodation icon */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-medium text-sm truncate" style={{ color: '#1A1A1A' }}>{activity.name}</h4>
-                        </div>
-                        {activity.location && (
-                          <div className="flex items-center text-xs" style={{ color: '#4B5A6A' }}>
-                            <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
-                            <span className="truncate">{activity.location}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Right side: Time, payment info, and external link */}
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        {activity.startTime && (
-                          <span className="text-xs font-medium whitespace-nowrap" style={{ color: '#4B5A6A' }}>
-                            {formatTime(activity.startTime)}
-                          </span>
-                        )}
-                        {activity.paymentType && (
-                          <Badge 
-                            variant="outline"
-                            className="text-xs px-2 py-1"
-                            style={{
-                              backgroundColor: activity.paymentType === 'free' ? '#28A745' : activity.paymentType === 'prepaid' ? '#3A8DFF' : '#FF9F43',
-                              color: 'white',
-                              borderColor: 'transparent'
-                            }}
-                          >
-                            {activity.paymentType === 'free' ? 'Free' : 
-                             activity.paymentType === 'payment_onsite' ? 'Pay Onsite' : 
-                             'Prepaid'}
-                          </Badge>
-                        )}
-                        {activity.activityLink && (
-                          <a 
-                            href={activity.activityLink.startsWith('http') ? activity.activityLink : `https://${activity.activityLink}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              console.log('Activity link clicked:', activity.activityLink);
-                            }}
-                          >
-                            <ExternalLink className="h-3 w-3" />
-                            Website
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <ActivityDetailsDialog 
+                  key={activity.id} 
+                  activity={activity}
+                  cardStyle={{ backgroundColor: '#F5F9FF', borderColor: '#CED6E0' }}
+                />
               ))}
 
             {/* Accommodations at Bottom */}
             {currentDayActivities
               .filter(activity => isAccommodationEntry(activity))
               .map((activity) => (
-                <div key={`accommodation-${activity.id}-${uniqueDays[selectedDay]}`} className="rounded-xl border" style={{ backgroundColor: '#FFF7E6', borderColor: '#FF9F43' }}>
-                  <div className="p-3">
-                    <div className="flex items-center justify-between gap-3">
-                      {/* Left side: Title, location, and accommodation icon */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Building className="h-4 w-4 flex-shrink-0" style={{ color: '#FF9F43' }} />
-                          <h4 className="font-medium text-sm truncate" style={{ color: '#1A1A1A' }}>{activity.name}</h4>
-                        </div>
-                        {activity.location && (
-                          <div className="flex items-center text-xs" style={{ color: '#4B5A6A' }}>
-                            <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
-                            <span className="truncate">{activity.location}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Right side: Time, payment info, and external link */}
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        {activity.startTime && (
-                          <span className="text-xs font-medium whitespace-nowrap" style={{ color: '#4B5A6A' }}>
-                            {formatTime(activity.startTime)}
-                          </span>
-                        )}
-                        {activity.paymentType && (
-                          <Badge 
-                            variant="outline"
-                            className="text-xs px-2 py-1"
-                            style={{
-                              backgroundColor: activity.paymentType === 'free' ? '#28A745' : activity.paymentType === 'prepaid' ? '#3A8DFF' : '#FF9F43',
-                              color: 'white',
-                              borderColor: 'transparent'
-                            }}
-                          >
-                            {activity.paymentType === 'free' ? 'Free' : 
-                             activity.paymentType === 'payment_onsite' ? 'Pay Onsite' : 
-                             'Prepaid'}
-                          </Badge>
-                        )}
-                        {activity.activityLink && (
-                          <a 
-                            href={activity.activityLink.startsWith('http') ? activity.activityLink : `https://${activity.activityLink}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              console.log('Activity link clicked:', activity.activityLink);
-                            }}
-                          >
-                            <ExternalLink className="h-3 w-3" />
-                            Website
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <ActivityDetailsDialog 
+                  key={`accommodation-${activity.id}-${uniqueDays[selectedDay]}`} 
+                  activity={activity}
+                  cardStyle={{ backgroundColor: '#FFF7E6', borderColor: '#FF9F43' }}
+                />
               ))}
           </div>
 
