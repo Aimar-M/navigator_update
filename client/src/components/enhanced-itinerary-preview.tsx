@@ -96,6 +96,13 @@ export default function EnhancedItineraryPreview({ activities, tripName, classNa
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
+  // Helper function to convert time string to minutes for sorting
+  const timeToMinutes = (timeStr?: string): number => {
+    if (!timeStr) return Infinity; // Activities without time come last
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+
   // Use expanded activities and group by day
   const expandedActivities = expandAccommodationActivities(activities || []);
   const groupedActivities = expandedActivities
@@ -108,6 +115,25 @@ export default function EnhancedItineraryPreview({ activities, tripName, classNa
       groups[dateKey].push(activity);
       return groups;
     }, {});
+
+  // Sort activities within each day by startTime
+  Object.keys(groupedActivities).forEach(dateKey => {
+    groupedActivities[dateKey].sort((a, b) => {
+      // First, separate by type: regular activities before accommodations
+      const aIsAccommodation = isAccommodationEntry(a);
+      const bIsAccommodation = isAccommodationEntry(b);
+      
+      if (aIsAccommodation !== bIsAccommodation) {
+        return aIsAccommodation ? 1 : -1; // Regular activities first
+      }
+      
+      // Within the same type, sort by startTime
+      const timeA = timeToMinutes(a.startTime);
+      const timeB = timeToMinutes(b.startTime);
+      
+      return timeA - timeB;
+    });
+  });
 
   const uniqueDays = Object.keys(groupedActivities);
   const currentDayActivities = uniqueDays[selectedDay] ? groupedActivities[uniqueDays[selectedDay]] : [];

@@ -50,6 +50,16 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const checkUserOnboardingStatus = async () => {
     if (!user || isChecking) return;
     
+    // Don't show automatic onboarding if there's a pending invitation
+    // User should complete RSVP first before seeing onboarding tooltips
+    const pendingInvitation = localStorage.getItem('pendingInvitation');
+    if (pendingInvitation) {
+      setIsCompleted(true);
+      setIsVisible(false);
+      setIsChecking(false);
+      return;
+    }
+    
     // Don't show automatic onboarding if manual tour was dismissed in this session
     if (manualTourDismissed) {
       setIsCompleted(true);

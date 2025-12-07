@@ -1,7 +1,6 @@
 // import nodemailer from 'nodemailer'; // COMMENTED OUT - Using Gmail API only
 import { sendEmailViaGmailAPI, getGmailAPIStatus } from './gmail-api';
-
-console.log('📧 Email module loaded successfully - Gmail API only');
+import { safeErrorLog } from './error-logger';
 
 // SMTP CODE COMMENTED OUT - Using Gmail API only
 /*
@@ -140,40 +139,25 @@ export async function preWarmEmailConnection() {
 
 // Gmail API doesn't need pre-warming
 export async function preWarmEmailConnection() {
-  console.log('📧 Gmail API ready - no pre-warming needed');
+  // Gmail API ready - no pre-warming needed
 }
 
 
 export async function sendEmail(to: string, subject: string, html: string) {
-  console.log('🚀 [EMAIL] Starting sendEmail function - Gmail API only');
-  console.log('🚀 [EMAIL] Parameters:', { to, subject, htmlLength: html.length });
-  
   // Check Gmail API status
   const gmailAPIStatus = getGmailAPIStatus();
-  console.log('🔍 [EMAIL] Gmail API status:', gmailAPIStatus);
   
   // Only use Gmail API - no SMTP fallback
   if (!gmailAPIStatus.configured) {
-    console.error('❌ [EMAIL] Gmail API not configured - email sending disabled');
-    console.error('❌ [EMAIL] Missing environment variables:', {
-      oauth2Configured: gmailAPIStatus.oauth2Configured ? 'SET' : 'MISSING',
-      serviceAccountConfigured: gmailAPIStatus.serviceAccountConfigured ? 'SET' : 'MISSING'
-    });
-    
-    // Return error instead of fallback
-    throw new Error('Gmail API not configured. Please set GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_SERVICE_ACCOUNT_KEY environment variables.');
+    const error = new Error('Gmail API not configured. Please set GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_SERVICE_ACCOUNT_KEY environment variables.');
+    safeErrorLog('❌ [EMAIL] Gmail API not configured - email sending disabled', error);
+    throw error;
   }
 
   try {
-    console.log('🚀 [EMAIL] Sending via Gmail API...');
     return await sendEmailViaGmailAPI(to, subject, html);
   } catch (error: any) {
-    console.error('❌ [EMAIL] Gmail API failed:', error.message);
-    console.error('❌ [EMAIL] Gmail API error details:', {
-      code: error.code,
-      status: error.status,
-      response: error.response?.data
-    });
+    safeErrorLog('❌ [EMAIL] Gmail API failed', error);
     throw error;
   }
 }

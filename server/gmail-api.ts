@@ -1,6 +1,5 @@
 import { google } from 'googleapis';
-
-console.log('📧 Gmail API module loaded successfully');
+import { safeErrorLog } from './error-logger';
 
 // Gmail API configuration
 const gmail = google.gmail({ version: 'v1' });
@@ -21,12 +20,7 @@ if (process.env.GOOGLE_REFRESH_TOKEN) {
   
   // Auto-refresh access token when it expires
   oauth2Client.on('tokens', (tokens) => {
-    if (tokens.refresh_token) {
-      console.log('🔄 [GMAIL-API] New refresh token received');
-    }
-    if (tokens.access_token) {
-      console.log('🔄 [GMAIL-API] Access token refreshed');
-    }
+    // Token refresh handled automatically - no logging needed
   });
 }
 
@@ -41,23 +35,17 @@ if (process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_SERVICE_ACCOU
       },
       scopes: ['https://www.googleapis.com/auth/gmail.send'],
     });
-    console.log('✅ [GMAIL-API] Service account auth configured');
   } catch (error) {
-    console.warn('⚠️ [GMAIL-API] Service account auth failed:', error);
+    safeErrorLog('⚠️ [GMAIL-API] Service account auth failed', error);
   }
 }
 
 // Function to send email via Gmail API
 export async function sendEmailViaGmailAPI(to: string, subject: string, html: string) {
   try {
-    console.log('🚀 [GMAIL-API] Starting Gmail API email send');
-    console.log('🚀 [GMAIL-API] Parameters:', { to, subject, htmlLength: html.length });
-
     // Check which authentication method to use
     const hasOAuth2 = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_REFRESH_TOKEN);
     const hasServiceAccount = !!(process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
-    
-    console.log('🔍 [GMAIL-API] Auth methods available:', { hasOAuth2, hasServiceAccount });
 
     if (!hasOAuth2 && !hasServiceAccount) {
       throw new Error('No Gmail API authentication configured. Need either OAuth2 (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN) or Service Account (GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_SERVICE_ACCOUNT_KEY)');
@@ -85,17 +73,8 @@ export async function sendEmailViaGmailAPI(to: string, subject: string, html: st
     .replace(/\//g, '_')
     .replace(/=+$/, '');
 
-    console.log('📧 [GMAIL-API] Message encoded, sending via Gmail API...');
-
     // Choose authentication method
-    let authMethod;
-    if (hasOAuth2) {
-      console.log('🔐 [GMAIL-API] Using OAuth2 authentication');
-      authMethod = oauth2Client;
-    } else {
-      console.log('🔐 [GMAIL-API] Using Service Account authentication');
-      authMethod = serviceAccountAuth;
-    }
+    const authMethod = hasOAuth2 ? oauth2Client : serviceAccountAuth;
 
     // Send the email
     const response = await gmail.users.messages.send({
@@ -106,10 +85,6 @@ export async function sendEmailViaGmailAPI(to: string, subject: string, html: st
       },
     });
 
-    console.log('✅ [GMAIL-API] Email sent successfully via Gmail API');
-    console.log('📧 [GMAIL-API] Message ID:', response.data.id);
-    console.log('📧 [GMAIL-API] Thread ID:', response.data.threadId);
-
     return {
       messageId: response.data.id,
       threadId: response.data.threadId,
@@ -117,13 +92,7 @@ export async function sendEmailViaGmailAPI(to: string, subject: string, html: st
     };
 
   } catch (error: any) {
-    console.error('❌ [GMAIL-API] Failed to send email via Gmail API:', error.message);
-    console.error('❌ [GMAIL-API] Error details:', {
-      code: error.code,
-      status: error.status,
-      response: error.response?.data,
-      stack: error.stack?.substring(0, 200) + '...'
-    });
+    safeErrorLog('❌ [GMAIL-API] Failed to send email via Gmail API', error);
     throw error;
   }
 }
@@ -144,22 +113,6 @@ export function getGmailAPIStatus() {
   
   // Overall configuration status
   const configured = oauth2Configured || serviceAccountConfigured;
-  
-  console.log('🔍 [GMAIL-API] Status check:', {
-    oauth2Configured,
-    serviceAccountConfigured,
-    configured,
-    oauth2: {
-      clientId: hasOAuth2ClientId ? 'SET' : 'NOT SET',
-      clientSecret: hasOAuth2ClientSecret ? 'SET' : 'NOT SET',
-      refreshToken: hasOAuth2RefreshToken ? 'SET' : 'NOT SET',
-      accessToken: hasOAuth2AccessToken ? 'SET' : 'NOT SET'
-    },
-    serviceAccount: {
-      email: hasServiceAccountEmail ? 'SET' : 'NOT SET',
-      key: hasServiceAccountKey ? 'SET' : 'NOT SET'
-    }
-  });
   
   return {
     configured,

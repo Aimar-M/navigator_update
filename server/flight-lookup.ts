@@ -80,23 +80,19 @@ export async function lookupFlightInfo(flightNumber: string, date: string): Prom
   }
 
   // Return null if no authentic data is available
-  console.log('No authentic flight data found for:', flightNumber);
   return null;
 }
 
 // Try multiple flight data sources
 async function tryMultipleFlightSources(flightNumber: string, date: string): Promise<FlightData | null> {
-  console.log('Trying multiple flight sources for:', flightNumber, date);
-  
   // Try AviationStack API first (most reliable with API key)
   try {
     const aviationStackResult = await lookupAviationStack(flightNumber, date);
     if (aviationStackResult) {
-      console.log('AviationStack found data');
       return aviationStackResult;
     }
   } catch (error) {
-    console.log('AviationStack failed:', (error as Error).message);
+    // AviationStack failed - try other sources
   }
 
   // Try other sources as fallback
@@ -111,7 +107,7 @@ async function tryMultipleFlightSources(flightNumber: string, date: string): Pro
       const result = await source();
       if (result) return result;
     } catch (error) {
-      console.log('Flight source failed:', (error as Error).message);
+      // Flight source failed - try next
     }
   }
   
@@ -343,7 +339,6 @@ async function lookupFlightAware(flightNumber: string, date: string): Promise<Fl
 
 async function lookupAviationStack(flightNumber: string, date: string): Promise<FlightData | null> {
   if (!process.env.AVIATIONSTACK_API_KEY) {
-    console.log('AviationStack API key not available');
     return null;
   }
 
@@ -355,15 +350,11 @@ async function lookupAviationStack(flightNumber: string, date: string): Promise<
     if (airlineCode) {
       const airlineUrl = `http://api.aviationstack.com/v1/airlines?access_key=${process.env.AVIATIONSTACK_API_KEY}&iata_code=${airlineCode}`;
       
-      console.log('Looking up airline for code:', airlineCode);
       const airlineResponse = await fetch(airlineUrl);
       const airlineData = await airlineResponse.json();
       
-      console.log('Airline lookup response:', JSON.stringify(airlineData, null, 2));
-      
       if (airlineData.data && airlineData.data.length > 0) {
         const airline = airlineData.data[0];
-        console.log('Found airline:', airline.airline_name);
         
         // Return only authentic airline information (this is what we can verify from free tier)
         return {
@@ -383,20 +374,8 @@ async function lookupAviationStack(flightNumber: string, date: string): Promise<
       }
     }
     
-    // Test what endpoints are available
-    console.log('Testing available AviationStack endpoints...');
-    const testUrl = `http://api.aviationstack.com/v1/countries?access_key=${process.env.AVIATIONSTACK_API_KEY}&limit=1`;
-    const testResponse = await fetch(testUrl);
-    const testData = await testResponse.json();
-    
-    if (testData.error) {
-      console.log('AviationStack API Error:', testData.error.message);
-    } else {
-      console.log('AviationStack API working, but flight data not available in free tier');
-    }
-    
   } catch (error) {
-    console.error('AviationStack API error:', error);
+    // AviationStack API error - return null to try other sources
   }
   
   return null;

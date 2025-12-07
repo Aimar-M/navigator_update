@@ -37,12 +37,17 @@ interface RegisterData {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Helper function to handle pending invitation redirects
-const handlePendingInvitationRedirect = (navigate: Function): boolean => {
+const handlePendingInvitationRedirect = (navigate: Function, useHardRedirect: boolean = false): boolean => {
   const pendingInvitation = localStorage.getItem('pendingInvitation');
   if (pendingInvitation) {
     // Don't remove it here - let it be removed after successful RSVP
     // This allows it to persist through email confirmation
-    navigate(`/invite/${pendingInvitation}`);
+    if (useHardRedirect) {
+      // Use hard redirect to prevent page from rendering before redirect
+      window.location.href = `/invite/${pendingInvitation}`;
+    } else {
+      navigate(`/invite/${pendingInvitation}`);
+    }
     return true; // Indicates redirect happened
   }
   return false; // No redirect needed
@@ -90,7 +95,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               // Store the new JWT token
               localStorage.setItem('auth_token', data.token);
               
-              // Set the user
+              // Check for pending invitation BEFORE setting user state
+              // This prevents onboarding from starting before redirect
+              if (handlePendingInvitationRedirect(navigate, true)) {
+                // Hard redirect will happen, don't set user state or continue
+                setIsLoading(false);
+                return;
+              }
+              
+              // Set the user only if no pending invitation
               setUser(data.user);
               
               if (data.user) {
@@ -103,9 +116,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                   username: data.user.username,
                 });
               }
-              
-              // Check for pending invitation after OAuth authentication
-              handlePendingInvitationRedirect(navigate);
               
               setIsLoading(false);
               return;

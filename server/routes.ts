@@ -228,13 +228,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Simple ping endpoint for basic connectivity testing
   router.get('/ping', (req: Request, res: Response) => {
-    console.log('🏓 Ping requested');
     res.status(200).json({ message: 'pong', timestamp: new Date().toISOString() });
   });
 
   // Test endpoint to verify server is working
   router.get('/test', (req: Request, res: Response) => {
-    console.log('🧪 Test endpoint hit');
     res.status(200).json({ 
       message: 'Server is working', 
       timestamp: new Date().toISOString(),
@@ -367,26 +365,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       userData.emailConfirmed = false;
       userData.emailConfirmationToken = emailConfirmationToken;
       
-      console.log(`🔐 Generated email confirmation token: ${emailConfirmationToken.substring(0, 8)}...`);
-      console.log(`📧 User data before creation:`, {
-        username: userData.username,
-        email: userData.email,
-        emailConfirmed: userData.emailConfirmed,
-        hasToken: !!userData.emailConfirmationToken
-      });
-      
       // Create user
       const user = await storage.createUser(userData);
-      
-      console.log(`✅ User created with ID: ${user.id}`);
-      console.log(`📧 User after creation:`, {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        emailConfirmed: user.emailConfirmed,
-        hasToken: !!user.emailConfirmationToken,
-        tokenLength: user.emailConfirmationToken?.length
-      });
       
       // Send confirmation email (log to console)
       const confirmUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/confirm-email?token=${emailConfirmationToken}`;
@@ -459,26 +439,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 // ... existing code ...
         
         
-        console.log(`✅ Welcome email sent successfully to: ${user.email}`);
       } catch (emailError) {
-        console.error('❌ Failed to send welcome email:', emailError);
-        
-        // Check if it's due to missing SMTP configuration
-        if (emailError instanceof Error && emailError.message.includes('SMTP not configured')) {
-          console.warn('⚠️ Email functionality is disabled - user registered without email confirmation');
-          console.log(`📧 Would have sent confirmation email to: ${user.email}`);
-          console.log(`📧 Confirmation URL: ${confirmUrl}`);
-        } else {
-          // Log other email errors but don't fail registration
-          console.error('❌ Email error during registration:', emailError);
-        }
+        // Log email errors but don't fail registration
+        safeErrorLog('❌ Failed to send welcome email during registration', emailError);
       }
       
       // Don't send password in the response
       const { password, ...userWithoutPassword } = user;
-      
-      // Don't return a token - user must confirm email first
-      console.log(`✅ User ${user.id} registered successfully. Email confirmation required.`);
       
       // Return user data without token, indicating email confirmation is needed
       res.status(201).json({
@@ -610,42 +577,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   router.get('/auth/me', async (req: Request, res: Response) => {
     try {
-      console.log('🔍 /api/auth/me called');
-      console.log('🔍 Request headers:', req.headers);
-      console.log('🔍 Cookie header:', req.headers.cookie);
-      console.log('🔍 Session ID:', req.sessionID);
-      console.log('🔍 Session exists:', !!req.session);
-      console.log('🔍 Session userId:', req.session?.userId);
-      console.log('🔍 Authorization header:', req.headers.authorization);
-      
       // Check for token-based authentication first
       const authHeader = req.headers.authorization;
       
       if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.split(' ')[1];
-        console.log('🔍 Auth check: Token received:', token);
-        console.log('🔍 Auth check: Token type:', typeof token);
-        console.log('🔍 Auth check: Token length:', token.length);
         
         // Handle OAuth temporary tokens (format: userId_oauth_temp)
         if (token.includes('_oauth_temp')) {
           const userId = parseInt(token.split('_')[0]);
-          console.log('🔍 Auth check: OAuth token detected, userId:', userId);
           
           if (!isNaN(userId)) {
           const user = await storage.getUser(userId);
           if (user) {
-            console.log('🔍 Auth check: OAuth user found:', user.username);
             // Don't send password in the response
             const { password, ...userWithoutPassword } = user;
             // Note: We still return deleted users here so frontend can handle display
             // But isAuthenticated middleware will block them from accessing resources
             return res.json(userWithoutPassword);
-          } else {
-              console.log('❌ Auth check: OAuth user not found in database for userId:', userId);
-            }
-          } else {
-            console.log('❌ Auth check: Invalid userId from OAuth token:', token.split('_')[0]);
+          }
           }
         }
         
@@ -655,39 +605,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!isNaN(userId)) {
           const user = await storage.getUser(userId);
           if (user) {
-            console.log('🔍 Auth check: JWT user found:', user.username);
             // Don't send password in the response
             const { password, ...userWithoutPassword } = user;
             // Note: We still return deleted users here so frontend can handle display
             // But isAuthenticated middleware will block them from accessing resources
             return res.json(userWithoutPassword);
-          } else {
-            console.log('❌ Auth check: JWT user not found in database for userId:', userId);
           }
-        } else {
-          console.log('❌ Auth check: Invalid userId from JWT token:', token.split('_')[0]);
         }
-      } else {
-        console.log('❌ Auth check: No valid authorization header found');
       }
       
       // Fallback to session-based auth if token auth fails
-      console.log('🔍 Auth check: Trying session authentication...');
-      console.log('🔍 Session data:', req.session);
-      console.log('🔍 Session userId:', req.session?.userId);
-      
       if (!req.session?.userId) {
-        console.log('❌ Auth check: No session userId found');
         return res.status(401).json({ message: 'Not authenticated' });
       }
       
       const user = await storage.getUser(req.session.userId);
       if (!user) {
-        console.log('❌ Auth check: User not found for session userId:', req.session.userId);
         return res.status(404).json({ message: 'User not found' });
       }
       
-      console.log('🔍 Auth check: Session user found:', user.username);
       // Don't send password in the response
       const { password, ...userWithoutPassword } = user;
       // Note: We still return deleted users here so frontend can handle display
@@ -730,18 +666,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.split(' ')[1];
-        console.log('🔍 Middleware: Token received:', token);
         
         if (token) {
           // Handle OAuth temporary tokens (format: userId_oauth_temp)
           if (token.includes('_oauth_temp')) {
             const userId = parseInt(token.split('_')[0]);
-            console.log('🔍 Middleware: OAuth token detected, userId:', userId);
             
             if (!isNaN(userId)) {
               const user = await storage.getUser(userId);
               if (user) {
-                console.log('🔍 Middleware: OAuth user found:', user.username);
                 // Check if account is deleted
                 if (user.deletedAt) {
                   return res.status(403).json({ 
@@ -769,7 +702,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (!isNaN(userId)) {
             const user = await storage.getUser(userId);
             if (user) {
-              console.log('🔍 Middleware: JWT user found:', user.username);
               // Check if account is deleted
               if (user.deletedAt) {
                 return res.status(403).json({ 
@@ -823,9 +755,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           safeErrorLog('Failed to fetch user from session in isAuthenticated middleware', sessionError);
         }
       }
-      
-      // Debug logging for authentication issues
-      console.log('Authentication failed - req.user:', req.user ? 'set' : 'not set', 'Session userId:', req.session?.userId, 'Auth header:', authHeader ? 'present' : 'missing');
       
       res.status(401).json({ message: 'Authentication required' });
     } catch (error) {
@@ -929,34 +858,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   router.delete('/auth/delete-account', isAuthenticated, async (req: Request, res: Response) => {
     try {
       const userId = req.user?.id;
-      console.log('🔍 Delete account request - userId:', userId);
-      console.log('🔍 Delete account request - user object:', req.user);
       
       if (!userId) {
-        console.log('❌ Delete account - No userId found');
         return res.status(401).json({ message: 'Not authenticated' });
       }
 
       // Check if user exists before attempting deletion
       const userExists = await storage.getUser(userId);
-      console.log('🔍 Delete account - User exists check:', !!userExists);
       
       if (!userExists) {
-        console.log('❌ Delete account - User not found in database');
         return res.status(404).json({ message: 'User not found' });
       }
 
       // Check deletion in progress status
       const deletionInProgress = await (storage as any).getDeletionInProgress(userId);
-      console.log('🔍 Delete account - Deletion in progress:', deletionInProgress);
 
       // Check for unsettled balances across all trips
-      console.log('🔍 Delete account - Checking for unsettled balances...');
       const tripsWithBalances = await (storage as any).getTripsWithUnsettledBalances(userId);
       
       // If deletion not in progress, set it and return trips with balances
       if (!deletionInProgress) {
-        console.log('🔍 Delete account - Setting deletion in progress to true');
         await (storage as any).setDeletionInProgress(userId, true);
         
         return res.status(200).json({ 
@@ -971,7 +892,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const hasNegativeBalances = tripsWithBalances.some(trip => trip.balance < 0);
       
       if (hasNegativeBalances) {
-        console.log('❌ Delete account - User still has negative balances');
         return res.status(400).json({ 
           message: 'You cannot delete your account until you settle all debts (negative balances).',
           tripsWithBalances: tripsWithBalances
@@ -979,23 +899,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // All clear - proceed with deletion
-      console.log('🔍 Delete account - No negative balances, starting user anonymization process...');
       // Use anonymizeUserAccount which handles trip organizer transfer and anonymization
       const success = await (storage as any).anonymizeUserAccount(userId);
-      console.log('🔍 Delete account - Anonymization result:', success);
       
       if (success) {
-        console.log('✅ Delete account - User anonymized successfully');
         // Destroy the session
         req.session.destroy((err) => {
           if (err) {
-            console.error('Error destroying session:', err);
+            safeErrorLog('Error destroying session during account deletion', err);
           }
         });
         
         return res.json({ message: 'Account deleted successfully. You can recover it by logging in again.' });
       } else {
-        console.log('❌ Delete account - Anonymization failed');
         return res.status(500).json({ message: 'Failed to delete user' });
       }
     } catch (error) {
@@ -1305,8 +1221,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Only the trip organizer can update trip details' });
       }
       
-      console.log('Received trip update data:', req.body);
-      
       // Check if downpayment is being changed
       const isDownPaymentChanging = req.body.requiresDownPayment !== undefined || req.body.downPaymentAmount !== undefined;
       const newRequiresDownPayment = req.body.requiresDownPayment !== undefined ? req.body.requiresDownPayment : trip.requiresDownPayment;
@@ -1337,7 +1251,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       const tripData = insertTripSchema.partial().parse(bodyWithDates);
-      console.log('Parsed trip data:', tripData);
       
       // Handle downpayment expense creation/deletion before updating trip
       if (isDownPaymentChanging) {
@@ -2591,20 +2504,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   router.post('/trips/:id/activities', isAuthenticated, requireConfirmedRSVP, async (req: Request, res: Response) => {
     try {
-      console.log('Activity creation request received:', req.body);
-      
       const authUser = ensureUser(req, res);
       if (!authUser) return; // Response already sent by ensureUser
       
       const tripId = parseInt(req.params.id);
       if (isNaN(tripId)) {
-        console.log('Invalid trip ID');
         return res.status(400).json({ message: 'Invalid trip ID' });
       }
       
       const trip = await storage.getTrip(tripId);
       if (!trip) {
-        console.log('Trip not found:', tripId);
         return res.status(404).json({ message: 'Trip not found' });
       }
       
@@ -2615,7 +2524,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       if (!currentMember) {
-        console.log('User not a confirmed member:', authUser.id, tripId);
         return res.status(403).json({ message: 'Not a confirmed member of this trip' });
       }
 
@@ -2637,15 +2545,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           createdBy: authUser.id
         };
         
-        console.log('Activity data before validation:', data);
-        
         // Validate the activity data
         const activityData = insertActivitySchema.parse(data);
-        console.log('Validated activity data:', activityData);
         
         // Create the activity
         const createdActivity = await storage.createActivity(activityData);
-        console.log('Activity created:', createdActivity);
         
         // Auto-RSVP the creator as "going"
         await storage.createActivityRSVP({
@@ -3246,7 +3150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               errorCount++;
             }
           } catch (error) {
-            console.error(`❌ Error migrating image ${message.image}:`, error);
+            safeErrorLog(`❌ Error migrating image ${message.image}`, error);
             errorCount++;
           }
         }
@@ -3259,7 +3163,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         errors: errorCount 
       });
     } catch (error) {
-      console.error('Error during image migration:', error);
+      safeErrorLog('Error during image migration', error);
       res.status(500).json({ message: 'Migration failed' });
     }
   });
@@ -3314,7 +3218,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // This ensures images persist across redeploys
       return res.status(201).json({ url: dataUrl });
     } catch (error) {
-      console.error('Error uploading chat image:', error);
+      safeErrorLog('Error uploading chat image', error);
       return res.status(500).json({ message: 'Server error' });
     }
   });
@@ -3526,13 +3430,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       // Broadcast via WebSocket for real-time updates
-      console.log(`Broadcasting message to ${tripId} via WebSocket`);
-      console.log('Connected clients:', wss.clients.size);
-      
       wss.clients.forEach((client: WebSocketClient) => {
-        console.log('Client tripIds:', client.tripIds, 'Client readyState:', client.readyState);
         if (client.readyState === WebSocket.OPEN && client.tripIds?.includes(tripId)) {
-          console.log('Sending message to client');
           client.send(JSON.stringify({
             type: 'new_message',
             data: messageWithUser
@@ -3730,7 +3629,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(allMessagesWithDetails);
     } catch (error) {
-      console.error('Error getting all messages and polls:', error);
+      safeErrorLog('Error getting all messages and polls', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -3767,7 +3666,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(allActivitiesWithDetails);
     } catch (error) {
-      console.error('Error getting all activities:', error);
+      safeErrorLog('Error getting all activities', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -3837,7 +3736,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(activityWithRSVPs);
     } catch (error) {
-      console.error('Error fetching activity details:', error);
+      safeErrorLog('Error fetching activity details', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -3892,7 +3791,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: 'Invalid invitation data', errors: error.errors });
       }
-      console.error('Error creating invitation:', error);
+      safeErrorLog('Error creating invitation', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -3932,7 +3831,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(invitesWithUrls);
     } catch (error) {
-      console.error('Error retrieving invitations:', error);
+      safeErrorLog('Error retrieving invitations', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -4033,7 +3932,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         members: membersWithUser.filter(member => member.user !== null)
       });
     } catch (error) {
-      console.error('Error processing invitation:', error);
+      safeErrorLog('Error processing invitation', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -4115,7 +4014,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         membership: tripMember
       });
     } catch (error) {
-      console.error('Error accepting invitation:', error);
+      safeErrorLog('Error accepting invitation', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -4158,7 +4057,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.status(201).json(member);
     } catch (error) {
-      console.error('Error joining trip:', error);
+      safeErrorLog('Error joining trip', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -4196,7 +4095,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.status(201).json(notification);
     } catch (error) {
-      console.error('Error creating notification:', error);
+      safeErrorLog('Error creating notification', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -4210,7 +4109,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const notifications = await storage.getUserNotifications(user.id);
       res.json(notifications);
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      safeErrorLog('Error fetching notifications', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -4233,7 +4132,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(notification);
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      safeErrorLog('Error marking notification as read', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -4289,7 +4188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(expensesWithUserDetails);
     } catch (error) {
-      console.error('Error fetching expenses:', error);
+      safeErrorLog('Error fetching expenses', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -4346,7 +4245,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(enhancedSummary);
     } catch (error) {
-      console.error('Error fetching expense summary:', error);
+      safeErrorLog('Error fetching expense summary', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -4432,7 +4331,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(updatedExpense);
     } catch (error) {
-      console.error('Error updating expense:', error);
+      safeErrorLog('Error updating expense', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -4517,7 +4416,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             activityDeleted = true;
           }
         } catch (activityError) {
-          console.error('Error deleting linked activity:', activityError);
+          safeErrorLog('Error deleting linked activity', activityError);
           // Continue with expense deletion even if activity deletion fails
         }
       }
@@ -4547,7 +4446,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(500).json({ message: 'Failed to delete expense' });
       }
     } catch (error) {
-      console.error('Error deleting expense:', error);
+      safeErrorLog('Error deleting expense', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -4586,9 +4485,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const { lookupFlightInfo } = await import('./flight-lookup');
         flightInfo = await lookupFlightInfo(req.body.flightNumber, req.body.departureDate || req.body.arrivalDate);
-        console.log('Flight lookup result:', flightInfo);
       } catch (error) {
-        console.log('Flight lookup failed:', (error as Error).message);
       }
       
       if (flightInfo && flightInfo.airline) {
@@ -4633,12 +4530,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           cost: req.body.price || null
         };
         
-        console.log('Creating flight activity:', activityData);
         try {
           const createdActivity = await storage.createActivity(activityData);
-          console.log('Successfully created flight activity:', createdActivity);
         } catch (error) {
-          console.error('Failed to create activity for flight:', error);
+          safeErrorLog('Failed to create activity for flight', error);
         }
         
         // Notify trip members about the new flight information
@@ -4689,12 +4584,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           cost: req.body.price || null
         };
         
-        console.log('Creating flight activity (no verified data):', activityData);
         try {
           const createdActivity = await storage.createActivity(activityData);
-          console.log('Successfully created flight activity:', createdActivity);
         } catch (error) {
-          console.error('Failed to create activity for flight:', error);
+          safeErrorLog('Failed to create activity for flight', error);
         }
         
         // Notify trip members about the new flight information
@@ -4709,7 +4602,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         res.status(400).json({ message: 'Invalid flight data', errors: error.errors });
       } else {
-        console.error('Error creating flight info:', error);
+        safeErrorLog('Error creating flight info', error);
         res.status(500).json({ message: 'Server error' });
       }
     }
@@ -4755,7 +4648,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(flightsWithUserDetails);
     } catch (error) {
-      console.error('Error fetching flight info:', error);
+      safeErrorLog('Error fetching flight info', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -4788,9 +4681,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           const { lookupFlightInfo } = await import('./flight-lookup');
           flightInfo = await lookupFlightInfo(req.body.flightNumber, req.body.departureDate || req.body.arrivalDate || flight.flightDetails?.userProvidedDepartureDate);
-          console.log('Flight lookup result for update:', flightInfo);
         } catch (error) {
-          console.log('Flight lookup failed during update:', (error as Error).message);
         }
       }
 
@@ -4828,7 +4719,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(updatedFlight);
     } catch (error) {
-      console.error('Error updating flight info:', error);
+      safeErrorLog('Error updating flight info', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -4869,7 +4760,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(500).json({ message: 'Failed to delete flight information' });
       }
     } catch (error) {
-      console.error('Error deleting flight info:', error);
+      safeErrorLog('Error deleting flight info', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -4897,7 +4788,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const flightResults = await storage.searchFlights(departureCity, arrivalCity, date);
       res.json(flightResults);
     } catch (error) {
-      console.error('Error searching flights:', error);
+      safeErrorLog('Error searching flights', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -4944,7 +4835,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ errors: error.errors });
       }
-      console.error('Error creating poll:', error);
+      safeErrorLog('Error creating poll', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -5008,7 +4899,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(pollsWithVotes);
     } catch (error) {
-      console.error('Error fetching polls:', error);
+      safeErrorLog('Error fetching polls', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -5106,7 +4997,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ errors: error.errors });
       }
-      console.error('Error voting on poll:', error);
+      safeErrorLog('Error voting on poll', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -5183,7 +5074,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalVotes: updatedVotes.length
       });
     } catch (error) {
-      console.error('Error removing poll vote:', error);
+      safeErrorLog('Error removing poll vote', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -5274,7 +5165,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(validTrips);
       
     } catch (error) {
-      console.error('Error fetching budget dashboard data:', error);
+      safeErrorLog('Error fetching budget dashboard data', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -5331,7 +5222,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(updatedUser);
     } catch (error) {
-      console.error('Error updating profile:', error);
+      safeErrorLog('Error updating profile', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -5367,7 +5258,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ message: 'Password updated successfully' });
     } catch (error) {
-      console.error('Error changing password:', error);
+      safeErrorLog('Error changing password', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -5391,7 +5282,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedUser = await storage.updateUser(user.id, { avatar: dataUrl });
       return res.json(updatedUser);
     } catch (error) {
-      console.error('Error uploading avatar:', error);
+      safeErrorLog('Error uploading avatar', error);
       return res.status(500).json({ message: 'Server error' });
     }
   });
@@ -5474,7 +5365,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(publicProfile);
     } catch (error) {
-      console.error("Error fetching user profile:", error);
+      safeErrorLog("Error fetching user profile", error);
       res.status(500).json({ message: "Server error" });
     }
   });
@@ -5530,7 +5421,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(stats);
     } catch (error) {
-      console.error("Error fetching user stats:", error);
+      safeErrorLog("Error fetching user stats", error);
       res.status(500).json({ message: "Server error" });
     }
   });
@@ -5569,7 +5460,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(updatedTrip);
     } catch (error) {
-      console.error("Error uploading trip image:", error);
+      safeErrorLog("Error uploading trip image", error);
       res.status(500).json({ message: "Server error" });
     }
   });
@@ -5602,7 +5493,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(updatedTrip);
     } catch (error) {
-      console.error("Error removing trip image:", error);
+      safeErrorLog("Error removing trip image", error);
       res.status(500).json({ message: "Server error" });
     }
   });
@@ -5616,11 +5507,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const { title, amount, category, description, paidBy, splitWith } = req.body;
       
-      console.log('Creating manual expense:', { title, amount, category, description, paidBy, splitWith });
-      
       // Validate required fields
       if (!title || !amount || !paidBy || !splitWith) {
-        console.log('Validation failed:', { title: !!title, amount: !!amount, paidBy: !!paidBy, splitWith: !!splitWith });
         return res.status(400).json({ message: "Missing required fields" });
       }
       
@@ -5681,7 +5569,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(expense);
     } catch (error) {
-      console.error("Error creating expense:", error);
+      safeErrorLog("Error creating expense", error);
       res.status(500).json({ message: "Failed to create expense" });
     }
   });
@@ -5711,7 +5599,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(balances);
     } catch (error) {
-      console.error("Error calculating balances:", error);
+      safeErrorLog("Error calculating balances", error);
       res.status(500).json({ message: "Failed to calculate balances" });
     }
   });
@@ -5742,7 +5630,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(expense);
     } catch (error) {
-      console.error('Error fetching expense details:', error);
+      safeErrorLog('Error fetching expense details', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -5823,7 +5711,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(settlement);
     } catch (error) {
-      console.error("Error initiating settlement:", error);
+      safeErrorLog("Error initiating settlement", error);
       res.status(500).json({ message: "Failed to initiate settlement" });
     }
   });
@@ -5848,7 +5736,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(enhancedSettlements);
     } catch (error) {
-      console.error("Error fetching settlements:", error);
+      safeErrorLog("Error fetching settlements", error);
       res.status(500).json({ message: "Failed to fetch settlements" });
     }
   });
@@ -5898,7 +5786,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(confirmedSettlement);
     } catch (error) {
-      console.error("Error confirming settlement:", error);
+      safeErrorLog("Error confirming settlement", error);
       res.status(500).json({ message: "Failed to confirm settlement" });
     }
   });
@@ -5952,7 +5840,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(rejectedSettlement);
     } catch (error) {
-      console.error("Error rejecting settlement:", error);
+      safeErrorLog("Error rejecting settlement", error);
       res.status(500).json({ message: "Failed to reject settlement" });
     }
   });
@@ -5979,7 +5867,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(enhancedSettlements);
     } catch (error) {
-      console.error("Error fetching pending settlements:", error);
+      safeErrorLog("Error fetching pending settlements", error);
       res.status(500).json({ message: "Failed to fetch pending settlements" });
     }
   });
@@ -5993,7 +5881,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tripsWithBalances = await (storage as any).getTripsWithUnsettledBalances(user.id);
       res.json(tripsWithBalances);
     } catch (error) {
-      console.error("Error fetching unsettled balances:", error);
+      safeErrorLog("Error fetching unsettled balances", error);
       res.status(500).json({ message: "Failed to fetch unsettled balances" });
     }
   });
@@ -6050,7 +5938,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(options);
     } catch (error) {
-      console.error("Error getting settlement options:", error);
+      safeErrorLog("Error getting settlement options", error);
       res.status(500).json({ message: "Failed to get settlement options" });
     }
   });
@@ -6105,7 +5993,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         originalBalances: balances
       });
     } catch (error) {
-      console.error("Error calculating optimized settlements:", error);
+      safeErrorLog("Error calculating optimized settlements", error);
       res.status(500).json({ message: "Failed to calculate optimized settlements" });
     }
   });
@@ -6143,7 +6031,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ recommendations });
     } catch (error) {
-      console.error("Error getting user settlement recommendations:", error);
+      safeErrorLog("Error getting user settlement recommendations", error);
       res.status(500).json({ message: "Failed to get settlement recommendations" });
     }
   });
@@ -6202,7 +6090,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: user.email
       });
     } catch (error) {
-      console.error('❌ Email confirmation error:', error);
+      safeErrorLog('❌ Email confirmation error', error);
       res.status(500).json({ message: 'Server error during email confirmation' });
     }
   });
@@ -6345,15 +6233,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (emailError) {
         const emailEndTime = Date.now();
         const emailDuration = emailEndTime - emailStartTime;
-        console.error(`❌ [ROUTES] Email send failed after ${emailDuration}ms`);
-        console.error('❌ Failed to send password reset email:', emailError);
-        console.error('❌ [ROUTES] Error details:', {
-          message: emailError instanceof Error ? emailError.message : 'Unknown error',
-          code: (emailError as any)?.code,
-          command: (emailError as any)?.command,
-          response: (emailError as any)?.response,
-          stack: emailError instanceof Error ? emailError.stack?.substring(0, 300) + '...' : undefined
-        });
+        safeErrorLog(`❌ [ROUTES] Email send failed after ${emailDuration}ms`, emailError);
         
         // Check if it's due to Gmail API configuration issues
         if (emailError instanceof Error && (
@@ -6379,12 +6259,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
     } catch (error) {
-      console.error('❌ Forgot password error:', error);
-      console.error('❌ Error details:', {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        timestamp: new Date().toISOString()
-      });
+      safeErrorLog('❌ Forgot password error', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -6440,7 +6315,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`✅ Password reset successful for user ${user.id}`);
       res.json({ message: 'Password reset successfully' });
     } catch (error) {
-      console.error('Reset password error:', error);
+      safeErrorLog('Reset password error', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -6525,7 +6400,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: 'Recovery email sent. Please check your inbox and click the link to restore your account.' 
       });
     } catch (error) {
-      console.error('Recovery request error:', error);
+      safeErrorLog('Recovery request error', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -6565,7 +6440,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         deletedAt: user.deletedAt
       });
     } catch (error) {
-      console.error('Recovery confirmation error:', error);
+      safeErrorLog('Recovery confirmation error', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -6623,7 +6498,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
     } catch (error) {
-      console.error('Recovery confirmation error:', error);
+      safeErrorLog('Recovery confirmation error', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -6732,7 +6607,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`✅ New confirmation email sent successfully to: ${user.email}`);
         res.json({ message: 'Confirmation email sent successfully' });
       } catch (emailError) {
-        console.error('❌ Failed to send new confirmation email:', emailError);
+        safeErrorLog('❌ Failed to send new confirmation email', emailError);
         
         if (emailError instanceof Error && emailError.message.includes('SMTP not configured')) {
           console.warn('⚠️ Email functionality is disabled - returning confirmation URL in response');
@@ -6745,7 +6620,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
     } catch (error) {
-      console.error('❌ Resend confirmation error:', error);
+      safeErrorLog('❌ Resend confirmation error', error);
       res.status(500).json({ message: 'Server error during resend confirmation' });
     }
   });
@@ -6772,7 +6647,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name: user.name
       });
     } catch (error) {
-      console.error('❌ Email status check error:', error);
+      safeErrorLog('❌ Email status check error', error);
       res.status(500).json({ message: 'Server error during email status check' });
     }
   });
@@ -6793,7 +6668,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     // Check if Google OAuth is properly configured
     if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-      console.error('❌ Google OAuth not configured properly');
+      // Google OAuth not configured properly - no action needed
       return res.status(500).json({ 
         error: 'Google OAuth not configured',
         message: 'Missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET environment variables'
@@ -6811,7 +6686,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       res.json({ message: 'OAuth backend is reachable', status: 'ok' });
     } catch (error) {
-      console.error('OAuth test error:', error);
+      safeErrorLog('OAuth test error', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -6883,7 +6758,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
     } catch (error) {
-      console.error('❌ Error in OAuth token validation:', error);
+      safeErrorLog('❌ Error in OAuth token validation', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   });
@@ -6892,7 +6767,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     (req: Request, res: Response, next: NextFunction) => {
       passport.authenticate('google', (err: any, user: any, info: any) => {
         if (err) {
-          console.error('❌ OAuth authentication error:', err);
+          safeErrorLog('❌ OAuth authentication error', err);
           // Check if error is about deleted account
           if (err.message === 'ACCOUNT_DELETED') {
             const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://navigator-update.vercel.app';
@@ -6903,14 +6778,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.redirect(302, `${frontendUrl}/login?error=oauth_failed`);
         }
         if (!user) {
-          console.error('❌ No user object in OAuth callback');
+          // No user object in OAuth callback - handled by error response
           const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://navigator-update.vercel.app';
           return res.redirect(302, `${frontendUrl}/login?error=oauth_failed`);
         }
         // User is authenticated, continue to next handler
         req.login(user, (loginErr) => {
           if (loginErr) {
-            console.error('❌ Error logging in user:', loginErr);
+            safeErrorLog('❌ Error logging in user', loginErr);
             const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://navigator-update.vercel.app';
             return res.redirect(302, `${frontendUrl}/login?error=oauth_failed`);
           }
@@ -6928,7 +6803,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Check if user is properly authenticated
         if (!req.user) {
-          console.error('❌ No user object in OAuth callback');
+          // No user object in OAuth callback - handled by error response
           return res.redirect(302, `${process.env.FRONTEND_URL || 'https://navigator-update.vercel.app'}/login?error=oauth_failed`);
         }
         
@@ -6940,7 +6815,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Save the session to ensure it's persisted
           req.session.save((err) => {
             if (err) {
-              console.error('❌ Error saving session:', err);
+              safeErrorLog('❌ Error saving session', err);
             } else {
               console.log('✅ Session saved successfully');
             }
@@ -6991,7 +6866,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           res.redirect(302, redirectUrl);
         } catch (redirectError) {
-          console.error('❌ Redirect error:', redirectError);
+          safeErrorLog('❌ Redirect error', redirectError);
           // Fallback: send JSON response with redirect info
           res.json({
             success: true,
@@ -7002,7 +6877,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       } catch (error) {
-        console.error('❌ Error in Google OAuth callback:', error);
+        safeErrorLog('❌ Error in Google OAuth callback', error);
         // Fallback redirect to homepage
         const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://navigator-update.vercel.app';
         console.log('🔄 Fallback redirect to:', `${frontendUrl}/`);
@@ -7045,7 +6920,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ recommendations });
     } catch (error: any) {
-      console.error('❌ Airport recommendations error:', error);
+      safeErrorLog('❌ Airport recommendations error', error);
       res.status(500).json({ 
         error: 'Failed to get airport recommendations',
         message: error.message 
@@ -7072,7 +6947,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ airports });
     } catch (error: any) {
-      console.error('❌ Nearby airports error:', error);
+      safeErrorLog('❌ Nearby airports error', error);
       res.status(500).json({ 
         error: 'Failed to find nearby airports',
         message: error.message 
@@ -7102,7 +6977,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ airport });
     } catch (error: any) {
-      console.error('❌ Airport details error:', error);
+      safeErrorLog('❌ Airport details error', error);
       res.status(500).json({ 
         error: 'Failed to get airport details',
         message: error.message 
@@ -7117,7 +6992,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const status = getAirportRecommendationsStatus();
       res.json(status);
     } catch (error: any) {
-      console.error('❌ Airport recommendations status error:', error);
+      safeErrorLog('❌ Airport recommendations status error', error);
       res.status(500).json({ 
         error: 'Failed to check airport recommendations status',
         message: error.message 
@@ -7162,7 +7037,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         searchRadius: radius
       });
     } catch (error: any) {
-      console.error('❌ Airport debug error:', error);
+      safeErrorLog('❌ Airport debug error', error);
       res.status(500).json({ 
         error: 'Failed to debug airports',
         message: error.message 
