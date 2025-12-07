@@ -145,6 +145,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (response.ok) {
             const userData = await response.json();
             console.log("Auth check: userData from /api/auth/me:", userData);
+            
+            // Check for pending invitation BEFORE setting user state
+            // This prevents onboarding from starting before redirect for new users
+            const pendingInvitation = localStorage.getItem('pendingInvitation');
+            if (pendingInvitation) {
+              // For new users from invite links, use hard redirect to prevent page render
+              // Check if this is likely a new user (no trips yet) by checking if they just signed up
+              // If pending invitation exists and user just authenticated, redirect immediately
+              console.log("🔗 Found pending invitation during JWT auth, redirecting...");
+              window.location.href = `/invite/${pendingInvitation}`;
+              setIsLoading(false);
+              return;
+            }
+            
             setUser(userData);
             
             // Track user identification with FullStory for existing sessions
@@ -156,9 +170,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               });
               wsClient.connect(userData.id, []);
             }
-            
-            // Check for pending invitation after authentication
-            handlePendingInvitationRedirect(navigate);
             
             setIsLoading(false);
             return;
@@ -180,6 +191,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (sessionResponse.ok) {
             const userData = await sessionResponse.json();
             console.log("Auth check: userData from session /api/auth/me:", userData);
+            
+            // Check for pending invitation BEFORE setting user state
+            // This prevents onboarding from starting before redirect for new users
+            const pendingInvitation = localStorage.getItem('pendingInvitation');
+            if (pendingInvitation) {
+              // For new users from invite links, use hard redirect to prevent page render
+              console.log("🔗 Found pending invitation during session auth, redirecting...");
+              window.location.href = `/invite/${pendingInvitation}`;
+              setIsLoading(false);
+              return;
+            }
+            
             setUser(userData);
             
             // Track user identification with FullStory for session-based auth
@@ -190,9 +213,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 username: userData.username,
               });
               wsClient.connect(userData.id, []);
-              
-              // Check for pending invitation after session authentication
-              handlePendingInvitationRedirect(navigate);
             }
           }
         } catch (sessionError) {
