@@ -1,25 +1,7 @@
-import { Link, useLocation } from "wouter";
-import { useAuth } from "@/hooks/use-auth";
-import { useEffect } from "react";
+import { Link } from "wouter";
 import { SEO } from "@/components/SEO";
 
 export default function Terms() {
-  const { user, isLoading } = useAuth();
-  const [, navigate] = useLocation();
-
-  // Redirect authenticated users to dashboard (but render content first for SEO)
-  useEffect(() => {
-    if (!isLoading && user) {
-      navigate("/dashboard");
-    }
-  }, [user, isLoading, navigate]);
-
-  // Don't render terms page if user is authenticated (will redirect)
-  // But show content during loading for SEO/crawlers
-  if (!isLoading && user) {
-    return null;
-  }
-
   return (
     <div className="min-h-screen bg-white">
       <SEO page="terms" />
