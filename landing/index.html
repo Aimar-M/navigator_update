@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Navigator — One-Stop Shop for Group Trips</title>
+  <meta name="description" content="Plan group trips effortlessly with Navigator. Split expenses, coordinate flights, chat, and vote on plans — all in one place." />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ============================================
+       NAVIGATION
+       ============================================ -->
+  <nav class="nav nav--transparent" id="mainNav">
+    <div class="container nav__inner">
+      <!-- Logo: 02 (white) on hero, 01 (dark) on scroll -->
+      <a href="/" class="nav__logo-link">
+        <img src="assets/logo-light.png" alt="Navigator" class="nav__logo nav__logo--light" />
+        <img src="assets/logo-dark.png" alt="Navigator" class="nav__logo nav__logo--dark" />
+      </a>
+
+      <!-- Desktop Links -->
+      <ul class="nav__links">
+        <li><a href="#features" class="nav__link">Features</a></li>
+        <li><a href="#how-it-works" class="nav__link">How It Works</a></li>
+        <li><a href="about.html" class="nav__link">About</a></li>
+        <li><a href="contact.html" class="nav__link">Contact</a></li>
+      </ul>
+
+      <!-- CTA -->
+      <a href="/login" class="btn btn-primary btn-sm nav__cta">Get Started</a>
+
+      <!-- Mobile Toggle -->
+      <button class="nav__mobile-toggle" id="mobileToggle" aria-label="Open menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div class="nav__mobile-menu" id="mobileMenu">
+    <a href="#features" onclick="closeMobileMenu()">Features</a>
+    <a href="#how-it-works" onclick="closeMobileMenu()">How It Works</a>
+    <a href="about.html" onclick="closeMobileMenu()">About</a>
+    <a href="contact.html" onclick="closeMobileMenu()">Contact</a>
+    <a href="/login" class="btn btn-primary" style="text-align:center;margin-top:1rem;">Get Started</a>
+  </div>
+
+  <!-- ============================================
+       SECTION 1: HERO
+       ============================================ -->
+  <section class="hero" id="hero">
+    <!-- Background Video -->
+    <div class="hero__video-wrap">
+      <video
+        class="hero__video"
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="auto"
+        id="heroVideo"
+      >
+        <source src="assets/hero-bg.mov" type="video/mp4" />
+        <source src="assets/hero-bg.mov" type="video/quicktime" />
+      </video>
+      <div class="hero__overlay"></div>
+    </div>
+
+    <!-- Hero Content -->
+    <div class="hero__content">
+      <h1 class="text-hero hero__headline reveal">
+        One-stop shop for<br />
+        <span class="hero__headline-accent">group trips</span>
+      </h1>
+      <p class="hero__subtext reveal reveal-delay-1">
+        Plan together. Split costs. Make memories. The only app your crew needs to go from idea to adventure.
+      </p>
+      <div class="hero__actions reveal reveal-delay-2">
+        <a href="/login" class="btn btn-primary btn-lg">Get Started — It's Free</a>
+        <a href="#how-it-works" class="btn btn-outline-white">See How It Works</a>
+      </div>
+    </div>
+
+    <!-- Scroll Indicator -->
+    <div class="hero__scroll">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 5v14M19 12l-7 7-7-7"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ============================================
+       SECTION 2: SOCIAL PROOF BAR (hidden for now)
+       ============================================ -->
+  <section class="proof" id="proof" style="display: none;">
+    <div class="container">
+      <div class="proof__grid">
+        <div class="proof__stat reveal">
+          <div class="proof__number">500+</div>
+          <div class="proof__label">Trips Planned</div>
+        </div>
+        <div class="proof__stat reveal reveal-delay-1">
+          <div class="proof__number">2,000+</div>
+          <div class="proof__label">Happy Travelers</div>
+        </div>
+        <div class="proof__stat reveal reveal-delay-2">
+          <div class="proof__number">$150K+</div>
+          <div class="proof__label">Expenses Split</div>
+        </div>
+        <div class="proof__stat reveal reveal-delay-3">
+          <div class="proof__number">4.9</div>
+          <div class="proof__label">Average Rating</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       SECTION 3: FEATURES
+       ============================================ -->
+  <section class="features section-lg" id="features">
+    <div class="container">
+      <div class="features__header reveal">
+        <h2 class="text-h1">Everything your trip needs</h2>
+        <p>From the first idea to the last sunset — Navigator keeps your crew organized, connected, and on budget.</p>
+      </div>
+
+      <!-- Feature 1: Trip Planning -->
+      <div class="feature-row reveal">
+        <div class="feature-row__image">
+          <img
+            src="assets/itinerary.png"
+            alt="Navigator itinerary view"
+            loading="lazy"
+          />
+        </div>
+        <div class="feature-row__text">
+          <div class="feature-row__icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/>
+            </svg>
+          </div>
+          <h3 class="text-h3 feature-row__title">Collaborative Itineraries</h3>
+          <p class="feature-row__desc">
+            Build your trip plan together in real time. Everyone sees the latest schedule, votes on activities, and stays in the loop — no more scattered Google Docs.
+          </p>
+        </div>
+      </div>
+
+      <!-- Feature 2: Expense Splitting -->
+      <div class="feature-row feature-row--reverse reveal">
+        <div class="feature-row__image">
+          <div class="feature-collage feature-collage--expenses">
+            <div class="feature-collage__main">
+              <img
+                src="assets/split%20expenses.png"
+                alt="Navigator add expense modal"
+                loading="lazy"
+              />
+            </div>
+            <div class="feature-collage__overlap">
+              <img
+                src="assets/settled_expenses.png"
+                alt="Navigator expense overview — who owes what"
+                loading="lazy"
+              />
+            </div>
+          </div>
+        </div>
+        <div class="feature-row__text">
+          <div class="feature-row__icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+          </div>
+          <h3 class="text-h3 feature-row__title">Smart Expense Splitting</h3>
+          <p class="feature-row__desc">
+            Track every shared cost as it happens. Navigator calculates who owes what and settles up instantly — no more awkward Venmo requests after the trip.
+          </p>
+        </div>
+      </div>
+
+      <!-- Feature 3: Group Chat -->
+      <div class="feature-row reveal">
+        <div class="feature-row__image">
+          <img
+            src="assets/chat.png"
+            alt="Navigator group chat"
+            loading="lazy"
+          />
+        </div>
+        <div class="feature-row__text">
+          <div class="feature-row__icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+          </div>
+          <h3 class="text-h3 feature-row__title">Built-in Group Chat</h3>
+          <p class="feature-row__desc">
+            Keep all trip conversations in one place. Share links, photos, and polls without losing them in a sea of iMessages and WhatsApp threads.
+          </p>
+        </div>
+      </div>
+
+      <!-- Feature 4: Easy Invites -->
+      <div class="feature-row feature-row--reverse reveal">
+        <div class="feature-row__image">
+          <div class="feature-collage feature-collage--portrait">
+            <div class="feature-collage__main">
+              <img
+                src="assets/tripinvite1.png"
+                alt="Navigator trip invite — You're Invited"
+                loading="lazy"
+              />
+            </div>
+            <div class="feature-collage__overlap">
+              <img
+                src="assets/tripinvite2.png"
+                alt="Navigator trip details and itinerary preview"
+                loading="lazy"
+              />
+            </div>
+          </div>
+        </div>
+        <div class="feature-row__text">
+          <div class="feature-row__icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>
+            </svg>
+          </div>
+          <h3 class="text-h3 feature-row__title">One Link, Everyone's In</h3>
+          <p class="feature-row__desc">
+            Share a single invite link and your whole crew joins instantly. No app downloads required, no sign-up hoops — just tap and you're on the trip.
+          </p>
+        </div>
+      </div>
+
+      <!-- Feature 5: Polls & Voting -->
+      <div class="feature-row reveal">
+        <div class="feature-row__image">
+          <img
+            src="assets/chat.png"
+            alt="Navigator polls and voting"
+            loading="lazy"
+          />
+        </div>
+        <div class="feature-row__text">
+          <div class="feature-row__icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 20V10M12 20V4M6 20v-6"/>
+            </svg>
+          </div>
+          <h3 class="text-h3 feature-row__title">Democratic Decisions</h3>
+          <p class="feature-row__desc">
+            Can't decide on the Airbnb? Put it to a vote. Navigator's polling system lets the group weigh in on every decision — fair, fast, and drama-free.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       SECTION 4: HOW IT WORKS
+       ============================================ -->
+  <section class="how-it-works section-lg" id="how-it-works">
+    <div class="container">
+      <div class="how-it-works__header reveal">
+        <h2 class="text-h1">Three steps to your next adventure</h2>
+      </div>
+
+      <div class="steps">
+        <!-- Step 1 -->
+        <div class="step reveal">
+          <div class="step__number">1</div>
+          <div class="step__image">
+            <img
+              src="assets/start%20here.png"
+              alt="Navigator dashboard — Create a Trip"
+              loading="lazy"
+            />
+          </div>
+          <h3 class="step__title">Create Your Trip</h3>
+          <p class="step__desc">Set the destination, dates, and budget. Navigator builds your trip hub in seconds.</p>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="step reveal reveal-delay-1">
+          <div class="step__number">2</div>
+          <div class="step__image">
+            <img
+              src="assets/tripinvite1.png"
+              alt="Navigator trip invite page"
+              loading="lazy"
+            />
+          </div>
+          <h3 class="step__title">Invite Your Crew</h3>
+          <p class="step__desc">Share a link. Friends join instantly — no downloads, no sign-up friction.</p>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="step reveal reveal-delay-2">
+          <div class="step__number">3</div>
+          <div class="step__image step__image--collage">
+            <div class="step-collage">
+              <div class="step-collage__card step-collage__card--back">
+                <img src="assets/tripcreated.png" alt="Navigator trip overview" loading="lazy" />
+              </div>
+              <div class="step-collage__card step-collage__card--mid">
+                <img src="assets/itinerary.png" alt="Navigator itinerary" loading="lazy" />
+              </div>
+              <div class="step-collage__card step-collage__card--front">
+                <img src="assets/chat.png" alt="Navigator group chat" loading="lazy" />
+              </div>
+            </div>
+          </div>
+          <h3 class="step__title">Go Live It</h3>
+          <p class="step__desc">Plan, vote, split, and chat — all in one place. Then get out there and make memories.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       SECTION 5: PHOTO GALLERY WALL
+       ============================================ -->
+  <section class="photo-wall" id="gallery">
+    <div class="container">
+      <div class="photo-wall__header reveal">
+        <h2 class="text-h1">Every trip tells a story</h2>
+        <p class="photo-wall__subtext">Real moments from real Navigator trips.</p>
+        <div class="photo-wall__actions">
+          <a href="/login" class="btn btn-primary">Plan a Trip</a>
+          <a href="/login" class="btn btn-secondary">Get the App</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scattered polaroids -->
+    <div class="polaroid-table">
+      <div class="polaroid" style="--x: 1%; --y: 0%; --r: -6deg; --z: 1;"><img src="assets/fromsocialmedia/1.jpg" alt="" loading="lazy" /></div>
+      <div class="polaroid" style="--x: 15%; --y: 4%; --r: 4deg; --z: 3;"><img src="assets/fromsocialmedia/2.jpg" alt="" loading="lazy" /></div>
+      <div class="polaroid" style="--x: 30%; --y: -1%; --r: -3deg; --z: 2;"><img src="assets/fromsocialmedia/3.jpeg" alt="" loading="lazy" /></div>
+      <div class="polaroid" style="--x: 46%; --y: 3%; --r: 7deg; --z: 4;"><img src="assets/fromsocialmedia/4.jpeg" alt="" loading="lazy" /></div>
+      <div class="polaroid" style="--x: 61%; --y: -2%; --r: -5deg; --z: 1;"><img src="assets/fromsocialmedia/5.jpeg" alt="" loading="lazy" /></div>
+      <div class="polaroid" style="--x: 77%; --y: 2%; --r: 3deg; --z: 5;"><img src="assets/fromsocialmedia/6.jpeg" alt="" loading="lazy" /></div>
+      <div class="polaroid" style="--x: 5%; --y: 30%; --r: 5deg; --z: 6;"><img src="assets/fromsocialmedia/7.jpeg" alt="" loading="lazy" /></div>
+      <div class="polaroid" style="--x: 20%; --y: 26%; --r: -8deg; --z: 7;"><img src="assets/fromsocialmedia/8.jpeg" alt="" loading="lazy" /></div>
+      <div class="polaroid" style="--x: 36%; --y: 32%; --r: 2deg; --z: 3;"><img src="assets/fromsocialmedia/9.jpeg" alt="" loading="lazy" /></div>
+      <div class="polaroid" style="--x: 52%; --y: 28%; --r: -4deg; --z: 8;"><img src="assets/fromsocialmedia/10.jpeg" alt="" loading="lazy" /></div>
+      <div class="polaroid" style="--x: 67%; --y: 33%; --r: 6deg; --z: 2;"><img src="assets/fromsocialmedia/11.jpeg" alt="" loading="lazy" /></div>
+      <div class="polaroid" style="--x: 82%; --y: 27%; --r: -3deg; --z: 4;"><img src="assets/fromsocialmedia/12.jpeg" alt="" loading="lazy" /></div>
+      <div class="polaroid" style="--x: 10%; --y: 58%; --r: -6deg; --z: 9;"><img src="assets/fromsocialmedia/13.jpeg" alt="" loading="lazy" /></div>
+      <div class="polaroid" style="--x: 38%; --y: 60%; --r: 3deg; --z: 5;"><img src="assets/fromsocialmedia/14.jpeg" alt="" loading="lazy" /></div>
+      <div class="polaroid" style="--x: 65%; --y: 56%; --r: -7deg; --z: 6;"><img src="assets/fromsocialmedia/15.jpeg" alt="" loading="lazy" /></div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       SECTION 6: TESTIMONIALS
+       ============================================ -->
+  <section class="testimonials section-lg" id="testimonials">
+    <div class="container">
+      <div class="testimonials__header reveal">
+        <h2 class="text-h1">What travelers are saying</h2>
+      </div>
+
+      <div class="testimonials__grid">
+        <div class="testimonial reveal">
+          <p class="testimonial__quote">
+            "Navigator saved our friendships. Seriously — no more 'who paid for what' arguments. Everything was tracked and settled before we even got home."
+          </p>
+          <div class="testimonial__author">
+            <img class="testimonial__avatar" src="https://i.pravatar.cc/88?img=11" alt="Sarah M." />
+            <div>
+              <div class="testimonial__name">Sarah M.</div>
+              <div class="testimonial__role">Organized 3 group trips</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial reveal reveal-delay-1">
+          <p class="testimonial__quote">
+            "I used to dread planning group trips. Now I just create a trip on Navigator, drop the link, and everyone handles their own stuff. Game changer."
+          </p>
+          <div class="testimonial__author">
+            <img class="testimonial__avatar" src="https://i.pravatar.cc/88?img=12" alt="Marcus J." />
+            <div>
+              <div class="testimonial__name">Marcus J.</div>
+              <div class="testimonial__role">Weekend trip regular</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial reveal reveal-delay-2">
+          <p class="testimonial__quote">
+            "The polling feature is undefeated. We went from 47 messages debating hotels to one quick vote. Everyone felt heard, nobody got annoyed."
+          </p>
+          <div class="testimonial__author">
+            <img class="testimonial__avatar" src="https://i.pravatar.cc/88?img=16" alt="Priya K." />
+            <div>
+              <div class="testimonial__name">Priya K.</div>
+              <div class="testimonial__role">Planned a 15-person trip</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       SECTION 7: FINAL CTA
+       ============================================ -->
+  <section class="final-cta" id="cta">
+    <div class="container">
+      <h2 class="text-h1 final-cta__headline reveal">Your next trip starts here</h2>
+      <p class="final-cta__subtext reveal reveal-delay-1">
+        Stop planning in group chats. Start planning with Navigator.
+      </p>
+      <div class="reveal reveal-delay-2">
+        <a href="/login" class="btn btn-primary btn-lg">Get Started — It's Free</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       FOOTER
+       ============================================ -->
+  <footer class="footer">
+    <div class="container footer__inner">
+      <div class="footer__columns">
+        <!-- Company -->
+        <div class="footer__col">
+          <h4 class="footer__col-title">Company</h4>
+          <ul class="footer__col-links">
+            <li><a href="about.html">About</a></li>
+            <li><a href="contact.html">Contact</a></li>
+          </ul>
+        </div>
+
+        <!-- Legal -->
+        <div class="footer__col">
+          <h4 class="footer__col-title">Legal</h4>
+          <ul class="footer__col-links">
+            <li><a href="terms.html">Terms &amp; Conditions</a></li>
+            <li><a href="privacy.html">Privacy Policy</a></li>
+          </ul>
+        </div>
+
+        <!-- Social -->
+        <div class="footer__col">
+          <h4 class="footer__col-title">Follow Us</h4>
+          <div class="footer__social">
+            <a href="https://www.instagram.com/navigatortrips/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+              </svg>
+            </a>
+            <a href="https://www.tiktok.com/@navigatortrips" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1 0-5.78 2.92 2.92 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 3 15.57 6.33 6.33 0 0 0 9.37 22a6.33 6.33 0 0 0 6.37-6.23V9.34a8.16 8.16 0 0 0 4.85 1.58V7.49a4.85 4.85 0 0 1-1-.8z"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer__bottom">
+        <p class="footer__copyright">
+          &copy; 2025 Navigator Technologies 1802, Inc. All rights reserved.
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============================================
+       SCRIPTS
+       ============================================ -->
+  <script src="script.js"></script>
+</body>
+</html>

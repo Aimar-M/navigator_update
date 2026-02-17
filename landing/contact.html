@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact — Navigator</title>
+  <meta name="description" content="Get in touch with the Navigator team. We'd love to hear from you." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+
+  <style>
+    /* ---- Page Nav ---- */
+    .page-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--nav-white);
+      border-bottom: 1px solid var(--nav-gray-300);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      padding: 1rem 0;
+    }
+    .page-nav .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .page-nav__logo { height: 36px; width: auto; }
+    .page-nav__links {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      list-style: none;
+    }
+    .page-nav__links a {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--nav-gray-500);
+      transition: color 0.2s ease;
+    }
+    .page-nav__links a:hover { color: var(--nav-black); }
+    .page-nav__links a.active { color: var(--nav-black); font-weight: 600; }
+
+    /* ---- Contact layout ---- */
+    .contact {
+      padding: var(--space-3xl) 0 var(--space-2xl);
+    }
+    .contact__grid {
+      display: grid;
+      grid-template-columns: 5fr 4fr;
+      gap: var(--space-3xl);
+      align-items: start;
+    }
+
+    /* Left column */
+    .contact__heading {
+      margin-bottom: 0.5rem;
+    }
+    .contact__sub {
+      font-size: 1.125rem;
+      color: var(--nav-gray-500);
+      line-height: 1.6;
+      margin-bottom: var(--space-xl);
+      max-width: 460px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--nav-black);
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.01em;
+    }
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      font-size: 0.9375rem;
+      font-family: 'Inter', sans-serif;
+      border: 1px solid var(--nav-gray-300);
+      border-radius: var(--radius-md);
+      background: var(--nav-white);
+      color: var(--nav-black);
+      transition: border-color 0.2s ease;
+    }
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+      color: var(--nav-gray-300);
+    }
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--nav-black);
+    }
+    .form-group textarea {
+      min-height: 140px;
+      resize: vertical;
+    }
+
+    /* Right column — info */
+    .contact__aside {
+      padding-top: 0.5rem;
+    }
+    .contact__aside-image {
+      aspect-ratio: 1 / 1;
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      margin-bottom: var(--space-xl);
+    }
+    .contact__aside-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .contact__detail {
+      margin-bottom: 1.5rem;
+    }
+    .contact__detail-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--nav-gray-500);
+      margin-bottom: 0.375rem;
+    }
+    .contact__detail-value {
+      font-size: 1rem;
+      color: var(--nav-black);
+      line-height: 1.5;
+    }
+    .contact__detail-value a {
+      color: var(--nav-black);
+      text-decoration: underline;
+      text-decoration-color: var(--nav-gray-300);
+      text-underline-offset: 3px;
+      transition: text-decoration-color 0.2s ease;
+    }
+    .contact__detail-value a:hover {
+      text-decoration-color: var(--nav-black);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      padding: 1rem 1.5rem;
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-weight: 500;
+      font-family: 'Inter', sans-serif;
+      color: var(--nav-white);
+      z-index: 9999;
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast--success { background: var(--nav-black); }
+    .toast--error { background: var(--nav-error); }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 768px) {
+      .page-nav__links { gap: 1.25rem; }
+      .page-nav .btn { display: none; }
+      .contact__grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-xl);
+      }
+      .contact__aside {
+        order: -1;
+      }
+      .contact__aside-image {
+        aspect-ratio: 16 / 9;
+      }
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="page-nav">
+    <div class="container">
+      <a href="index.html">
+        <img src="assets/logo-dark.png" alt="Navigator" class="page-nav__logo" />
+      </a>
+      <ul class="page-nav__links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="contact.html" class="active">Contact</a></li>
+      </ul>
+      <a href="/login" class="btn btn-primary btn-sm">Get Started</a>
+    </div>
+  </nav>
+
+  <!-- CONTACT -->
+  <section class="contact">
+    <div class="container">
+      <div class="contact__grid">
+
+        <!-- Form -->
+        <div class="reveal">
+          <h1 class="text-h1 contact__heading">Get in touch</h1>
+          <p class="contact__sub">Questions, feedback, or just want to say hi — we'd love to hear from you.</p>
+
+          <form id="contactForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="firstName">First name</label>
+                <input type="text" id="firstName" name="firstName" placeholder="Jane" required />
+              </div>
+              <div class="form-group">
+                <label for="lastName">Last name</label>
+                <input type="text" id="lastName" name="lastName" placeholder="Doe" required />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input type="email" id="email" name="email" placeholder="jane@example.com" required />
+            </div>
+
+            <div class="form-group">
+              <label for="subject">Subject</label>
+              <input type="text" id="subject" name="subject" placeholder="What's this about?" required />
+            </div>
+
+            <div class="form-group">
+              <label for="message">Message</label>
+              <textarea id="message" name="message" placeholder="Tell us more..." required></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Send Message</button>
+          </form>
+        </div>
+
+        <!-- Aside -->
+        <div class="contact__aside reveal reveal-delay-1">
+          <div class="contact__aside-image">
+            <img
+              src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&h=800&fit=crop"
+              alt="Friends laughing together on a trip"
+              loading="lazy"
+            />
+          </div>
+
+          <div class="contact__detail">
+            <div class="contact__detail-label">Email</div>
+            <div class="contact__detail-value">
+              <a href="mailto:info@navigatortrips.com">info@navigatortrips.com</a>
+            </div>
+          </div>
+
+          <div class="contact__detail">
+            <div class="contact__detail-label">Social</div>
+            <div class="contact__detail-value">
+              <a href="https://www.instagram.com/navigatortrips/" target="_blank" rel="noopener noreferrer">Instagram</a>
+              &nbsp;&middot;&nbsp;
+              <a href="https://www.tiktok.com/@navigatortrips" target="_blank" rel="noopener noreferrer">TikTok</a>
+            </div>
+          </div>
+
+          <div class="contact__detail">
+            <div class="contact__detail-label">Response time</div>
+            <div class="contact__detail-value">Usually within 24 hours</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="final-cta">
+    <div class="container">
+      <h2 class="text-h1 final-cta__headline reveal">Your next trip starts here</h2>
+      <p class="final-cta__subtext reveal reveal-delay-1">
+        Stop planning in group chats. Start planning with Navigator.
+      </p>
+      <div class="reveal reveal-delay-2">
+        <a href="/login" class="btn btn-primary btn-lg">Get Started — It's Free</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container footer__inner">
+      <div class="footer__columns">
+        <div class="footer__col">
+          <h4 class="footer__col-title">Company</h4>
+          <ul class="footer__col-links">
+            <li><a href="about.html">About</a></li>
+            <li><a href="contact.html">Contact</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <h4 class="footer__col-title">Legal</h4>
+          <ul class="footer__col-links">
+            <li><a href="terms.html">Terms &amp; Conditions</a></li>
+            <li><a href="privacy.html">Privacy Policy</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <h4 class="footer__col-title">Follow Us</h4>
+          <div class="footer__social">
+            <a href="https://www.instagram.com/navigatortrips/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+            </a>
+            <a href="https://www.tiktok.com/@navigatortrips" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1 0-5.78 2.92 2.92 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 3 15.57 6.33 6.33 0 0 0 9.37 22a6.33 6.33 0 0 0 6.37-6.23V9.34a8.16 8.16 0 0 0 4.85 1.58V7.49a4.85 4.85 0 0 1-1-.8z"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        <p class="footer__copyright">&copy; 2025 Navigator Technologies 1802, Inc. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="script.js"></script>
+  <script>
+    document.getElementById('contactForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      var fields = ['firstName','lastName','email','subject','message'];
+      for (var i = 0; i < fields.length; i++) {
+        if (!this[fields[i]].value.trim()) {
+          showToast('Please fill in all fields.', 'error');
+          return;
+        }
+      }
+      showToast('Message sent — we\'ll be in touch.', 'success');
+      this.reset();
+    });
+    function showToast(msg, type) {
+      var t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast toast--' + type + ' show';
+      setTimeout(function() { t.classList.remove('show'); }, 3500);
+    }
+  </script>
+</body>
+</html>
