@@ -275,7 +275,6 @@ Sitemap: https://navigatortrips.com/sitemap.xml
     server.listen({
       port,
       host: "0.0.0.0",
-      reusePort: true,
     }, async () => {
       log(`🚀 Server running on port ${port}`);
       log(`📡 API available at http://0.0.0.0:${port}/api`);
