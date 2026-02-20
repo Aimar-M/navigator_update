@@ -52,6 +52,27 @@ export async function setupVite(app: Express, server: Server) {
   });
 
   app.use(vite.middlewares);
+
+  // Serve static assets from the landing directory
+  const landingPath = path.resolve(__dirname, "..", "landing");
+  app.use(express.static(landingPath));
+
+  // Serve static landing pages for public routes
+  const landingRoutes: Record<string, string> = {
+    "/": "index.html",
+    "/about": "about.html",
+    "/contact": "contact.html",
+    "/privacy": "privacy.html",
+    "/terms": "terms.html",
+  };
+
+  for (const [route, file] of Object.entries(landingRoutes)) {
+    app.get(route, (_req, res) => {
+      res.sendFile(path.resolve(landingPath, file));
+    });
+  }
+
+  // Fall through to React SPA for all other routes
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
 
@@ -89,7 +110,26 @@ export function serveStatic(app: Express) {
 
   app.use(express.static(distPath));
 
-  // fall through to index.html if the file doesn't exist
+  // Serve static assets from the landing directory
+  const landingPath = path.resolve(__dirname, "..", "landing");
+  app.use(express.static(landingPath));
+
+  // Serve static landing pages for public routes
+  const landingRoutes: Record<string, string> = {
+    "/": "index.html",
+    "/about": "about.html",
+    "/contact": "contact.html",
+    "/privacy": "privacy.html",
+    "/terms": "terms.html",
+  };
+
+  for (const [route, file] of Object.entries(landingRoutes)) {
+    app.get(route, (_req, res) => {
+      res.sendFile(path.resolve(landingPath, file));
+    });
+  }
+
+  // fall through to React SPA index.html if the file doesn't exist
   app.use("*", (_req, res) => {
     res.sendFile(path.resolve(distPath, "index.html"));
   });
