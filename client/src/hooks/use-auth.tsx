@@ -265,8 +265,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Check if there's a pending invitation and redirect if needed
       if (!handlePendingInvitationRedirect(navigate)) {
-        // Otherwise redirect to home page
-        navigate("/");
+        // Check if there's pending trip data to resume
+        const pendingTrip = localStorage.getItem('pendingTripData');
+        if (pendingTrip) {
+          navigate("/create-trip");
+        } else {
+          navigate("/");
+        }
       }
     } catch (error) {
       toast({
@@ -328,8 +333,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Check if there's a pending invitation and redirect if needed
       if (!handlePendingInvitationRedirect(navigate)) {
-        // Otherwise redirect to home page
-        navigate("/");
+        // Check if there's pending trip data to resume
+        const pendingTrip = localStorage.getItem('pendingTripData');
+        if (pendingTrip) {
+          navigate("/create-trip");
+        } else {
+          navigate("/");
+        }
       }
     } catch (error) {
       toast({

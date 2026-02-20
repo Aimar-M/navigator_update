@@ -595,6 +595,18 @@ const TripForm = forwardRef<TripFormRef, TripFormProps>(({ onComplete }, ref) =>
               )}
             </div>
           )}
+          {/* Show skip link on steps 1 and 2 for unauthenticated users */}
+          {!user && step < totalSteps && (
+            <div className="text-center mt-3">
+              <button
+                type="button"
+                className="text-sm text-gray-500 hover:text-gray-700 underline"
+                onClick={() => navigate('/login')}
+              >
+                Skip — I'll create a trip later
+              </button>
+            </div>
+          )}
           {/* Show just Back button on step 3 for unauthenticated users */}
           {step === 3 && !user && (
             <div className="flex justify-start mt-6">
