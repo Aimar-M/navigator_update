@@ -72,7 +72,7 @@ a {
    ============================================ */
 
 .text-hero {
-  font-size: clamp(3rem, 6vw, 5.5rem);
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
   line-height: 0.95;
   letter-spacing: -0.03em;
   font-weight: 700;
@@ -378,7 +378,7 @@ a {
 
 .hero {
   position: relative;
-  min-height: 100vh;
+  min-height: 75vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -499,6 +499,7 @@ a {
 
 .features {
   background: var(--nav-white);
+  padding-top: var(--space-xl);
 }
 
 .features__header {
@@ -1032,6 +1033,7 @@ a {
    ============================================ */
 
 .testimonials {
+  display: none;
   background: var(--nav-gray-100);
 }
 
