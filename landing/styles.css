@@ -797,11 +797,17 @@ a {
 .steps {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-xl);
+  grid-template-rows: auto 1fr auto auto;
+  column-gap: var(--space-xl);
+  row-gap: var(--space-lg);
 }
 
 .step {
   text-align: center;
+  display: grid;
+  grid-row: span 4;
+  grid-template-rows: subgrid;
+  row-gap: var(--space-sm);
 }
 
 .step__number {
@@ -819,16 +825,17 @@ a {
 }
 
 .step__image {
-  aspect-ratio: 3 / 2;
   border-radius: var(--radius-lg);
   overflow: hidden;
   margin-bottom: 1.5rem;
+  align-self: end;
 }
 
 .step__image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  aspect-ratio: 3 / 2;
 }
 
 /* Step collage variant — no forced aspect, let collage breathe */
@@ -840,7 +847,7 @@ a {
 .step-collage {
   position: relative;
   width: 100%;
-  padding-bottom: 80%;
+  padding-bottom: 66.67%;
 }
 
 .step-collage__card {
