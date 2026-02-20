@@ -10,7 +10,20 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      fontFamily: {
+        inter: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        pacifico: ['Pacifico', 'cursive'],
+      },
       colors: {
+        "nav-blue": "#2D31D1",
+        "nav-black": "#000000",
+        "nav-white": "#FFFFFF",
+        "nav-error": "#E53935",
+        "nav-gray": {
+          100: "#F5F5F5",
+          300: "#D4D4D4",
+          500: "#737373",
+        },
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {

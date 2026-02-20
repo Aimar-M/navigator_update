@@ -1,21 +1,26 @@
-import { Link, useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
+import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useFullStory } from "@/hooks/use-fullstory";
 import { fullstory } from "@/lib/fullstory";
-import { useEffect, useRef } from "react";
-import backgroundVideo from "@/assets/IMG_4795_1758657014573.mov";
-import navigatorLogo from "@/assets/ab_Navigator2-02.png";
-import navigatorLogoMobile from "@/assets/ab_Navigator2-08.png";
+import { useEffect } from "react";
 import FullStoryDebug from "@/components/FullStoryDebug";
 import { SEO } from "@/components/SEO";
-import Footer from "@/components/footer";
+
+import "@/styles/landing.css";
+
+import LandingNav from "@/components/landing/LandingNav";
+import HeroSection from "@/components/landing/HeroSection";
+import FeaturesSection from "@/components/landing/FeaturesSection";
+import HowItWorksSection from "@/components/landing/HowItWorksSection";
+import PhotoWallSection from "@/components/landing/PhotoWallSection";
+import TestimonialsSection from "@/components/landing/TestimonialsSection";
+import FinalCTASection from "@/components/landing/FinalCTASection";
+import LandingFooter from "@/components/landing/LandingFooter";
 
 export default function Landing() {
   const { user, isLoading } = useAuth();
   const [, navigate] = useLocation();
   const { trackPage } = useFullStory();
-  const videoRef = useRef<HTMLVideoElement>(null);
 
   // Track page view
   useEffect(() => {
@@ -23,47 +28,12 @@ export default function Landing() {
       isAuthenticated: !!user,
       timestamp: new Date().toISOString(),
     });
-    
+
     // Test FullStory connection
     setTimeout(() => {
       fullstory.testConnection();
     }, 2000);
   }, [trackPage, user]);
-
-  // Ensure video autoplays on mobile devices
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    // Try to play the video programmatically (helps with mobile autoplay)
-    const playVideo = async () => {
-      try {
-        // Set volume to 0 to ensure muted (some browsers need this)
-        video.volume = 0;
-        await video.play();
-      } catch (error) {
-        // Autoplay was prevented, which is fine - user interaction will be needed
-        console.log('Video autoplay prevented:', error);
-      }
-    };
-
-    // Try playing when video is loaded
-    if (video.readyState >= 2) {
-      // Video metadata is loaded
-      playVideo();
-    } else {
-      // Wait for metadata to load
-      video.addEventListener('loadedmetadata', playVideo, { once: true });
-    }
-
-    // Also try playing when video can play through
-    video.addEventListener('canplaythrough', playVideo, { once: true });
-
-    return () => {
-      video.removeEventListener('loadedmetadata', playVideo);
-      video.removeEventListener('canplaythrough', playVideo);
-    };
-  }, []);
 
   // Redirect authenticated users to dashboard
   useEffect(() => {
@@ -88,95 +58,19 @@ export default function Landing() {
   if (user) {
     return null;
   }
+
   return (
-    <div className="min-h-screen bg-black text-white relative overflow-hidden">
+    <div className="min-h-screen bg-white text-nav-black font-inter overflow-x-hidden">
       <SEO page="home" />
       <FullStoryDebug />
-      {/* Background Video */}
-      <div className="absolute inset-0 z-0">
-        <video
-          ref={videoRef}
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="w-full h-full object-cover"
-          data-testid="background-video"
-          preload="auto"
-          aria-label="Background video of travel destinations"
-        >
-          <source src={backgroundVideo} type="video/mp4" />
-          <source src={backgroundVideo} type="video/quicktime" />
-          {/* Fallback gradient for unsupported browsers */}
-          <div className="w-full h-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" />
-        </video>
-        {/* Dark overlay to ensure text readability */}
-        <div className="absolute inset-0 bg-black/40" />
-      </div>
-
-      {/* Header */}
-      <header className="relative z-50 bg-transparent">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <nav className="flex items-center space-x-8">
-              <Link href="/" className="bg-blue-600 text-white px-3 py-1.5 rounded-full text-sm font-medium" data-testid="nav-home">
-                Home
-              </Link>
-              <Link href="/about" className="text-white/80 hover:text-white transition-colors" data-testid="nav-about">
-                About
-              </Link>
-              <Link href="/contact" className="text-white/80 hover:text-white transition-colors" data-testid="nav-contact">
-                Contact
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </header>
-
-      {/* Hero Content */}
-      <div className="relative z-10 flex items-center justify-center min-h-screen">
-        <div className="text-center px-4 sm:px-6 lg:px-8">
-          {/* Navigator Logo */}
-          <div className="mb-8">
-            {/* Mobile Logo (phone screens) */}
-            <img 
-              src={navigatorLogoMobile} 
-              alt="Navigator Logo" 
-              className="h-72 mx-auto filter brightness-0 invert opacity-90 md:hidden"
-              data-testid="navigator-logo-mobile"
-            />
-            {/* Desktop/Tablet Logo (tablets and PCs) */}
-            <img 
-              src={navigatorLogo} 
-              alt="Navigator Logo" 
-              className="hidden md:block h-72 mx-auto filter brightness-0 invert opacity-90"
-              data-testid="navigator-logo"
-            />
-          </div>
-
-          {/* Main Headline */}
-          <h1 className="text-5xl sm:text-7xl font-bold text-white mb-12 leading-tight">
-            One-stop Shop for{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
-              group trips
-            </span>
-          </h1>
-
-          {/* Action Button */}
-          <div className="flex justify-center">
-            <Link href="/login">
-              <Button 
-                size="lg" 
-                className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold hover:from-blue-600 hover:to-purple-700 hover:-translate-y-1 transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-purple-500/30 px-10 py-4 text-xl"
-                data-testid="button-sign-up-sign-in"
-              >
-                Sign Up / Sign In
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-      <Footer isDark={true} />
+      <LandingNav />
+      <HeroSection />
+      <FeaturesSection />
+      <HowItWorksSection />
+      <PhotoWallSection />
+      <TestimonialsSection />
+      <FinalCTASection />
+      <LandingFooter />
     </div>
   );
 }

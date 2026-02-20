@@ -1,16 +1,15 @@
-import { Link, useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Send } from "lucide-react";
+import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
 import { SEO } from "@/components/SEO";
-import Footer from "@/components/footer";
+
+import "@/styles/landing.css";
+
+import PageNav from "@/components/landing/PageNav";
+import ScrollReveal from "@/components/landing/ScrollReveal";
+import FinalCTASection from "@/components/landing/FinalCTASection";
+import LandingFooter from "@/components/landing/LandingFooter";
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -18,7 +17,7 @@ export default function Contact() {
   const { user, isLoading } = useAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  
+
   // Form state
   const [formData, setFormData] = useState({
     firstName: '',
@@ -46,17 +45,14 @@ export default function Contact() {
     let firstName = '';
     let lastName = '';
 
-    // Check if firstName and lastName exist directly
     if (user.firstName && user.lastName) {
       firstName = user.firstName;
       lastName = user.lastName;
     } else if (user.name) {
-      // Parse user.name by splitting on space
       const nameParts = user.name.trim().split(/\s+/);
       if (nameParts.length > 0) {
         firstName = nameParts[0];
         if (nameParts.length > 1) {
-          // Join remaining parts as lastName
           lastName = nameParts.slice(1).join(' ');
         }
       }
@@ -68,19 +64,15 @@ export default function Contact() {
   // Pre-fill form when user comes from Help button or Delete flow
   useEffect(() => {
     if ((fromHelp || fromDelete) && !isLoading) {
-      // Pre-fill subject from URL parameter (works for both authenticated and non-authenticated users)
       if (prefillSubject) {
         setFormData(prev => ({
           ...prev,
           subject: prev.subject || prefillSubject
         }));
       }
-      
-      // Pre-fill user info if authenticated
+
       if (user) {
         const { firstName, lastName } = extractUserNames(user);
-        
-        // Only pre-fill if fields are empty (don't overwrite user input)
         setFormData(prev => ({
           ...prev,
           firstName: prev.firstName || firstName,
@@ -91,7 +83,7 @@ export default function Contact() {
     }
   }, [fromHelp, fromDelete, user, isLoading, prefillSubject]);
 
-  // Redirect authenticated users to dashboard (but render content first for SEO)
+  // Redirect authenticated users to dashboard
   // UNLESS they came from the Help button or Delete flow
   useEffect(() => {
     if (!isLoading && user && !fromHelp && !fromDelete) {
@@ -102,8 +94,7 @@ export default function Contact() {
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate required fields
+
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.subject || !formData.message) {
       toast({
         title: "Missing Information",
@@ -113,7 +104,6 @@ export default function Contact() {
       return;
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       toast({
@@ -142,8 +132,7 @@ export default function Contact() {
           title: "Message Sent!",
           description: result.message,
         });
-        
-        // Reset form
+
         setFormData({
           firstName: '',
           lastName: '',
@@ -179,154 +168,203 @@ export default function Contact() {
     }));
   };
 
-  // Don't render contact page if user is authenticated (will redirect)
-  // But show content during loading for SEO/crawlers
-  // UNLESS they came from the Help button or Delete flow
   if (!isLoading && user && !fromHelp && !fromDelete) {
     return null;
   }
+
+  const inputClass = "w-full py-3 px-4 text-[0.9375rem] font-inter border border-nav-gray-300 rounded-lg bg-white text-nav-black placeholder:text-nav-gray-300 focus:outline-none focus:border-nav-black transition-colors duration-200";
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white font-inter">
       <SEO page="contact" />
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <nav className="flex items-center space-x-8">
-              <Link href="/" className="text-gray-600 hover:text-gray-900 transition-colors" data-testid="nav-home">
-                Home
-              </Link>
-              <Link href="/about" className="text-gray-600 hover:text-gray-900 transition-colors" data-testid="nav-about">
-                About
-              </Link>
-              <Link href="/contact" className="bg-blue-600 text-white px-3 py-1.5 rounded-full text-sm font-medium" data-testid="nav-contact">
-                Contact
-              </Link>
-              {/* <Link href="/terms" className="text-gray-600 hover:text-gray-900 transition-colors" data-testid="nav-terms">
-                Terms & Conditions
-              </Link>
-              <Link href="/privacy" className="text-gray-600 hover:text-gray-900 transition-colors" data-testid="nav-privacy">
-                Privacy Policy
-              </Link> */}
-            </nav>
-          </div>
-        </div>
-      </header>
+      <PageNav />
 
-      {/* Contact Form Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4" data-testid="heading-send-message">
-              Send Us a Message
-            </h1>
-            <p className="text-xl text-gray-600">
-              Fill out the form below and we'll get back to you within 24 hours.
-            </p>
-          </div>
+      {/* Contact Section */}
+      <section className="py-32 pb-24">
+        <div className="max-w-[1200px] mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-[5fr_4fr] gap-32 items-start max-md:gap-16">
 
-          <Card className="border-gray-200 shadow-lg">
-            <CardContent className="p-8">
-              <form onSubmit={handleSubmit} className="space-y-6" data-testid="contact-form">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input 
-                      id="firstName" 
-                      name="firstName"
-                      type="text" 
-                      placeholder="Enter your first name"
-                      className="mt-2"
-                      value={formData.firstName}
-                      onChange={handleInputChange}
-                      data-testid="input-first-name"
+            {/* Form Column */}
+            <ScrollReveal>
+              <div>
+                <h1 className="text-h1 mb-2">Get in touch</h1>
+                <p className="text-lg text-nav-gray-500 leading-relaxed mb-16 max-w-[460px]">
+                  Questions, feedback, or just want to say hi — we'd love to hear from you.
+                </p>
+
+                <form onSubmit={handleSubmit} data-testid="contact-form">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                    <div>
+                      <label htmlFor="firstName" className="block text-[0.8125rem] font-semibold text-nav-black mb-2 tracking-[0.01em]">
+                        First name
+                      </label>
+                      <input
+                        type="text"
+                        id="firstName"
+                        name="firstName"
+                        placeholder="Jane"
+                        required
+                        className={inputClass}
+                        value={formData.firstName}
+                        onChange={handleInputChange}
+                        data-testid="input-first-name"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="lastName" className="block text-[0.8125rem] font-semibold text-nav-black mb-2 tracking-[0.01em]">
+                        Last name
+                      </label>
+                      <input
+                        type="text"
+                        id="lastName"
+                        name="lastName"
+                        placeholder="Doe"
+                        required
+                        className={inputClass}
+                        value={formData.lastName}
+                        onChange={handleInputChange}
+                        data-testid="input-last-name"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mb-5">
+                    <label htmlFor="email" className="block text-[0.8125rem] font-semibold text-nav-black mb-2 tracking-[0.01em]">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      placeholder="jane@example.com"
                       required
+                      className={inputClass}
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      data-testid="input-email"
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input 
-                      id="lastName" 
-                      name="lastName"
-                      type="text" 
-                      placeholder="Enter your last name"
-                      className="mt-2"
-                      value={formData.lastName}
-                      onChange={handleInputChange}
-                      data-testid="input-last-name"
+
+                  <div className="mb-5">
+                    <label htmlFor="subject" className="block text-[0.8125rem] font-semibold text-nav-black mb-2 tracking-[0.01em]">
+                      Subject
+                    </label>
+                    <input
+                      type="text"
+                      id="subject"
+                      name="subject"
+                      placeholder="What's this about?"
                       required
+                      className={inputClass}
+                      value={formData.subject}
+                      onChange={handleInputChange}
+                      data-testid="input-subject"
                     />
+                  </div>
+
+                  <div className="mb-5">
+                    <label htmlFor="message" className="block text-[0.8125rem] font-semibold text-nav-black mb-2 tracking-[0.01em]">
+                      Message
+                    </label>
+                    <textarea
+                      id="message"
+                      name="message"
+                      placeholder="Tell us more..."
+                      required
+                      className={`${inputClass} min-h-[140px] resize-y`}
+                      value={formData.message}
+                      onChange={handleInputChange}
+                      data-testid="textarea-message"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full inline-flex items-center justify-center gap-2 font-semibold bg-nav-blue text-white rounded-full px-8 py-3.5 min-h-[48px] hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+                    data-testid="button-send-message"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" />
+                        Sending...
+                      </>
+                    ) : (
+                      "Send Message"
+                    )}
+                  </button>
+                </form>
+              </div>
+            </ScrollReveal>
+
+            {/* Aside Column */}
+            <ScrollReveal delay={0.1}>
+              <div className="pt-2 max-md:-order-1">
+                <div className="aspect-square max-md:aspect-video rounded-2xl overflow-hidden mb-16">
+                  <img
+                    src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&h=800&fit=crop"
+                    alt="Friends laughing together on a trip"
+                    loading="lazy"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                <div className="mb-6">
+                  <div className="text-xs font-semibold tracking-[0.06em] uppercase text-nav-gray-500 mb-1.5">
+                    Email
+                  </div>
+                  <div className="text-base text-nav-black leading-relaxed">
+                    <a
+                      href="mailto:info@navigatortrips.com"
+                      className="text-nav-black underline decoration-nav-gray-300 underline-offset-[3px] hover:decoration-nav-black transition-colors duration-200"
+                    >
+                      info@navigatortrips.com
+                    </a>
                   </div>
                 </div>
 
-                <div>
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input 
-                    id="email" 
-                    name="email"
-                    type="email" 
-                    placeholder="Enter your email address"
-                    className="mt-2"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    data-testid="input-email"
-                    required
-                  />
+                <div className="mb-6">
+                  <div className="text-xs font-semibold tracking-[0.06em] uppercase text-nav-gray-500 mb-1.5">
+                    Social
+                  </div>
+                  <div className="text-base text-nav-black leading-relaxed">
+                    <a
+                      href="https://www.instagram.com/navigatortrips/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-nav-black underline decoration-nav-gray-300 underline-offset-[3px] hover:decoration-nav-black transition-colors duration-200"
+                    >
+                      Instagram
+                    </a>
+                    <span className="mx-1">&middot;</span>
+                    <a
+                      href="https://www.tiktok.com/@navigatortrips"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-nav-black underline decoration-nav-gray-300 underline-offset-[3px] hover:decoration-nav-black transition-colors duration-200"
+                    >
+                      TikTok
+                    </a>
+                  </div>
                 </div>
 
-                <div>
-                  <Label htmlFor="subject">Subject</Label>
-                  <Input 
-                    id="subject" 
-                    name="subject"
-                    type="text" 
-                    placeholder="What's this about?"
-                    className="mt-2"
-                    value={formData.subject}
-                    onChange={handleInputChange}
-                    data-testid="input-subject"
-                    required
-                  />
+                <div className="mb-6">
+                  <div className="text-xs font-semibold tracking-[0.06em] uppercase text-nav-gray-500 mb-1.5">
+                    Response time
+                  </div>
+                  <div className="text-base text-nav-black leading-relaxed">
+                    Usually within 24 hours
+                  </div>
                 </div>
+              </div>
+            </ScrollReveal>
 
-                <div>
-                  <Label htmlFor="message">Message</Label>
-                  <Textarea 
-                    id="message" 
-                    name="message"
-                    placeholder="Tell us more about how we can help you..."
-                    className="mt-2 min-h-[120px]"
-                    value={formData.message}
-                    onChange={handleInputChange}
-                    data-testid="textarea-message"
-                    required
-                  />
-                </div>
-
-                <Button 
-                  type="submit" 
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg font-semibold"
-                  data-testid="button-send-message"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                      Sending...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="mr-2 h-5 w-5" />
-                      Send Message
-                    </>
-                  )}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+          </div>
         </div>
       </section>
-      <Footer isDark={false} />
+
+      <FinalCTASection />
+      <LandingFooter />
     </div>
   );
 }

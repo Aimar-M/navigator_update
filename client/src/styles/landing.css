@@ -1,0 +1,300 @@
+/* ============================================
+   NAVIGATOR — Landing Page Styles
+   Complex CSS that doesn't translate well to Tailwind
+   ============================================ */
+
+/* ---- Typography Utilities ---- */
+.text-hero {
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+}
+
+.text-h1 {
+  font-size: clamp(2.25rem, 4vw, 3.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+.text-h2 {
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  font-weight: 600;
+}
+
+.text-h3 {
+  font-size: clamp(1.25rem, 2vw, 1.75rem);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+}
+
+/* ---- Landing Nav ---- */
+.landing-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 1.25rem 0;
+  transition: all 0.3s ease;
+}
+
+.landing-nav--transparent {
+  background: transparent;
+}
+
+.landing-nav--solid {
+  background: var(--nav-white);
+  border-bottom: 1px solid var(--nav-gray-300);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+/* On transparent nav: show light logo, hide dark */
+.landing-nav--transparent .nav-logo-dark {
+  display: none;
+}
+.landing-nav--transparent .nav-logo-light {
+  display: block;
+}
+
+/* On solid nav: show dark logo, hide light */
+.landing-nav--solid .nav-logo-dark {
+  display: block;
+}
+.landing-nav--solid .nav-logo-light {
+  display: none;
+}
+
+/* Nav link colors based on state */
+.landing-nav--transparent .landing-nav__link {
+  color: rgba(255, 255, 255, 0.8);
+}
+.landing-nav--transparent .landing-nav__link:hover {
+  color: var(--nav-white);
+}
+.landing-nav--solid .landing-nav__link {
+  color: var(--nav-gray-500);
+}
+.landing-nav--solid .landing-nav__link:hover {
+  color: var(--nav-black);
+}
+
+/* Mobile toggle bar colors */
+.landing-nav--transparent .mobile-toggle-bar {
+  background: var(--nav-white);
+}
+.landing-nav--solid .mobile-toggle-bar {
+  background: var(--nav-black);
+}
+
+/* ---- Hero ---- */
+.hero-scroll-indicator {
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+  40% { transform: translateX(-50%) translateY(-8px); }
+  60% { transform: translateX(-50%) translateY(-4px); }
+}
+
+/* ---- Feature Collage ---- */
+.feature-collage {
+  position: relative;
+  width: 100%;
+  padding-bottom: 75%;
+}
+
+.feature-collage__main {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 88%;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.10);
+  background: var(--nav-white);
+  z-index: 1;
+}
+
+.feature-collage__main img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.feature-collage__overlap {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 55%;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.14);
+  background: var(--nav-white);
+  z-index: 2;
+}
+
+.feature-collage__overlap img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Expenses variant */
+.feature-collage--expenses {
+  padding-bottom: 80%;
+}
+.feature-collage--expenses .feature-collage__main {
+  width: 85%;
+  top: 0;
+  left: 0;
+}
+.feature-collage--expenses .feature-collage__overlap {
+  width: 65%;
+  bottom: -4%;
+  right: -6%;
+}
+
+/* Portrait variant (invite screenshots) */
+.feature-collage--portrait {
+  padding-bottom: 95%;
+}
+.feature-collage--portrait .feature-collage__main {
+  width: 65%;
+  top: 0;
+  left: 5%;
+}
+.feature-collage--portrait .feature-collage__overlap {
+  width: 60%;
+  bottom: 0;
+  right: 0;
+}
+
+/* ---- Step Collage ---- */
+.step-collage {
+  position: relative;
+  width: 100%;
+  padding-bottom: 66.67%;
+}
+
+.step-collage__card {
+  position: absolute;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--nav-white);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.10);
+}
+
+.step-collage__card img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.step-collage__card--back {
+  width: 80%;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+.step-collage__card--mid {
+  width: 75%;
+  top: 18%;
+  right: 0;
+  z-index: 2;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.12);
+}
+
+.step-collage__card--front {
+  width: 65%;
+  bottom: 0;
+  left: 8%;
+  z-index: 3;
+  box-shadow: 0 10px 32px rgba(0,0,0,0.14);
+}
+
+/* ---- Polaroid Photo Wall ---- */
+.polaroid-table {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-bottom: 42%;
+  margin-top: var(--space-md);
+}
+
+.polaroid {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  z-index: var(--z);
+  width: 14%;
+  transform: rotate(var(--r));
+  transition: transform 0.3s ease, z-index 0s;
+  cursor: default;
+}
+
+.polaroid::before {
+  content: '';
+  display: block;
+  padding-bottom: 115%;
+}
+
+.polaroid > img {
+  position: absolute;
+  top: 8%;
+  left: 6%;
+  width: 88%;
+  height: 76%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Polaroid white frame */
+.polaroid::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--nav-white);
+  border-radius: 2px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1);
+  z-index: -1;
+}
+
+.polaroid:hover {
+  transform: rotate(0deg) scale(1.08);
+  z-index: 100;
+}
+
+.polaroid:hover::after {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18), 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+/* ---- About Page ---- */
+.about-hero__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.15) 60%);
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 1024px) {
+  .polaroid {
+    width: 22%;
+  }
+}
+
+@media (max-width: 768px) {
+  .polaroid {
+    width: 26%;
+  }
+
+  .polaroid-table {
+    padding-bottom: 75%;
+  }
+}
