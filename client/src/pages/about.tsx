@@ -23,7 +23,7 @@ export default function About() {
   }
   const features = [
     {
-      emoji: "🧳",
+      emoji: "🗺️",
       title: "Trip Planning Made Easy",
       description: "Collaborative itineraries that keep everyone on the same page."
     },
