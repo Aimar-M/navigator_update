@@ -54,12 +54,20 @@ export default function LandingNav() {
           </ul>
 
           {/* CTA */}
-          <Link
-            href="/login"
-            className="hidden md:inline-flex items-center text-sm font-semibold bg-nav-blue text-white rounded-full px-6 py-2.5 min-h-[40px] hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
-          >
-            Get Started
-          </Link>
+          <div className="hidden md:flex items-center gap-4">
+            <Link
+              href="/login"
+              className="landing-nav__link text-sm font-medium transition-colors duration-200"
+            >
+              Sign In
+            </Link>
+            <Link
+              href="/create-trip"
+              className="inline-flex items-center text-sm font-semibold bg-nav-blue text-white rounded-full px-6 py-2.5 min-h-[40px] hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+            >
+              Get Started
+            </Link>
+          </div>
 
           {/* Mobile Toggle */}
           <button
@@ -106,11 +114,18 @@ export default function LandingNav() {
             Contact
           </Link>
           <Link
-            href="/login"
+            href="/create-trip"
             onClick={closeMobile}
             className="inline-flex items-center justify-center font-semibold bg-nav-blue text-white rounded-full px-8 py-3.5 mt-4 text-center hover:opacity-90 transition-all duration-200"
           >
             Get Started
+          </Link>
+          <Link
+            href="/login"
+            onClick={closeMobile}
+            className="inline-flex items-center justify-center font-medium text-nav-gray-500 hover:text-nav-black text-base text-center transition-colors duration-200"
+          >
+            Sign In
           </Link>
         </div>
       )}

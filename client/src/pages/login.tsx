@@ -105,9 +105,13 @@ export default function Login() {
             
             // Check for pending invitation before redirecting
             const pendingInvitation = localStorage.getItem('pendingInvitation');
+            const pendingTrip = localStorage.getItem('pendingTripData');
             if (pendingInvitation) {
               console.log('🔗 Found pending invitation, redirecting to invitation page...');
               navigate(`/invite/${pendingInvitation}`);
+            } else if (pendingTrip) {
+              console.log('🔗 Found pending trip data, redirecting to create trip...');
+              navigate('/create-trip');
             } else {
               // Redirect to homepage with permanent token
               console.log('🔗 No pending invitation, redirecting to homepage...');
@@ -171,7 +175,8 @@ export default function Login() {
 
   // Redirect if already logged in
   if (user) {
-    navigate("/");
+    const pendingTrip = localStorage.getItem('pendingTripData');
+    navigate(pendingTrip ? "/create-trip" : "/");
     return null;
   }
 

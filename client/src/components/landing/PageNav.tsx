@@ -43,12 +43,20 @@ export default function PageNav() {
           </li>
         </ul>
 
-        <Link
-          href="/login"
-          className="text-sm font-semibold bg-nav-blue text-white rounded-full px-6 py-2.5 min-h-[40px] inline-flex items-center hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 max-md:hidden"
-        >
-          Get Started
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link
+            href="/login"
+            className="text-sm font-medium text-nav-gray-500 hover:text-nav-black transition-colors"
+          >
+            Sign In
+          </Link>
+          <Link
+            href="/create-trip"
+            className="text-sm font-semibold bg-nav-blue text-white rounded-full px-6 py-2.5 min-h-[40px] inline-flex items-center hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 max-md:hidden"
+          >
+            Get Started
+          </Link>
+        </div>
       </div>
     </nav>
   );

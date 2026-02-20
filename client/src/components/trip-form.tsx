@@ -1,4 +1,4 @@
-import { useState, useEffect, useImperativeHandle, forwardRef } from "react";
+import { useState, useEffect, useImperativeHandle, forwardRef, useRef } from "react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
@@ -36,6 +36,7 @@ const TripForm = forwardRef<TripFormRef, TripFormProps>(({ onComplete }, ref) =>
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState(1);
   const [totalSteps] = useState(3);
+  const autoSubmitAttempted = useRef(false);
   const [formData, setFormData] = useState({
     name: "",
     destination: "",
@@ -53,6 +54,87 @@ const TripForm = forwardRef<TripFormRef, TripFormProps>(({ onComplete }, ref) =>
     }
   }, [isOnboardingVisible]);
 
+  // Restore pending trip data and auto-submit after auth
+  useEffect(() => {
+    if (user && !autoSubmitAttempted.current) {
+      const pendingData = localStorage.getItem('pendingTripData');
+      if (pendingData) {
+        autoSubmitAttempted.current = true;
+        try {
+          const parsed = JSON.parse(pendingData);
+          localStorage.removeItem('pendingTripData');
+          setFormData(parsed);
+          // Auto-submit after state updates
+          setTimeout(() => {
+            autoSubmitTrip(parsed);
+          }, 100);
+        } catch {
+          localStorage.removeItem('pendingTripData');
+        }
+      }
+    }
+  }, [user]);
+
+  const autoSubmitTrip = async (data: typeof formData) => {
+    if (!user) return;
+
+    setIsSubmitting(true);
+    try {
+      const tripData: any = {
+        ...data,
+        organizer: user.id,
+        status: "planning",
+        downPaymentAmount: data.requiresDownPayment ? data.downPaymentAmount : null,
+      };
+
+      if (data.startDate) {
+        tripData.startDate = parseLocalDate(data.startDate);
+      }
+      if (data.endDate) {
+        tripData.endDate = parseLocalDate(data.endDate);
+      }
+
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`${API_BASE}/api/trips`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(tripData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create trip');
+      }
+
+      const trip = await response.json();
+      trackTripCreation(trip.id.toString(), trip.name, user.id.toString());
+
+      toast({
+        title: "Trip created",
+        description: "Your trip has been created successfully.",
+      });
+
+      await queryClient.refetchQueries({ queryKey: [`${API_BASE}/api/trips`], exact: false });
+
+      if (onComplete) {
+        onComplete();
+      } else {
+        navigate(`/trips/${trip.id}`);
+      }
+    } catch (error) {
+      toast({
+        title: "Failed to create trip",
+        description: error instanceof Error ? error.message : "Something went wrong",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Expose methods for onboarding
   useImperativeHandle(ref, () => ({
     nextStep: () => {
@@ -68,7 +150,7 @@ const TripForm = forwardRef<TripFormRef, TripFormProps>(({ onComplete }, ref) =>
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type, checked } = e.target as HTMLInputElement;
-    
+
     // Handle date validation for start/end dates
     if (name === 'startDate' && value) {
       setFormData((prev) => {
@@ -82,9 +164,9 @@ const TripForm = forwardRef<TripFormRef, TripFormProps>(({ onComplete }, ref) =>
         return updated;
       });
     } else {
-      setFormData((prev) => ({ 
-        ...prev, 
-        [name]: type === 'checkbox' ? checked : value 
+      setFormData((prev) => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
       }));
     }
   };
@@ -102,7 +184,7 @@ const TripForm = forwardRef<TripFormRef, TripFormProps>(({ onComplete }, ref) =>
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user) {
       toast({
         title: "Authentication required",
@@ -111,9 +193,9 @@ const TripForm = forwardRef<TripFormRef, TripFormProps>(({ onComplete }, ref) =>
       });
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
       // Only include dates if they are provided
       const tripData: any = {
@@ -122,7 +204,7 @@ const TripForm = forwardRef<TripFormRef, TripFormProps>(({ onComplete }, ref) =>
         status: "planning",
         downPaymentAmount: formData.requiresDownPayment ? formData.downPaymentAmount : null,
       };
-      
+
       // Only add dates if they are provided
       // Use parseLocalDate to ensure dates are created in local time, not UTC
       // This prevents timezone issues where dates appear a day behind
@@ -132,7 +214,7 @@ const TripForm = forwardRef<TripFormRef, TripFormProps>(({ onComplete }, ref) =>
       if (formData.endDate) {
         tripData.endDate = parseLocalDate(formData.endDate);
       }
-      
+
       // Use fetch directly with authentication token
       const token = localStorage.getItem('auth_token');
       const response = await fetch(`${API_BASE}/api/trips`, {
@@ -143,36 +225,36 @@ const TripForm = forwardRef<TripFormRef, TripFormProps>(({ onComplete }, ref) =>
         },
         body: JSON.stringify(tripData),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         console.error('Trip creation failed:', errorData);
         throw new Error(errorData.message || 'Failed to create trip');
       }
-      
+
       const trip = await response.json();
-      
+
       // Track trip creation with FullStory
       trackTripCreation(trip.id.toString(), trip.name, user.id.toString());
-      
+
       toast({
         title: "Trip created",
         description: "Your trip has been created successfully.",
       });
-      
+
       await queryClient.refetchQueries({ queryKey: [`${API_BASE}/api/trips`], exact: false });
-      
+
       // Store trip ID for onboarding navigation
       if (isOnboardingVisible) {
         localStorage.setItem('onboardingTripId', trip.id.toString());
       }
-      
+
       if (onComplete) {
         onComplete();
       } else {
         navigate(`/trips/${trip.id}`);
       }
-    } 
+    }
     catch (error) {
       toast({
         title: "Failed to create trip",
@@ -184,7 +266,12 @@ const TripForm = forwardRef<TripFormRef, TripFormProps>(({ onComplete }, ref) =>
     }
   };
 
-      
+
+
+  const savePendingAndNavigate = (path: string) => {
+    localStorage.setItem('pendingTripData', JSON.stringify(formData));
+    navigate(path);
+  };
 
   const renderStep = () => {
     switch (step) {
@@ -280,10 +367,10 @@ const TripForm = forwardRef<TripFormRef, TripFormProps>(({ onComplete }, ref) =>
                 data-tooltip="details"
               />
             </div>
-            
+
             <div className="border-t pt-4" data-tooltip="downpayment">
               <h3 className="text-lg font-medium text-gray-900 mb-3">Payment Options</h3>
-              
+
               <div className="mb-4">
                 <label className="flex items-center space-x-3">
                   <input
@@ -301,7 +388,7 @@ const TripForm = forwardRef<TripFormRef, TripFormProps>(({ onComplete }, ref) =>
                   Members must submit payment before their RSVP is confirmed and they gain full access to trip features.
                 </p>
               </div>
-              
+
               {formData.requiresDownPayment && (
                 <div className="ml-7">
                   <label htmlFor="downPaymentAmount" className="block text-sm font-medium text-gray-700 mb-1">
@@ -324,34 +411,93 @@ const TripForm = forwardRef<TripFormRef, TripFormProps>(({ onComplete }, ref) =>
           </div>
         );
       case 3:
+        // Unauthenticated: show auth prompt instead of review
+        if (!user) {
+          return (
+            <div className="mb-4">
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Almost there! Create an account to launch your trip</h3>
+              <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                <p className="text-sm font-medium text-gray-700">Trip Name:</p>
+                <p className="text-sm text-gray-900 mb-2">{formData.name}</p>
+
+                {formData.destination && (
+                  <>
+                    <p className="text-sm font-medium text-gray-700">Destination:</p>
+                    <p className="text-sm text-gray-900 mb-2">{formData.destination}</p>
+                  </>
+                )}
+
+                <p className="text-sm font-medium text-gray-700">Dates:</p>
+                <p className="text-sm text-gray-900">
+                  {formData.startDate && formData.endDate
+                    ? `${formData.startDate} to ${formData.endDate}`
+                    : formData.startDate
+                      ? `Start: ${formData.startDate}`
+                      : formData.endDate
+                        ? `End: ${formData.endDate}`
+                        : "Not set (you can add dates later)"}
+                </p>
+              </div>
+              <p className="text-sm text-gray-500 mb-6">
+                Your trip details are saved. Sign up or log in to create it.
+              </p>
+              <div className="flex flex-col gap-3">
+                <Button
+                  type="button"
+                  className="w-full"
+                  onClick={() => savePendingAndNavigate('/register')}
+                >
+                  Sign Up
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => savePendingAndNavigate('/login')}
+                >
+                  Log In
+                </Button>
+                <button
+                  type="button"
+                  className="text-sm text-gray-500 hover:text-gray-700 underline mt-2 text-center"
+                  onClick={() => navigate('/login')}
+                >
+                  Skip — I'll create a trip later
+                </button>
+              </div>
+            </div>
+          );
+        }
+
+        // Authenticated: show the existing review + "Create Trip" button
         return (
           <div className="mb-4">
             <h3 className="text-lg font-medium text-gray-900 mb-2">Trip Summary</h3>
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-sm font-medium text-gray-700">Trip Name:</p>
               <p className="text-sm text-gray-900 mb-2">{formData.name}</p>
-              
+
               <p className="text-sm font-medium text-gray-700">Destination:</p>
               <p className="text-sm text-gray-900 mb-2">{formData.destination}</p>
-              
+
               <p className="text-sm font-medium text-gray-700">Dates:</p>
               <p className="text-sm text-gray-900 mb-2">
-                {formData.startDate && formData.endDate 
+                {formData.startDate && formData.endDate
                   ? `${formData.startDate} to ${formData.endDate}`
-                  : formData.startDate 
+                  : formData.startDate
                     ? `Start: ${formData.startDate}`
                     : formData.endDate
                       ? `End: ${formData.endDate}`
                       : "Not set (you can add dates later)"}
               </p>
-              
+
               {formData.description && (
                 <>
                   <p className="text-sm font-medium text-gray-700">Description:</p>
                   <p className="text-sm text-gray-900 mb-2">{formData.description}</p>
                 </>
               )}
-              
+
               {formData.requiresDownPayment && (
                 <>
                   <p className="text-sm font-medium text-gray-700">Down Payment:</p>
@@ -399,7 +545,7 @@ const TripForm = forwardRef<TripFormRef, TripFormProps>(({ onComplete }, ref) =>
             <h4 className="text-sm font-medium text-gray-900">
               {step === 1 && "Trip Basics"}
               {step === 2 && "Trip Details"}
-              {step === 3 && "Review & Create"}
+              {step === 3 && (user ? "Review & Create" : "Create Account")}
             </h4>
             <div className="flex items-center">
               <span className="text-xs text-gray-500 mr-2">
@@ -417,35 +563,46 @@ const TripForm = forwardRef<TripFormRef, TripFormProps>(({ onComplete }, ref) =>
 
         <form onSubmit={handleSubmit}>
           {renderStep()}
-          
-          <div className="flex justify-between mt-6">
-            {step > 1 ? (
+
+          {/* Hide the bottom nav buttons on step 3 for unauthenticated users (auth prompt has its own buttons) */}
+          {!(step === 3 && !user) && (
+            <div className="flex justify-between mt-6">
+              {step > 1 ? (
+                <Button type="button" variant="outline" onClick={prevStep}>
+                  Back
+                </Button>
+              ) : (
+                <div></div>
+              )}
+
+              {step < totalSteps ? (
+                <Button
+                  type="button"
+                  onClick={nextStep}
+                  disabled={!isStepValid()}
+                  data-trip-form-next
+                >
+                  Next
+                </Button>
+              ) : (
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  data-trip-form-submit
+                >
+                  {isSubmitting ? "Creating..." : "Create Trip"}
+                </Button>
+              )}
+            </div>
+          )}
+          {/* Show just Back button on step 3 for unauthenticated users */}
+          {step === 3 && !user && (
+            <div className="flex justify-start mt-6">
               <Button type="button" variant="outline" onClick={prevStep}>
                 Back
               </Button>
-            ) : (
-              <div></div>
-            )}
-            
-            {step < totalSteps ? (
-              <Button
-                type="button"
-                onClick={nextStep}
-                disabled={!isStepValid()}
-                data-trip-form-next
-              >
-                Next
-              </Button>
-            ) : (
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                data-trip-form-submit
-              >
-                {isSubmitting ? "Creating..." : "Create Trip"}
-              </Button>
-            )}
-          </div>
+            </div>
+          )}
         </form>
       </CardContent>
     </Card>

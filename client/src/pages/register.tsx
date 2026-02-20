@@ -55,7 +55,8 @@ export default function Register() {
 
   // Redirect if already logged in
   if (user) {
-    navigate("/");
+    const pendingTrip = localStorage.getItem('pendingTripData');
+    navigate(pendingTrip ? "/create-trip" : "/");
     return null;
   }
 

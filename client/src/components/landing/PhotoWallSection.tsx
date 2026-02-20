@@ -48,7 +48,7 @@ export default function PhotoWallSection() {
             </p>
             <div className="flex items-center justify-center gap-4 mt-8 max-md:flex-col">
               <Link
-                href="/login"
+                href="/create-trip"
                 className="inline-flex items-center justify-center gap-2 font-semibold bg-nav-blue text-white rounded-full px-8 py-3.5 min-h-[48px] hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
               >
                 Plan a Trip

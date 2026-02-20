@@ -12,7 +12,7 @@ export default function FinalCTASection({
   headline = "Your next trip starts here",
   subtext = "Stop planning in group chats. Start planning with Navigator.",
   ctaText = "Get Started, It's Free",
-  ctaHref = "/login",
+  ctaHref = "/create-trip",
 }: FinalCTASectionProps) {
   return (
     <section className="bg-nav-black py-32 pb-24 text-center">

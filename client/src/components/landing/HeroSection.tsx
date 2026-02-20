@@ -66,7 +66,7 @@ export default function HeroSection() {
         <ScrollReveal delay={0.2}>
           <div className="flex items-center justify-center gap-4 flex-wrap max-md:flex-col">
             <Link
-              href="/login"
+              href="/create-trip"
               className="inline-flex items-center justify-center gap-2 font-semibold text-lg bg-nav-blue text-white rounded-full px-10 py-[18px] min-h-[56px] hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
             >
               Get Started, It's Free
