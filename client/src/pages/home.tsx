@@ -89,14 +89,18 @@ export default function Home() {
             localStorage.setItem('auth_token', data.token);
             console.log('✅ Permanent token stored:', data.token);
             
-            // Check for pending invitation before reloading
+            // Check for pending invitation or trip data before reloading
             const pendingInvitation = localStorage.getItem('pendingInvitation');
+            const pendingTrip = localStorage.getItem('pendingTripData');
             if (pendingInvitation) {
               console.log('🔗 Found pending invitation, redirecting to invitation page...');
               window.location.href = `/invite/${pendingInvitation}`;
+            } else if (pendingTrip) {
+              console.log('🔗 Found pending trip data, redirecting to create-trip...');
+              window.location.href = '/create-trip';
             } else {
               // Force a re-render to trigger auth check
-              console.log('🔗 No pending invitation, reloading page...');
+              console.log('🔗 No pending invitation or trip data, reloading page...');
               window.location.reload();
             }
           } else {

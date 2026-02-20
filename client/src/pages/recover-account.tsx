@@ -153,9 +153,10 @@ export default function RecoverAccount() {
           description: "Your account has been successfully restored. Welcome back!",
         });
         
-        // Redirect to home page
+        // Redirect to create-trip if pending trip data, otherwise home page
         setTimeout(() => {
-          window.location.href = "/";
+          const pendingTrip = localStorage.getItem('pendingTripData');
+          window.location.href = pendingTrip ? "/create-trip" : "/";
         }, 1500);
       } else {
         const errorData = await response.json();

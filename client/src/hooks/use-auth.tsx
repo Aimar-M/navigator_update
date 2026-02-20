@@ -102,8 +102,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setIsLoading(false);
                 return;
               }
-              
-              // Set the user only if no pending invitation
+
+              // Check for pending trip data
+              const pendingTrip = localStorage.getItem('pendingTripData');
+              if (pendingTrip) {
+                console.log('🔗 Found pending trip data during OAuth validation, redirecting to create-trip...');
+                window.location.href = '/create-trip';
+                setIsLoading(false);
+                return;
+              }
+
+              // Set the user only if no pending invitation or trip data
               setUser(data.user);
               
               if (data.user) {
