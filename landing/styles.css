@@ -525,7 +525,9 @@ a {
   grid-template-columns: 1fr 1fr;
   gap: var(--space-xl);
   align-items: center;
-  margin-bottom: var(--space-2xl);
+  min-height: 85vh;
+  margin-bottom: 0;
+  padding: var(--space-xl) 0;
 }
 
 .feature-row:last-child {
@@ -773,6 +775,11 @@ a {
   color: var(--nav-gray-500);
   font-size: 1.0625rem;
   line-height: 1.7;
+}
+
+.feature-row__cta {
+  margin-top: var(--space-lg);
+  display: inline-flex;
 }
 
 /* ============================================
@@ -1352,6 +1359,8 @@ a {
   .feature-row {
     grid-template-columns: 1fr;
     gap: var(--space-lg);
+    min-height: auto;
+    padding: var(--space-xl) 0;
   }
 
   .feature-row--reverse .feature-row__image {

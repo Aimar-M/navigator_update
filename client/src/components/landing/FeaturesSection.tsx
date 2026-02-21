@@ -40,6 +40,8 @@ export default function FeaturesSection() {
               className="w-full h-auto object-contain rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.2)]"
             />
           }
+          ctaText="Start planning together →"
+          ctaHref="/create-trip"
         />
 
         {/* Feature 2: Expense Splitting */}
@@ -61,6 +63,8 @@ export default function FeaturesSection() {
               overlapAlt="Navigator expense overview — who owes what"
             />
           }
+          ctaText="Track and split expenses →"
+          ctaHref="/create-trip"
         />
 
         {/* Feature 3: Group Chat */}
@@ -80,6 +84,8 @@ export default function FeaturesSection() {
               className="w-full h-auto object-contain rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.2)]"
             />
           }
+          ctaText="Chat with your crew →"
+          ctaHref="/create-trip"
         />
 
         {/* Feature 4: Easy Invites */}
@@ -101,6 +107,8 @@ export default function FeaturesSection() {
               overlapAlt="Navigator trip details and itinerary preview"
             />
           }
+          ctaText="Share your invite link →"
+          ctaHref="/create-trip"
         />
 
         {/* Feature 5: Democratic Decisions */}
@@ -120,6 +128,8 @@ export default function FeaturesSection() {
               className="w-full h-auto object-contain rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.2)]"
             />
           }
+          ctaText="Create a group vote →"
+          ctaHref="/create-trip"
         />
       </div>
     </section>
