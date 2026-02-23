@@ -55,7 +55,7 @@ export default function HeroSection() {
       <div className="relative z-10 text-center px-6 max-w-[900px]">
         <ScrollReveal>
           <h1 className="text-hero text-white mb-6">
-            Plan Together.<br />Split Costs.<br />Make Memories.
+            Plan Together<br />Split Costs<br />Make Memories
           </h1>
         </ScrollReveal>
         <ScrollReveal delay={0.1}>
